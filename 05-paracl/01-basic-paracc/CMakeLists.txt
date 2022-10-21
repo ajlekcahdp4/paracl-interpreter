@@ -68,6 +68,7 @@ if (SANITIZE)
 endif()
 
 set(DRIVER_SOURCES
+  src/chunk.cc
   src/driver.cc
 )
 
