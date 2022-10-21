@@ -1,0 +1,53 @@
+# 1. Bytecode VM
+
+The approach we will be taking is motivated by Lox from "Crafting Interpreters" by Robert Nystrom. The obvious choice to implement a ParaCL interpreter
+would be to implement a trivial tree walker, but this approach is slow and has downsides when recurisive functions are in concerned.
+Thus, this implementation will forego this entirely and run the code on a stack-based virtual machine, let's call it pclvm.
+
+# 2. Chunks
+
+The compiled bytecode program will be represented as a single (for now) "chunk". It will contain:
+
+1. Constant pool used by the program
+2. Function information i.e. location, arguments, etc
+2. The bytecode itself 
+
+# 3. Code representation and instructions
+
+As this is a stack machine, the will be no address space for mutable data like in Harvard architecture (indexes into the stack), only the constant pool and immutable bytecode. These will be addressed separately.
+Constant pool is trivial to address by index into the "array" 0, 1, 2, ..., CONSTANT_COUNT_MAX.
+On the other hand, as the virtual machine needs to control control flow address space will be address either as an abosulute byte address starting from 0x00000000 or relatively
+to the current instruction pointer.
+
+# Nullary instructions
+
+RETURN  # Return from function or exit current scope
+
+# Stack manipulation instructions
+
+PUSH_CONST [IDX] # Push contant from the pool onto the stack
+POP              # Pop from the top of the stack
+
+## Arithmetic on i32
+
+ADD               # b = pop(); a = pop(); push(a + b)
+SUB               # b = pop(); a = pop(); push(a - b)
+MUL               # b = pop(); a = pop(); push(a * b)
+DIV               # b = pop(); a = pop(); push(a / b)
+MOD               # b = pop(); a = pop(); push(a % b)
+
+# Comparisons
+
+CMP               # Compares b = pop(), a = pop() and sets flags accordingly
+
+# Control flow
+
+JMP_REL [REL_ADDR]      # ip = ip + REL_ADDR
+JMP_ABS [ABS_ADDR]      # ip = ABS_ADDR
+
+SKP_EQ                  # Skips the next instruction if previous call to cmp resulted in CMP_EQ_FLAG
+SKP_LS                  # Skips the next instruction if previous call to cmp resulted in CMP_LS_FLAG
+SKP_GT                  # Skips the next instruction if previous call to cmp resulted in CMP_GT_FLAG
+SKP_GE                  # Skips the next instruction if previous call to cmp resulted in CMP_GE_FLAG
+SKP_LE                  # Skips the next instruction if previous call to cmp resulted in CMP_LE_FLAG
+SKP_NE                  # Skips the next instruction if previous call to cmp resulted in CMP_NE_FLAG       
