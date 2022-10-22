@@ -20,12 +20,21 @@ int main() {
   ch.push_byte(0);
   ch.push_byte(0);
   ch.push_byte(0);
+
   ch.push_byte(opcode::E_JMP_GT_ABS_UNARY);
   
   ch.push_byte(5);
-  ch.push_byte(0);
-  ch.push_byte(0);
-  ch.push_byte(0);
+  ch.push_byte(1);
+  ch.push_byte(1);
+  ch.push_byte(1);
+
+  ch.push_byte(opcode::E_MOV_LOCAL_UNARY);
+  ch.push_byte(1);
+  ch.push_byte(1);
+  ch.push_byte(1);
+  ch.push_byte(1);
+
+  ch.push_byte(opcode::E_PRINT_NULLARY);
   
   disassembly::chunk_complete_disassembler{}(std::cout, ch);
 }

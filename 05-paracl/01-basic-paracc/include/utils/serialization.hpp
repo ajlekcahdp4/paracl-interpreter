@@ -24,10 +24,6 @@ namespace paracl::utils::serialization {
 template <typename T, std::input_iterator iter> std::optional<std::pair<T, iter>> read_little_endian(iter first, iter last) requires std::integral<T> || std::floating_point<T> { 
   std::array<char, sizeof(T)> raw_bytes;
 
-  if (first == last) {
-    return std::nullopt;
-  }
-
   auto input_iter = typename decltype(raw_bytes)::iterator{};
 
   if constexpr (std::endian::native == std::endian::little) {
@@ -41,6 +37,7 @@ template <typename T, std::input_iterator iter> std::optional<std::pair<T, iter>
   auto size = sizeof(T);
   first = algorithm::copy_while(first, last, input_iter, [&size](auto) {return size && size--; });
 
+  if (size != 0) return std::nullopt;
   return std::make_pair(std::bit_cast<T>(raw_bytes), first);
 }
 

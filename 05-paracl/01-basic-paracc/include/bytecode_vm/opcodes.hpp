@@ -28,16 +28,13 @@ enum class opcode : std::uint8_t {
   E_MUL_NULLARY,
   E_DIV_NULLARY,
   E_MOD_NULLARY,
+  E_PRINT_NULLARY,
+  E_PUSH_READ_NULLARY,
 
   E_CMP_NULLARY,
 
-  E_JMP_REL_UNARY,
-  E_JMP_EQ_REL_UNARY,
-  E_JMP_NE_REL_UNARY,
-  E_JMP_GT_REL_UNARY,
-  E_JMP_LS_REL_UNARY,
-  E_JMP_GE_REL_UNARY,
-  E_JMP_LE_REL_UNARY,
+  E_PUSH_LOCAL_UNARY,
+  E_MOV_LOCAL_UNARY,
 
   E_JMP_ABS_UNARY,
   E_JMP_EQ_ABS_UNARY,
@@ -52,17 +49,26 @@ inline std::string opcode_to_string(opcode code) {
   using enum opcode;
 
   static const std::unordered_map<opcode, std::string> lookup_table = {
-      {E_RETURN_NULLARY, "ret"}, {E_PUSH_CONST_UNARY, "push_const"},
-      {E_POP_NULLARY, "pop"},    {E_ADD_NULLARY, "add"},
-      {E_SUB_NULLARY, "sub"},    {E_MUL_NULLARY, "mul"},
-      {E_DIV_NULLARY, "div"},    {E_MOD_NULLARY, "mod"},
-      {E_CMP_NULLARY, "cmp"},    {E_JMP_REL_UNARY, "jmp"},
-      {E_JMP_EQ_REL_UNARY, "jmp_eq"},  {E_JMP_NE_REL_UNARY, "jmp_ne"},
-      {E_JMP_GT_REL_UNARY, "jmp_gt"},  {E_JMP_LS_REL_UNARY, "jmp_ls"},
-      {E_JMP_GE_REL_UNARY, "jmp_ge"},  {E_JMP_LE_REL_UNARY, "jmp_le"},
-      {E_JMP_EQ_ABS_UNARY, "jmp_eq"},  {E_JMP_NE_ABS_UNARY, "jmp_ne"},
-      {E_JMP_GT_ABS_UNARY, "jmp_gt"},  {E_JMP_LS_ABS_UNARY, "jmp_ls"},
-      {E_JMP_GE_ABS_UNARY, "jmp_ge"},  {E_JMP_LE_ABS_UNARY, "jmp_le"}};
+      {E_RETURN_NULLARY, "ret"},
+      {E_PUSH_CONST_UNARY, "push_const"},
+      {E_POP_NULLARY, "pop"},
+      {E_ADD_NULLARY, "add"},
+      {E_SUB_NULLARY, "sub"},
+      {E_MUL_NULLARY, "mul"},
+      {E_DIV_NULLARY, "div"},
+      {E_MOD_NULLARY, "mod"},
+      {E_CMP_NULLARY, "cmp"},
+      {E_JMP_EQ_ABS_UNARY, "jmp_eq"},
+      {E_JMP_NE_ABS_UNARY, "jmp_ne"},
+      {E_JMP_GT_ABS_UNARY, "jmp_gt"},
+      {E_JMP_LS_ABS_UNARY, "jmp_ls"},
+      {E_JMP_GE_ABS_UNARY, "jmp_ge"},
+      {E_JMP_LE_ABS_UNARY, "jmp_le"},
+      {E_PUSH_LOCAL_UNARY, "push_local"},
+      {E_MOV_LOCAL_UNARY, "mov_local"},
+      {E_PRINT_NULLARY, "print"},
+      {E_PUSH_READ_NULLARY, "push_read"},
+  };
 
   return lookup_table.at(code);
 }

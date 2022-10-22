@@ -40,7 +40,6 @@ public:
 
   void push_byte(opcode op) { push_byte(static_cast<uint8_t>(op)); }
   void push_byte(uint8_t code) { m_binary_code.push_back(code); }
-  
   void push_signed_byte(int8_t val) {m_binary_code.push_back(std::bit_cast<uint8_t>(val)); }
 
   const auto &binary_code() const & { return m_binary_code; }
@@ -48,6 +47,5 @@ public:
 };
 
 chunk read_chunk(std::istream &);
-std::string disassemble_chunk(const chunk &);
 
 } // namespace paracl::bytecode_vm
