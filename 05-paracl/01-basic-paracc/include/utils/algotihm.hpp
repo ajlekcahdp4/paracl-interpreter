@@ -10,11 +10,19 @@
 
 #pragma once
 
-#include <cstdint>
-#include <vector>
+#include <concepts>
+#include <iterator>
 
-namespace paracl::bytecode_vm {
+namespace paracl::utils::algorithm {
 
-using constant_pool = std::vector<int>;
+template <std::input_iterator input_it, std::output_iterator<typename input_it::value_type> output_it, typename t_pred>
+input_it copy_while(input_it first, input_it last, output_it o_first, t_pred pred) {
+  for (; first != last; ++first) {
+    if (!pred(*first)) break;
+    *o_first = *first;
+    ++o_first;
+  }
+  return first;
+}
 
-} // namespace paracl::bytecode_vm
+} // namespace paracl::utils::algorithm

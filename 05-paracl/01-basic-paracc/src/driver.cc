@@ -1,6 +1,8 @@
 #include <iostream>
 
 #include "bytecode_vm.hpp"
+#include "utils/serialization.hpp"
+#include "bytecode_vm/disassembly.hpp"
 
 int main() {
   using namespace paracl::bytecode_vm;
@@ -14,10 +16,12 @@ int main() {
 
   chunk ch{std::move(buf), std::move(pool)};
   ch.push_byte(opcode::E_PUSH_CONST_UNARY);
-  ch.push_byte(2);
+  ch.push_byte(1);
   ch.push_byte(0);
   ch.push_byte(0);
   ch.push_byte(0);
-
-  std::cout << disassemble_chunk(ch) << "\n";
+  ch.push_byte(opcode::E_POP_NULLARY);
+  ch.push_byte(opcode::E_RETURN_NULLARY);
+  
+  disassembly::chunk_complete_disassembler{}(std::cout, ch);
 }
