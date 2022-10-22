@@ -24,13 +24,22 @@
 
 namespace paracl::bytecode_vm::disassembly {
 
+struct padded_hex {
+  template <typename T, typename t_stream> t_stream & operator()(t_stream &os, T val, unsigned padding = 8, char fill = '0') const {
+    os << "0x" << std::setfill(fill) << std::setw(padding) << std::hex << val;
+    return os;
+  }
+};
+
+constexpr auto padded_hex_printer = padded_hex{};
+
 class constant_pool_disassembler {
 public:
   template <typename t_stream> t_stream &operator()(t_stream &os, const constant_pool &pool) const {
     os << ".constant_pool\n";
 
     for (constant_pool::size_type i = 0; i < pool.size(); ++i) {
-      os << "0x" << std::setfill('0') << std::setw(8) << std::hex << i << " " << std::dec << pool[i] << "\n";
+      padded_hex_printer(os, i) << " " << std::dec << pool[i] << "\n";
     }
 
     return os;
@@ -40,11 +49,13 @@ public:
 class chunk_binary_disassembler {
 private:
   template <typename t_stream>
-  std::optional<binary_code_buffer::const_iterator> operator()(t_stream &os, const chunk &chk, auto first, auto last) const {
+  std::optional<binary_code_buffer::const_iterator> operator()(t_stream &os, const chunk &chk, auto first, auto last, auto beginning) const {
     if (first == last) {
       os << "<Unexpectedly reached the end of range>\n";
       return std::nullopt;
     }
+    
+    unsigned current_pos = std::distance(beginning, first);
 
     auto        op = static_cast<opcode>(*first++);
     const auto &pool = chk.const_pool();
@@ -63,11 +74,69 @@ private:
     case E_CMP_NULLARY: os << opcode_to_string(op); break;
 
     case E_PUSH_CONST_UNARY: {
-      auto [val, new_iter] = utils::serialization::read_little_endian<unsigned>(first, last).value();
+      auto read_val = utils::serialization::read_little_endian<uint32_t>(first, last);
+      
+      if (!read_val) { 
+        os << "<Incorrectly encoded push_const>\n";
+        return std::nullopt;
+      }
+
+      auto [val, new_iter] = read_val.value();
       os << opcode_to_string(op) << " [ " << std::dec << pool.at(val) << " ]";
       return new_iter;
     }
 
+    case E_JMP_REL_UNARY:
+    case E_JMP_EQ_REL_UNARY:
+    case E_JMP_NE_REL_UNARY:
+    case E_JMP_GT_REL_UNARY:
+    case E_JMP_LS_REL_UNARY:
+    case E_JMP_GE_REL_UNARY:
+    case E_JMP_LE_REL_UNARY: {
+      auto read_val = utils::serialization::read_little_endian<int8_t>(first, last);
+      auto instr_name = opcode_to_string(op);
+
+      if (!read_val) { 
+        os << "<Incorrectly encoded " << instr_name << ">\n";
+        return std::nullopt;
+      }
+
+      auto [offset, new_iter] = read_val.value();
+      auto pointing_pos = offset > 0 ? current_pos + offset : current_pos - std::abs(offset);
+      
+      os << opcode_to_string(op) << " [ ";
+      padded_hex_printer(os, pointing_pos) << " ]";
+
+      return new_iter;
+    }
+
+    case E_JMP_ABS_UNARY:
+    case E_JMP_EQ_ABS_UNARY:
+    case E_JMP_NE_ABS_UNARY:
+    case E_JMP_GT_ABS_UNARY:
+    case E_JMP_LS_ABS_UNARY:
+    case E_JMP_GE_ABS_UNARY:
+    case E_JMP_LE_ABS_UNARY: {
+      auto read_val = utils::serialization::read_little_endian<uint32_t>(first, last);
+      auto instr_name = opcode_to_string(op);
+
+      if (!read_val) { 
+        os << "<Incorrectly encoded " << instr_name << ">\n";
+        return std::nullopt;
+      }
+
+      auto [addr, new_iter] = read_val.value();
+      
+      os << opcode_to_string(op) << " [ ";
+      padded_hex_printer(os, addr) << " ]";
+
+      return new_iter;
+    }
+
+    default: {
+      os << "<Unknown opcode>\n";
+      return std::nullopt;
+    }
 
     }
 
@@ -82,8 +151,11 @@ public:
     auto start = binary.begin();
     
     for (auto first = binary.begin(), last = binary.end(); first != last; ) {
-      os << "0x" << std::setfill('0') << std::setw(8) << std::hex << std::distance(start, first) << " ";
-      first = operator()(os, chk, first, last).value();
+      padded_hex_printer(os, std::distance(start, first)) << " ";
+      auto disas_instr = operator()(os, chk, first, last, start);
+      if (!disas_instr) { break; }
+
+      first = disas_instr.value();
       os << "\n";
     }
 
