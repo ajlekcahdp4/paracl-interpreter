@@ -12,23 +12,26 @@
 
 #include <vector>
 
-#include "constant_pool.hpp"
-#include "opcodes.hpp"
+#include "bytecode_vm/constant_pool.hpp"
+#include "bytecode_vm/opcodes.hpp"
 
+#include "utils/serialization.hpp"
+
+#include <array>
+#include <bit>
 #include <concepts>
 #include <iostream>
 #include <string>
-#include <bit>
 
 namespace paracl::bytecode_vm {
 
 using binary_code_buffer = std::vector<uint8_t>;
 
 class chunk {
+public:
   binary_code_buffer m_binary_code;
   constant_pool      m_constant_pool;
 
-public:
   chunk() = default;
 
   chunk(std::vector<uint8_t> &&p_bin, constant_pool &&p_const)
@@ -38,12 +41,14 @@ public:
   chunk(binary_it bin_begin, binary_it bin_end, constant_it const_begin, constant_it const_end)
       : m_binary_code{bin_begin, bin_end}, m_constant_pool{const_begin, const_end} {}
 
-  void push_byte(opcode op) { push_byte(static_cast<uint8_t>(op)); }
+  void push_opcode(opcode op) { push_byte(static_cast<uint8_t>(op)); }
   void push_byte(uint8_t code) { m_binary_code.push_back(code); }
-  void push_signed_byte(int8_t val) {m_binary_code.push_back(std::bit_cast<uint8_t>(val)); }
 
-  const auto &binary_code() const & { return m_binary_code; }
-  const auto &const_pool() const & { return m_constant_pool; }
+  template <typename T> void push_value(T val) {
+    utils::serialization::write_little_endian(val, std::back_inserter(m_binary_code));
+  };
+
+  void push_signed_byte(int8_t val) { m_binary_code.push_back(std::bit_cast<uint8_t>(val)); }
 };
 
 chunk read_chunk(std::istream &);

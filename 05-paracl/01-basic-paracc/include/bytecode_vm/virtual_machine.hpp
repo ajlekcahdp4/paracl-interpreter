@@ -25,6 +25,7 @@ class virtual_machine {
 private:
   const chunk                        m_program_code;
   std::vector<int>                   m_execution_stack;
+  
   binary_code_buffer::const_iterator m_ip;
   binary_code_buffer::const_iterator m_ip_end;
 

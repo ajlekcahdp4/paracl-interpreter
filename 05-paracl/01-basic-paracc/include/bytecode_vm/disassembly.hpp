@@ -50,17 +50,14 @@ public:
 class chunk_binary_disassembler {
 private:
   template <typename t_stream>
-  std::optional<binary_code_buffer::const_iterator> operator()(t_stream &os, const chunk &chk, auto first, auto last,
-                                                               auto beginning) const {
+  std::optional<binary_code_buffer::const_iterator> operator()(t_stream &os, const chunk &chk, auto first, auto last) const {
     if (first == last) {
       os << "<Unexpectedly reached the end of range>\n";
       return std::nullopt;
     }
 
-    unsigned current_pos = std::distance(beginning, first);
-
     auto        op = static_cast<opcode>(*first++);
-    const auto &pool = chk.const_pool();
+    const auto &pool = chk.m_constant_pool;
 
     using enum opcode;
 
@@ -128,12 +125,12 @@ public:
   template <typename t_stream> t_stream &operator()(t_stream &os, const chunk &chk) const {
     os << ".code\n";
 
-    const auto &binary = chk.binary_code();
+    const auto &binary = chk.m_binary_code;
     auto        start = binary.begin();
 
     for (auto first = binary.begin(), last = binary.end(); first != last;) {
       padded_hex_printer(os, std::distance(start, first)) << " ";
-      auto disas_instr = operator()(os, chk, first, last, start);
+      auto disas_instr = operator()(os, chk, first, last);
       if (!disas_instr) {
         break;
       }
@@ -149,7 +146,7 @@ public:
 class chunk_complete_disassembler {
 public:
   template <typename t_stream> t_stream &operator()(t_stream &os, const chunk &chk) const {
-    constant_pool_disassembler{}(os, chk.const_pool());
+    constant_pool_disassembler{}(os, chk.m_constant_pool);
     os << "\n";
     chunk_binary_disassembler{}(os, chk);
     return os;
