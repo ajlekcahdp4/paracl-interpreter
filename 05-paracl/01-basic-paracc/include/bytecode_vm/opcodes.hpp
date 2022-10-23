@@ -16,6 +16,9 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <variant>
+
+#include "utils/serialization.hpp"
 
 namespace paracl::bytecode_vm {
 
@@ -64,6 +67,46 @@ template <typename... Ts> struct instruction {
 };
 
 using nullary_instruction = instruction<>;
-using jump_instruction = instruction<uint32_t>;
+using unary_u32_instruction = instruction<uint32_t>;
+using variant_instruction = std::variant<std::monostate, nullary_instruction, unary_u32_instruction>;
+
+template <std::input_iterator iter> std::pair<variant_instruction, iter> decode_instruction(iter first, iter last) {
+  if (first == last) return std::make_pair(std::monostate{}, first);
+  opcode op = static_cast<opcode>(*first++);
+  using enum opcode;
+
+  switch (op) {
+
+  // 1. Nullary operatorions
+  case E_RETURN_NULLARY:
+  case E_POP_NULLARY:
+  case E_ADD_NULLARY:
+  case E_SUB_NULLARY:
+  case E_MUL_NULLARY:
+  case E_DIV_NULLARY:
+  case E_MOD_NULLARY:
+  case E_PRINT_NULLARY:
+  case E_PUSH_READ_NULLARY:
+  case E_CMP_NULLARY: {
+    return std::make_pair(nullary_instruction{op}, first);
+  }
+
+  // 2. Unary instruction with u32 argument
+  case E_PUSH_CONST_UNARY:
+  case E_JMP_ABS_UNARY:
+  case E_JMP_EQ_ABS_UNARY:
+  case E_JMP_NE_ABS_UNARY:
+  case E_JMP_GT_ABS_UNARY:
+  case E_JMP_LS_ABS_UNARY:
+  case E_JMP_GE_ABS_UNARY:
+  case E_JMP_LE_ABS_UNARY:
+  case E_PUSH_LOCAL_UNARY:
+  case E_MOV_LOCAL_UNARY: {
+    auto [val, it] = utils::serialization::read_little_endian<uint32_t>(first, last);
+    if (!val) return std::make_pair(std::monostate{}, it);
+    return std::make_pair(unary_u32_instruction{op, val.value()}, it);
+  }
+  }
+}
 
 } // namespace paracl::bytecode_vm

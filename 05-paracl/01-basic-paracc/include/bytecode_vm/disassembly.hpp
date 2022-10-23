@@ -47,79 +47,55 @@ public:
   }
 };
 
+template <class... Ts> struct visitors : Ts... { using Ts::operator()...; };
+template <class... Ts> visitors(Ts...) -> visitors<Ts...>;
+
 class chunk_binary_disassembler {
 private:
   template <typename t_stream>
-  std::optional<binary_code_buffer::const_iterator> operator()(t_stream &os, const chunk &chk, auto first, auto last) const {
+  std::optional<binary_code_buffer::const_iterator> operator()(t_stream &os, const chunk &chk, auto first,
+                                                               auto last) const {
     if (first == last) {
       os << "<Unexpectedly reached the end of range>\n";
       return std::nullopt;
     }
 
-    auto        op = static_cast<opcode>(*first++);
+    auto [instr, it] = decode_instruction(first, last);
     const auto &pool = chk.m_constant_pool;
-
     using enum opcode;
 
-    switch (op) {
+    auto visitor = visitors{[&os](const nullary_instruction &nullary) { os << opcode_to_string(nullary.op); },
+                            [&os, &pool](const unary_u32_instruction &unary) {
+                              auto first_attr = std::get<0>(unary.attributes);
 
-    case E_RETURN_NULLARY:
-    case E_POP_NULLARY:
-    case E_ADD_NULLARY:
-    case E_SUB_NULLARY:
-    case E_MUL_NULLARY:
-    case E_DIV_NULLARY:
-    case E_MOD_NULLARY:
-    case E_PRINT_NULLARY:
-    case E_PUSH_READ_NULLARY: // Intentional fallthrough.
-    case E_CMP_NULLARY: os << opcode_to_string(op); break;
+                              switch (unary.op) {
+                              case E_PUSH_CONST_UNARY: {
+                                os << opcode_to_string(unary.op) << " [ " << std::dec << pool.at(first_attr) << " ]";
+                                break;
+                              }
 
-    case E_PUSH_CONST_UNARY: {
-      auto read_val = utils::serialization::read_little_endian<uint32_t>(first, last);
+                              case E_PUSH_LOCAL_UNARY:
+                              case E_MOV_LOCAL_UNARY:
+                              case E_JMP_ABS_UNARY:
+                              case E_JMP_EQ_ABS_UNARY:
+                              case E_JMP_NE_ABS_UNARY:
+                              case E_JMP_GT_ABS_UNARY:
+                              case E_JMP_GE_ABS_UNARY:
+                              case E_JMP_LE_ABS_UNARY: {
+                                os << opcode_to_string(unary.op) << " [ ";
+                                padded_hex_printer(os, first_attr) << " ] ";
+                                break;
+                              }
 
-      if (!read_val) {
-        os << "<Incorrectly encoded push_const>\n";
-        return std::nullopt;
-      }
+                              default: throw std::runtime_error{"Unexpected error encountered"};
+                              }
+                            },
+                            [&os](std::monostate) { std::cout << "<Incorrectly encoded instruction>"; }};
 
-      auto [val, new_iter] = read_val.value();
-      os << opcode_to_string(op) << " [ " << std::dec << pool.at(val) << " ]";
-      return new_iter;
-    }
+    std::visit(visitor, instr);
 
-    case E_JMP_ABS_UNARY:
-    case E_JMP_EQ_ABS_UNARY:
-    case E_JMP_NE_ABS_UNARY:
-    case E_JMP_GT_ABS_UNARY:
-    case E_JMP_LS_ABS_UNARY:
-    case E_JMP_GE_ABS_UNARY:
-    case E_JMP_LE_ABS_UNARY:
-    case E_PUSH_LOCAL_UNARY:
-    case E_MOV_LOCAL_UNARY: {
-      auto read_val = utils::serialization::read_little_endian<uint32_t>(first, last);
-      auto instr_name = opcode_to_string(op);
-
-      if (!read_val) {
-        os << "<Incorrectly encoded " << instr_name << ">\n";
-        return std::nullopt;
-      }
-
-      auto [addr, new_iter] = read_val.value();
-
-      os << instr_name << " [ ";
-      padded_hex_printer(os, addr) << " ]";
-
-      return new_iter;
-    }
-
-    default: {
-      os << "<Unknown opcode>\n";
-      return std::nullopt;
-    }
-    }
-
-    return first;
-  }
+    return it;
+  } // namespace paracl::bytecode_vm::disassembly
 
 public:
   template <typename t_stream> t_stream &operator()(t_stream &os, const chunk &chk) const {

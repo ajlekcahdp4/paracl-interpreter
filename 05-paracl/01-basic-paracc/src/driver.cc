@@ -25,9 +25,7 @@ int main() {
   ch.push_value<uint32_t>(0);
 
   ch.push_opcode(opcode::E_MOV_LOCAL_UNARY);
-  ch.push_value<uint32_t>(1);
-
-  ch.push_opcode(opcode::E_PRINT_NULLARY);
+  ch.push_value<uint32_t>(5);
   
   disassembly::chunk_complete_disassembler{}(std::cout, ch);
 }
