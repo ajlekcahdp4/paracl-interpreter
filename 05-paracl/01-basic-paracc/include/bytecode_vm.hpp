@@ -13,3 +13,6 @@
 #include "bytecode_vm/chunk.hpp"
 #include "bytecode_vm/opcodes.hpp"
 #include "bytecode_vm/constant_pool.hpp"
+#include "bytecode_vm/disassembly.hpp"
+#include "bytecode_vm/virtual_machine.hpp"
+#include "bytecode_vm/binary_writer.hpp"

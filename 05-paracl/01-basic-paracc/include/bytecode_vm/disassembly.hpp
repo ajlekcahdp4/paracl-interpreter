@@ -40,7 +40,7 @@ public:
     os << ".constant_pool\n";
 
     for (constant_pool::size_type i = 0; i < pool.size(); ++i) {
-      padded_hex_printer(os, i) << " " << std::dec << pool[i] << "\n";
+      padded_hex_printer(os, i) << " = { " << std::dec << pool[i] << " }\n";
     }
 
     return os;

@@ -11,8 +11,10 @@
 #pragma once
 
 #include <cstdint>
+#include <iterator>
+#include <optional>
 #include <string>
-
+#include <tuple>
 #include <unordered_map>
 
 namespace paracl::bytecode_vm {
@@ -35,7 +37,7 @@ enum class opcode : std::uint8_t {
 
 // clang-format on
 
-inline std::string opcode_to_string(opcode code) {
+static inline std::string opcode_to_string(opcode code) {
   using enum opcode;
 
   // clang-format off
@@ -55,5 +57,13 @@ inline std::string opcode_to_string(opcode code) {
 
   return lookup_table.at(code);
 }
+
+template <typename... Ts> struct instruction {
+  opcode            op;
+  std::tuple<Ts...> attributes;
+};
+
+using nullary_instruction = instruction<>;
+using jump_instruction = instruction<uint32_t>;
 
 } // namespace paracl::bytecode_vm
