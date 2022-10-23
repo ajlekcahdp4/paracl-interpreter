@@ -15,17 +15,18 @@ int main() {
   binary_code_buffer buf;
 
   chunk ch{std::move(buf), std::move(pool)};
-  ch.push_opcode(opcode::E_PUSH_CONST_UNARY);
-  ch.push_byte(1);
-  ch.push_byte(0);
-  ch.push_byte(0);
-  ch.push_byte(0);
 
   ch.push_opcode(opcode::E_JMP_GT_ABS_UNARY);
   ch.push_value<uint32_t>(0);
 
-  ch.push_opcode(opcode::E_MOV_LOCAL_UNARY);
-  ch.push_value<uint32_t>(5);
+  ch.push_opcode(opcode::E_PUSH_CONST_UNARY);
+  ch.push_value<uint32_t>(1);
+  ch.push_opcode(opcode::E_PRINT_NULLARY);
+  ch.push_opcode(opcode::E_RETURN_NULLARY);
   
+  virtual_machine vm{ch};
+  vm.execute();
+
+  std::cout << "-------\n";
   disassembly::chunk_complete_disassembler{}(std::cout, ch);
 }

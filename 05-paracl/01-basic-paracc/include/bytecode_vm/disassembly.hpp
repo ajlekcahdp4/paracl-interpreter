@@ -21,18 +21,9 @@
 #include "bytecode_vm/chunk.hpp"
 #include "bytecode_vm/constant_pool.hpp"
 #include "utils/serialization.hpp"
+#include "utils/utils.hpp"
 
 namespace paracl::bytecode_vm::disassembly {
-
-struct padded_hex {
-  template <typename T, typename t_stream>
-  t_stream &operator()(t_stream &os, T val, unsigned padding = 8, char fill = '0') const {
-    os << "0x" << std::setfill(fill) << std::setw(padding) << std::hex << val;
-    return os;
-  }
-};
-
-constexpr auto padded_hex_printer = padded_hex{};
 
 class constant_pool_disassembler {
 public:
@@ -40,15 +31,12 @@ public:
     os << ".constant_pool\n";
 
     for (constant_pool::size_type i = 0; i < pool.size(); ++i) {
-      padded_hex_printer(os, i) << " = { " << std::dec << pool[i] << " }\n";
+      utils::serialization::padded_hex_printer(os, i) << " = { " << std::dec << pool[i] << " }\n";
     }
 
     return os;
   }
 };
-
-template <class... Ts> struct visitors : Ts... { using Ts::operator()...; };
-template <class... Ts> visitors(Ts...) -> visitors<Ts...>;
 
 class chunk_binary_disassembler {
 private:
@@ -64,7 +52,7 @@ private:
     const auto &pool = chk.m_constant_pool;
     using enum opcode;
 
-    auto visitor = visitors{[&os](const nullary_instruction &nullary) { os << opcode_to_string(nullary.op); },
+    auto visitor = utils::visitors{[&os](const nullary_instruction &nullary) { os << opcode_to_string(nullary.op); },
                             [&os, &pool](const unary_u32_instruction &unary) {
                               auto first_attr = std::get<0>(unary.attributes);
 
@@ -83,7 +71,7 @@ private:
                               case E_JMP_GE_ABS_UNARY:
                               case E_JMP_LE_ABS_UNARY: {
                                 os << opcode_to_string(unary.op) << " [ ";
-                                padded_hex_printer(os, first_attr) << " ] ";
+                                utils::serialization::padded_hex_printer(os, first_attr) << " ] ";
                                 break;
                               }
 
@@ -105,7 +93,7 @@ public:
     auto        start = binary.begin();
 
     for (auto first = binary.begin(), last = binary.end(); first != last;) {
-      padded_hex_printer(os, std::distance(start, first)) << " ";
+      utils::serialization::padded_hex_printer(os, std::distance(start, first)) << " ";
       auto disas_instr = operator()(os, chk, first, last);
       if (!disas_instr) {
         break;

@@ -16,6 +16,7 @@
 #include <array>
 #include <concepts>
 #include <optional>
+#include <iomanip>
 
 #include "utils/algotihm.hpp"
 
@@ -57,5 +58,15 @@ template <typename T, std::output_iterator<uint8_t> iter> void write_little_endi
   auto size = sizeof(T);
   std::copy_n(input_iter, size, oput);
 }
+
+struct padded_hex {
+  template <typename T, typename t_stream>
+  t_stream &operator()(t_stream &os, T val, unsigned padding = 8, char fill = '0') const {
+    os << "0x" << std::setfill(fill) << std::setw(padding) << std::hex << val;
+    return os;
+  }
+};
+
+constexpr auto padded_hex_printer = padded_hex{};
 
 } // namespace paracl::utils::serialization
