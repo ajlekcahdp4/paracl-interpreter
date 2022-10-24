@@ -52,5 +52,6 @@ public:
 };
 
 chunk read_chunk(std::istream &);
+void  write_chunk(std::ostream &, const chunk &);
 
 } // namespace paracl::bytecode_vm

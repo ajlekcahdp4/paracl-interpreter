@@ -1,4 +1,6 @@
 #include <iostream>
+#include <ostream>
+#include <fstream>
 
 #include "bytecode_vm.hpp"
 #include "utils/serialization.hpp"
@@ -29,4 +31,7 @@ int main() {
 
   std::cout << "-------\n";
   disassembly::chunk_complete_disassembler{}(std::cout, ch);
+
+  std::ofstream os("./out.pcl", std::ios::binary);
+  write_chunk(os, ch);
 }

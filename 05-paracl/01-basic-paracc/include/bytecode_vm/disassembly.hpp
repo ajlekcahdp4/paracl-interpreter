@@ -78,7 +78,7 @@ private:
                               default: throw std::runtime_error{"Unexpected error encountered"};
                               }
                             },
-                            [&os](std::monostate) { std::cout << "<Incorrectly encoded instruction>"; }};
+                            [&os](std::monostate) { os << "<Incorrectly encoded instruction>"; }};
 
     std::visit(visitor, instr);
 

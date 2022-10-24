@@ -29,4 +29,21 @@ static std::vector<uint8_t> read_raw_data(std::istream &is) {
 
 chunk read_chunk(std::istream &is) {}
 
+void write_chunk(std::ostream &os, const chunk &ch) {
+  constexpr unsigned magic_byte_length = 6;
+  std::array<uint8_t, magic_byte_length> header = {0xB, 0x0, 0x0, 0xB, 0xE, 0xC};
+  
+  // Write header with magic bytes.
+  os.write(reinterpret_cast<char *>(header.data()), header.size());
+  std::array<uint8_t, sizeof(uint32_t)> size_buffer;
+
+  utils::serialization::write_little_endian(ch.m_constant_pool.size(), size_buffer.begin());
+  os.write(reinterpret_cast<char *>(size_buffer.data()), size_buffer.size());
+  utils::serialization::write_little_endian(ch.m_binary_code.size(), size_buffer.begin());
+  os.write(reinterpret_cast<char *>(size_buffer.data()), size_buffer.size());
+
+  os.write(reinterpret_cast<const char *>(ch.m_constant_pool.data()), ch.m_constant_pool.size() * sizeof(int));
+  os.write(reinterpret_cast<const char *>(ch.m_binary_code.data()), ch.m_binary_code.size());
+}
+
 } // namespace paracl::bytecode_vm
