@@ -18,8 +18,40 @@
 
 #include "bytecode_vm/chunk.hpp"
 #include "bytecode_vm/opcodes.hpp"
+#include "bytecode_vm/decl_vm.hpp"
 
 namespace paracl::bytecode_vm {
+
+namespace instruction_set {
+
+using namespace paracl::decl_vm;
+
+constexpr instruction_desc<static_cast<uint8_t>(opcode::E_PUSH_CONST_UNARY), unsigned> push_const_desc = "push_const";
+constexpr auto push_const_instr = push_const_desc >> [](auto &&ctx, auto &&attr){ ctx.push(ctx.pool().at(std::get<0>(attr))); };
+
+constexpr instruction_desc<static_cast<uint8_t>(opcode::E_RETURN_NULLARY), unsigned> return_desc = "ret";
+constexpr auto return_instr = return_desc >> [](auto &&ctx, auto &&){ ctx.halt(); };
+
+constexpr instruction_desc<static_cast<uint8_t>(opcode::E_RETURN_NULLARY), unsigned> pop_desc = "pop";
+constexpr auto pop_instr = return_desc >> [](auto &&ctx, auto &&){ ctx.pop(); };
+
+constexpr instruction_desc<static_cast<uint8_t>(opcode::E_ADD_NULLARY), unsigned> add_desc = "add";
+constexpr auto add_instr = return_desc >> [](auto &&ctx, auto &&){ auto second = ctx.pop(); auto first = ctx.pop(); ctx.push(first + second); };
+
+constexpr instruction_desc<static_cast<uint8_t>(opcode::E_SUB_NULLARY), unsigned> sub_desc = "sub";
+constexpr auto sub_instr = return_desc >> [](auto &&ctx, auto &&){ auto second = ctx.pop(); auto first = ctx.pop(); ctx.push(first - second); };
+
+constexpr instruction_desc<static_cast<uint8_t>(opcode::E_MUL_NULLARY), unsigned> mul_desc = "mul";
+constexpr auto mul_instr = return_desc >> [](auto &&ctx, auto &&){ auto second = ctx.pop(); auto first = ctx.pop(); ctx.push(first * second); };
+
+constexpr instruction_desc<static_cast<uint8_t>(opcode::E_MUL_NULLARY), unsigned> div_desc = "mul";
+constexpr auto div_instr = return_desc >> [](auto &&ctx, auto &&){ auto second = ctx.pop(); auto first = ctx.pop(); ctx.push(first / second); };
+
+constexpr instruction_desc<static_cast<uint8_t>(opcode::E_MUL_NULLARY), unsigned> mod_desc = "mul";
+constexpr auto mod_instr = return_desc >> [](auto &&ctx, auto &&){ auto second = ctx.pop(); auto first = ctx.pop(); ctx.push(first % second); };
+
+
+}
 
 class virtual_machine {
 private:
