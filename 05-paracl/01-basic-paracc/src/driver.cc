@@ -17,9 +17,18 @@ int main() {
 
   binary_code_buffer buf;
 
-  std::ifstream is("./out.pcl", std::ios::binary);
-  chunk ch = read_chunk(is).value();
+  chunk ch{binary_code_buffer{}, std::move(pool)};
+
+  ch.push_opcode(opcode::E_PUSH_CONST_UNARY);
+  ch.push_value<uint32_t>(1);
+
+  ch.push_opcode(opcode::E_PUSH_CONST_UNARY);
+  ch.push_value<uint32_t>(1);
   
+  ch.push_opcode(opcode::E_DIV_NULLARY);
+  ch.push_opcode(opcode::E_PRINT_NULLARY);
+  ch.push_opcode(opcode::E_RETURN_NULLARY);
+
   virtual_machine vm{ch};
   vm.execute();
   

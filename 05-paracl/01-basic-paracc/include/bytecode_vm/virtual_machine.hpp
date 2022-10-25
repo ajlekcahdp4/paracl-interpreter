@@ -37,6 +37,7 @@ private:
     E_CMP_LS,
   } compare_state = compare_result::E_CMP_EQ;
 
+  bool execute_nullary(const nullary_instruction &nullary);
   bool execute_instruction();
   void report_error(std::string);
 
