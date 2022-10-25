@@ -51,7 +51,7 @@ public:
   void push_signed_byte(int8_t val) { m_binary_code.push_back(std::bit_cast<uint8_t>(val)); }
 };
 
-chunk read_chunk(std::istream &);
+std::optional<chunk> read_chunk(std::istream &);
 void  write_chunk(std::ostream &, const chunk &);
 
 } // namespace paracl::bytecode_vm

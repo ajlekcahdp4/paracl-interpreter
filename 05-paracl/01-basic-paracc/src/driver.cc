@@ -3,6 +3,7 @@
 #include <fstream>
 
 #include "bytecode_vm.hpp"
+#include "bytecode_vm/chunk.hpp"
 #include "utils/serialization.hpp"
 #include "bytecode_vm/disassembly.hpp"
 
@@ -16,22 +17,15 @@ int main() {
 
   binary_code_buffer buf;
 
-  chunk ch{std::move(buf), std::move(pool)};
-
-  ch.push_opcode(opcode::E_JMP_GT_ABS_UNARY);
-  ch.push_value<uint32_t>(0);
-
-  ch.push_opcode(opcode::E_PUSH_CONST_UNARY);
-  ch.push_value<uint32_t>(1);
-  ch.push_opcode(opcode::E_PRINT_NULLARY);
-  ch.push_opcode(opcode::E_RETURN_NULLARY);
+  std::ifstream is("./out.pcl", std::ios::binary);
+  chunk ch = read_chunk(is).value();
   
   virtual_machine vm{ch};
   vm.execute();
-
+  
   std::cout << "-------\n";
   disassembly::chunk_complete_disassembler{}(std::cout, ch);
 
-  std::ofstream os("./out.pcl", std::ios::binary);
+  std::ofstream os("./copy.pcl", std::ios::binary);
   write_chunk(os, ch);
 }
