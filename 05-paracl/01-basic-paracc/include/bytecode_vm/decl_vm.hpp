@@ -18,18 +18,45 @@
 #include <variant>
 #include <vector>
 
-#include "bytecode_vm/chunk.hpp"
-#include "utils/serialization.hpp"
-#include "utils/utils.hpp"
+#include "utils.hpp"
 
-namespace paracl::decl_vm {
+namespace paracl::bytecode_vm::decl_vm {
+
+using constant_pool = std::vector<int>;
+using binary_code_buffer = std::vector<uint8_t>;
+
+class chunk {
+public:
+  binary_code_buffer m_binary_code;
+  constant_pool      m_constant_pool;
+
+  chunk() = default;
+
+  chunk(std::vector<uint8_t> &&p_bin, constant_pool &&p_const)
+      : m_binary_code{std::move(p_bin)}, m_constant_pool{std::move(p_const)} {}
+
+  template <std::input_iterator binary_it, std::input_iterator constant_it>
+  chunk(binary_it bin_begin, binary_it bin_end, constant_it const_begin, constant_it const_end)
+      : m_binary_code{bin_begin, bin_end}, m_constant_pool{const_begin, const_end} {}
+
+  void push_byte(uint8_t code) { m_binary_code.push_back(code); }
+
+  template <typename T> void push_value(T val) {
+    utils::serialization::write_little_endian(val, std::back_inserter(m_binary_code));
+  };
+
+  void push_signed_byte(int8_t val) { m_binary_code.push_back(std::bit_cast<uint8_t>(val)); }
+};
+
+std::optional<chunk> read_chunk(std::istream &);
+void                 write_chunk(std::ostream &, const chunk &);
 
 template <typename, typename> struct instruction;
 
 using opcode_underlying_type = uint8_t;
 template <opcode_underlying_type ident, typename... Ts> struct instruction_desc {
   static constexpr auto opcode = ident;
-  static constexpr auto binary_size = sizeof(opcode_underlying_type) + (sizeof(Ts) + ...);
+  static constexpr auto binary_size = sizeof(opcode_underlying_type) + (sizeof(Ts) + ... + 0);
 
   const char *name = nullptr;
   using attribute_types = std::tuple<Ts...>;
@@ -97,29 +124,31 @@ public:
 
   struct context {
   private:
-    paracl::bytecode_vm::chunk                m_program_code;
+    chunk                             m_program_code;
     std::vector<execution_value_type> m_execution_stack;
-    bool                                      halted = false;
+    bool                              halted = false;
 
   public:
-    paracl::bytecode_vm::binary_code_buffer::const_iterator m_ip, m_ip_end;
+    binary_code_buffer::const_iterator m_ip, m_ip_end;
     context() = default;
 
-    context(const paracl::bytecode_vm::chunk &ch) : m_program_code{ch} {
+    context(const chunk &ch) : m_program_code{ch} {
       m_ip = code().begin();
       m_ip_end = code().end();
     }
 
-    context(paracl::bytecode_vm::chunk &&ch) : m_program_code{std::move(ch)} {
+    context(chunk &&ch) : m_program_code{std::move(ch)} {
       m_ip = code().begin();
       m_ip_end = code().end();
     }
 
     auto &ip() { return m_ip; }
-    
+
     const auto &chunk() const { return m_program_code; }
     const auto &code() const { return chunk().m_binary_code; }
     const auto &pool() const { return chunk().m_constant_pool; }
+
+    auto &at_stack(uint32_t index) { return m_execution_stack.at(index); }
 
     void set_ip(uint32_t new_ip) {
       m_ip = code().begin();
@@ -143,8 +172,8 @@ public:
 
   constexpr virtual_machine(t_desc desc) : instruction_set{desc} {}
 
-  void set_program_code(paracl::bytecode_vm::chunk &&ch) { ctx() = context{std::move(ch)}; }
-  void set_program_code(const paracl::bytecode_vm::chunk &ch) { ctx() = context{ch}; }
+  void set_program_code(chunk &&ch) { ctx() = context{std::move(ch)}; }
+  void set_program_code(const chunk &ch) { ctx() = context{ch}; }
 
   void execute_instruction() {
     if (ctx().is_halted()) throw std::runtime_error{"Can't execute, VM is halted"};
@@ -160,6 +189,12 @@ public:
         instr->action(ctx(), attr); }}, current_instruction);
     // clang-format on
   }
+
+  void execute() {
+    while (!ctx().is_halted()) {
+      execute_instruction();
+    }
+  }
 };
 
-} // namespace paracl::decl_vm
+} // namespace paracl::bytecode_vm::decl_vm

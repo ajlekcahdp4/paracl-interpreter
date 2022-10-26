@@ -1,5 +1,4 @@
-#include "bytecode_vm/chunk.hpp"
-#include "bytecode_vm/disassembly.hpp"
+#include "bytecode_vm/decl_vm.hpp"
 #include "utils/serialization.hpp"
 
 #include <cstdint>
@@ -10,7 +9,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace paracl::bytecode_vm {
+namespace paracl::bytecode_vm::decl_vm {
 
 static constexpr unsigned                                magic_bytes_length = 6;
 static constexpr std::array<uint8_t, magic_bytes_length> header = {0xB, 0x0, 0x0, 0xB, 0xE, 0xC};

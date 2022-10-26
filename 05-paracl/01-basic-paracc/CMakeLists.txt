@@ -68,9 +68,8 @@ if (SANITIZE)
 endif()
 
 set(DRIVER_SOURCES
-  src/chunk.cc
+  src/decl_vm.cc
   src/driver.cc
-  src/virtual_machine.cc
 )
 
 add_executable(driver ${DRIVER_SOURCES})

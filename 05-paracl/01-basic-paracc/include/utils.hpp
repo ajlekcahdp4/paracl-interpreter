@@ -19,6 +19,7 @@
 #include <iomanip>
 
 #include "utils/algotihm.hpp"
+#include "utils/serialization.hpp"
 
 namespace paracl::utils {
 

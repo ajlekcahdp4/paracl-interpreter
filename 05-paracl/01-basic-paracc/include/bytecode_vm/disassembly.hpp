@@ -18,13 +18,11 @@
 #include <iterator>
 #include <optional>
 
-#include "bytecode_vm/chunk.hpp"
-#include "bytecode_vm/constant_pool.hpp"
-#include "utils/serialization.hpp"
-#include "utils/utils.hpp"
+#include "utils.hpp"
 
 namespace paracl::bytecode_vm::disassembly {
 
+#if 0
 class constant_pool_disassembler {
 public:
   template <typename t_stream> t_stream &operator()(t_stream &os, const constant_pool &pool) const {
@@ -117,4 +115,5 @@ public:
   }
 };
 
+#endif
 } // namespace paracl::bytecode_vm::disassembly
