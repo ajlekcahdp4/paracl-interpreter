@@ -34,8 +34,8 @@ int main() {
   decl_vm::virtual_machine vm{instruction_set::paracl_isa};
   
   decl_vm::disassembly::chunk_complete_disassembler disas{instruction_set::paracl_isa};
-  // disas(std::cout, ch);
-
+  disas(std::cout, ch);
+  
   vm.set_program_code(ch);
   vm.execute();
 }

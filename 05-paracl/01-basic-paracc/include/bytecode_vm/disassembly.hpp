@@ -39,8 +39,8 @@ public:
 
 template <typename t_instr_set> class chunk_binary_disassembler {
 public:
-  const t_instr_set& instruction_set;
-  chunk_binary_disassembler(const t_instr_set& isa) : instruction_set{isa} {}
+  t_instr_set instruction_set;
+  chunk_binary_disassembler(const t_instr_set &isa) : instruction_set{isa} {}
 
 public:
   void operator()(auto &os, auto &first, auto last) const {
@@ -55,9 +55,7 @@ public:
         throw std::runtime_error{"Unknown opcode"};},
       [&](auto&& instr) {
         auto attr = instr->decode(first, last).attributes;
-        // instr->pretty_print(os, attr);}}, 
-        auto name = instr->get_name();
-        os << "Hello\n" << "\n"; }},
+        instr->pretty_print(os, attr); }},
       current_instruction);
     // clang-format on
   } // namespace paracl::bytecode_vm::disassembly

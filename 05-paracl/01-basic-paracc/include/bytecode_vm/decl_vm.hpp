@@ -65,22 +65,23 @@ template <opcode_underlying_type ident, typename... Ts> struct instruction_desc 
   const std::string_view name;
   using attribute_types = std::tuple<Ts...>;
 
-  instruction_desc(const char *debug_name) : name{debug_name} {
+  constexpr instruction_desc(const char *debug_name) : name{debug_name} {
     if (!debug_name || name[0] == '\0') throw std::runtime_error{"Empty debug names aren't allowed"};
   }
 
-  instruction_desc(const instruction_desc &other) = default;
-
-  auto operator>>(auto action) const { return instruction(*this, action); }
+  constexpr auto operator>>(auto action) const { return instruction(*this, action); }
   template <size_t... I> static void pretty_print(auto &os, const attribute_types &tuple, std::index_sequence<I...>) {
     (..., (os << (I == 0 ? "" : ", "), utils::serialization::padded_hex{}(os, std::get<I>(tuple))));
   }
 
   template <typename t_stream>
   t_stream& pretty_print(t_stream &os, const attribute_types &attr) const {
-    os << name << " [ ";
-    pretty_print(os, attr, std::make_index_sequence<std::tuple_size_v<attribute_types>>());
-    os << " ]";
+    os << name;
+    if constexpr (std::tuple_size_v<attribute_types> != 0) {
+      os << " [ ";
+      pretty_print(os, attr, std::make_index_sequence<std::tuple_size_v<attribute_types>>());
+      os << " ]";
+    }
     return os;
   }
 };
@@ -92,13 +93,13 @@ template <typename t_desc, typename t_action> struct instruction {
   const t_desc description;
   t_action     action = nullptr;
 
-  instruction(t_desc p_description, t_action p_action) : description{p_description}, action{p_action} {}
-  auto get_name() const { return description.name; }
+  constexpr instruction(t_desc p_description, t_action p_action) : description{p_description}, action{p_action} {}
+  constexpr auto get_name() const { return description.name; }
   constexpr auto get_opcode() const { return t_desc::opcode; }
   constexpr auto get_size() const { return t_desc::binary_size; }
 
   template <typename t_stream> t_stream& pretty_print(t_stream &os, const attribute_tuple_type &attr) const { 
-    os << get_name();
+    description.pretty_print(os, attr);
     return os;
   }
 
@@ -132,10 +133,10 @@ template <typename t_desc, typename t_action> struct instruction {
 using execution_value_type = int;
 
 template <typename... t_instructions> struct instruction_set_description {
-  using instruction_variant_type = std::variant<std::monostate, t_instructions *...>;
+  using instruction_variant_type = std::variant<std::monostate, const t_instructions *...>;
   std::array<instruction_variant_type, std::numeric_limits<opcode_underlying_type>::max() + 1> instruction_lookup_table;
 
-  instruction_set_description(t_instructions... instructions) : instruction_lookup_table{std::monostate{}} {
+  constexpr instruction_set_description(const t_instructions&... instructions) : instruction_lookup_table{std::monostate{}} {
     ((instruction_lookup_table[instructions.get_opcode()] = std::addressof(instructions)), ...);
   }
 };
@@ -166,8 +167,8 @@ public:
 
     auto &ip() { return m_ip; }
 
-    const auto &code() const { return chunk().m_binary_code; }
-    const auto &pool() const { return chunk().m_constant_pool; }
+    const auto &code() const { return m_program_code.m_binary_code; }
+    const auto &pool() const { return m_program_code.m_constant_pool; }
 
     auto &at_stack(uint32_t index) { return m_execution_stack.at(index); }
 
