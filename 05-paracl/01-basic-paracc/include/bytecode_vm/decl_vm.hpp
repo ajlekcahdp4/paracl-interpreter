@@ -157,16 +157,16 @@ public:
     context() = default;
 
     context(const chunk &ch) : m_program_code{ch} {
-      m_ip = ch.m_binary_code.begin();
-      m_ip_end = ch.m_binary_code.end();
+      m_ip = m_program_code.m_binary_code.begin();
+      m_ip_end = m_program_code.m_binary_code.end();
     }
 
     context(chunk &&ch) : m_program_code{std::move(ch)} {
-      m_ip = ch.m_binary_code.begin();
-      m_ip_end = ch.m_binary_code.end();
+      m_ip = m_program_code.m_binary_code.begin();
+      m_ip_end = m_program_code.m_binary_code.end();
     }
 
-    auto &ip() { return m_ip; }
+    const auto &ip() { return m_ip; }
 
     const auto &code() const { return m_program_code.m_binary_code; }
     const auto &pool() const { return m_program_code.m_constant_pool; }

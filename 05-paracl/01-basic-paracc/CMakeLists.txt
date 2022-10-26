@@ -84,9 +84,9 @@ target_include_directories(popl INTERFACE 3rd-party/popl)
 add_executable(pcldis ${PCLDIS_SOURCES})
 target_link_libraries(pcldis popl bytecode_vm)
 
-set(DRIVER_SOURCES
-  src/driver.cc
+set(PCLVM_SOURCES
+  src/pclvm.cc
 )
 
-add_executable(driver ${DRIVER_SOURCES})
-target_link_libraries(driver popl bytecode_vm)
+add_executable(pclvm ${PCLVM_SOURCES})
+target_link_libraries(pclvm popl bytecode_vm)
