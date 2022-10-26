@@ -39,6 +39,7 @@ int main(int argc, char *argv[]) {
     input_file.open(input_file_name, std::ios::binary);
   } catch (std::exception &e) {
     std::cerr << "Error opening file: " << e.what() << "\n";
+    return 1;
   }
 
   auto ch = decl_vm::read_chunk(input_file);
