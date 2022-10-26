@@ -10,13 +10,7 @@
 
 #pragma once
 
-#include "utils/serialization.hpp"
-
-#include <bit>
-#include <concepts>
-#include <iostream>
-#include <string>
-#include <vector>
+#include <cstdint>
 
 namespace paracl::bytecode_vm {
 

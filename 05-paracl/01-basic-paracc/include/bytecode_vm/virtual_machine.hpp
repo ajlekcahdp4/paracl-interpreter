@@ -11,11 +11,9 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
 
 #include <iostream>
 #include <stdexcept>
-#include <vector>
 
 #include "bytecode_vm/decl_vm.hpp"
 #include "bytecode_vm/opcodes.hpp"
