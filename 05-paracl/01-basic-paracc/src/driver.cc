@@ -3,6 +3,8 @@
 #include <fstream>
 
 #include "bytecode_vm.hpp"
+#include "bytecode_vm/disassembly.hpp"
+#include "bytecode_vm/virtual_machine.hpp"
 
 int main() {
   using namespace paracl::bytecode_vm;
@@ -27,10 +29,13 @@ int main() {
   ch.push_byte(opcode::E_RETURN_NULLARY);
 
   std::ofstream os("./copy.pcl", std::ios::binary);
-  write_chunk(os, ch);
+  // write_chunk(os, ch);
 
   decl_vm::virtual_machine vm{instruction_set::paracl_isa};
   
+  decl_vm::disassembly::chunk_complete_disassembler disas{instruction_set::paracl_isa};
+  // disas(std::cout, ch);
+
   vm.set_program_code(ch);
   vm.execute();
 }

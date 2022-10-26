@@ -17,12 +17,13 @@
 #include <iomanip>
 #include <iterator>
 #include <optional>
+#include <stdexcept>
 
+#include "bytecode_vm/decl_vm.hpp"
 #include "utils.hpp"
 
-namespace paracl::bytecode_vm::disassembly {
+namespace paracl::bytecode_vm::decl_vm::disassembly {
 
-#if 0
 class constant_pool_disassembler {
 public:
   template <typename t_stream> t_stream &operator()(t_stream &os, const constant_pool &pool) const {
@@ -36,51 +37,29 @@ public:
   }
 };
 
-class chunk_binary_disassembler {
-private:
-  template <typename t_stream>
-  std::optional<binary_code_buffer::const_iterator> operator()(t_stream &os, const chunk &chk, auto first,
-                                                               auto last) const {
+template <typename t_instr_set> class chunk_binary_disassembler {
+public:
+  const t_instr_set& instruction_set;
+  chunk_binary_disassembler(const t_instr_set& isa) : instruction_set{isa} {}
+
+public:
+  void operator()(auto &os, auto &first, auto last) const {
     if (first == last) {
-      os << "<Unexpectedly reached the end of range>\n";
-      return std::nullopt;
+      throw std::runtime_error{"Unexpectedly reached the end of range"};
     }
 
-    auto [instr, it] = decode_instruction(first, last);
-    const auto &pool = chk.m_constant_pool;
-    using enum opcode;
-
-    auto visitor = utils::visitors{[&os](const nullary_instruction &nullary) { os << opcode_to_string(nullary.op); },
-                            [&os, &pool](const unary_u32_instruction &unary) {
-                              auto first_attr = std::get<0>(unary.attributes);
-
-                              switch (unary.op) {
-                              case E_PUSH_CONST_UNARY: {
-                                os << opcode_to_string(unary.op) << " [ " << std::dec << pool.at(first_attr) << " ]";
-                                break;
-                              }
-
-                              case E_PUSH_LOCAL_UNARY:
-                              case E_MOV_LOCAL_UNARY:
-                              case E_JMP_ABS_UNARY:
-                              case E_JMP_EQ_ABS_UNARY:
-                              case E_JMP_NE_ABS_UNARY:
-                              case E_JMP_GT_ABS_UNARY:
-                              case E_JMP_GE_ABS_UNARY:
-                              case E_JMP_LE_ABS_UNARY: {
-                                os << opcode_to_string(unary.op) << " [ ";
-                                utils::serialization::padded_hex_printer(os, first_attr) << " ] ";
-                                break;
-                              }
-
-                              default: throw std::runtime_error{"Unexpected error encountered"};
-                              }
-                            },
-                            [&os](std::monostate) { os << "<Incorrectly encoded instruction>"; }};
-
-    std::visit(visitor, instr);
-
-    return it;
+    auto current_instruction = instruction_set.instruction_lookup_table[*first++];
+    // clang-format off
+    std::visit(paracl::utils::visitors{
+      [&](std::monostate) {
+        throw std::runtime_error{"Unknown opcode"};},
+      [&](auto&& instr) {
+        auto attr = instr->decode(first, last).attributes;
+        // instr->pretty_print(os, attr);}}, 
+        auto name = instr->get_name();
+        os << "Hello\n" << "\n"; }},
+      current_instruction);
+    // clang-format on
   } // namespace paracl::bytecode_vm::disassembly
 
 public:
@@ -92,12 +71,7 @@ public:
 
     for (auto first = binary.begin(), last = binary.end(); first != last;) {
       utils::serialization::padded_hex_printer(os, std::distance(start, first)) << " ";
-      auto disas_instr = operator()(os, chk, first, last);
-      if (!disas_instr) {
-        break;
-      }
-
-      first = disas_instr.value();
+      operator()(os, first, last);
       os << "\n";
     }
 
@@ -105,15 +79,18 @@ public:
   }
 };
 
-class chunk_complete_disassembler {
+template <typename t_instr_set> class chunk_complete_disassembler {
+  chunk_binary_disassembler<t_instr_set> binary_disas;
+
 public:
+  chunk_complete_disassembler(t_instr_set isa) : binary_disas{isa} {}
+
   template <typename t_stream> t_stream &operator()(t_stream &os, const chunk &chk) const {
     constant_pool_disassembler{}(os, chk.m_constant_pool);
     os << "\n";
-    chunk_binary_disassembler{}(os, chk);
+    binary_disas(os, chk);
     return os;
   }
 };
 
-#endif
-} // namespace paracl::bytecode_vm::disassembly
+} // namespace paracl::bytecode_vm::decl_vm::disassembly
