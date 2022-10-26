@@ -29,9 +29,9 @@ int main() {
   ch.push_byte(opcode::E_RETURN_NULLARY);
 
   std::ofstream os("./copy.pcl", std::ios::binary);
-  // write_chunk(os, ch);
+  write_chunk(os, ch);
 
-  decl_vm::virtual_machine vm{instruction_set::paracl_isa};
+  auto vm = create_paracl_vm();
   
   decl_vm::disassembly::chunk_complete_disassembler disas{instruction_set::paracl_isa};
   disas(std::cout, ch);

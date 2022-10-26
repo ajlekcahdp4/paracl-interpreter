@@ -67,10 +67,26 @@ if (SANITIZE)
   add_link_options(-fsanitize=address -fno-omit-frame-pointer)
 endif()
 
+set(BYTECODE_VM_SOURCES
+  src/bytecode_vm/decl_vm.cc
+)
+
+add_library(bytecode_vm STATIC ${BYTECODE_VM_SOURCES})
+target_include_directories(bytecode_vm PUBLIC include)
+
+set(PCLDIS_SOURCES
+  src/pcldis.cc
+)
+
+add_library(popl INTERFACE)
+target_include_directories(popl INTERFACE 3rd-party/popl)
+
+add_executable(pcldis ${PCLDIS_SOURCES})
+target_link_libraries(pcldis popl bytecode_vm)
+
 set(DRIVER_SOURCES
-  src/decl_vm.cc
   src/driver.cc
 )
 
 add_executable(driver ${DRIVER_SOURCES})
-target_include_directories(driver PUBLIC include)
+target_link_libraries(driver popl bytecode_vm)

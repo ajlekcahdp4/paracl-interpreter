@@ -97,10 +97,20 @@ static constexpr auto push_local_instr = push_local_desc >> [](auto &&ctx, auto 
   ctx.push(val);
 };
 
+enum compare_state {
+  E_CMP_EQ,
+  E_CMP_GT,
+  E_CMP_LS,
+};
+
 static const auto paracl_isa =
     instruction_set_description(push_const_instr, return_instr, pop_instr, add_instr, sub_instr, mul_instr, div_instr,
                                 mod_instr, print_instr, push_read, mov_local_instr, push_local_instr);
 
 } // namespace instruction_set
+
+static inline auto create_paracl_vm() {
+  return decl_vm::virtual_machine<instruction_set::compare_state, decltype(instruction_set::paracl_isa)>{instruction_set::paracl_isa};
+}
 
 } // namespace paracl::bytecode_vm

@@ -58,7 +58,7 @@ public:
         instr->pretty_print(os, attr); }},
       current_instruction);
     // clang-format on
-  } // namespace paracl::bytecode_vm::disassembly
+  }
 
 public:
   template <typename t_stream> t_stream &operator()(t_stream &os, const chunk &chk) const {
