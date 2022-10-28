@@ -34,8 +34,8 @@ static constexpr auto                                           push_const_instr
 static constexpr instruction_desc<E_RETURN_NULLARY> return_desc = "ret";
 static constexpr auto return_instr = return_desc >> [](auto &&ctx, auto &&) { ctx.halt(); };
 
-static const instruction_desc<E_POP_NULLARY> pop_desc = "pop";
-static const auto                            pop_instr = pop_desc >> [](auto &&ctx, auto &&) { ctx.pop(); };
+static constexpr instruction_desc<E_POP_NULLARY> pop_desc = "pop";
+static constexpr auto                            pop_instr = pop_desc >> [](auto &&ctx, auto &&) { ctx.pop(); };
 
 static constexpr instruction_desc<E_ADD_NULLARY> add_desc = "add";
 static constexpr auto                            add_instr = add_desc >> [](auto &&ctx, auto &&) {

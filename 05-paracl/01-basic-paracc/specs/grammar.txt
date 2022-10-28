@@ -1,0 +1,21 @@
+This is a draft of ParaCL grammar, syntax and semantics
+
+# 1. Literals
+
+literal: TOKEN_INT_LITERAL
+
+# 2. Expressions
+
+term: literal
+      | ID
+      | ( expr )
+      | QMARK
+
+expr: term
+      | expr + expr
+      | expr - expr
+      | expr / expr
+      | expr * expr
+      | expr % expr
+      | - expr
+      
