@@ -10,10 +10,7 @@
 
 #pragma once
 
-#include "i_expression_node.hpp"
-#include "i_statement_node.hpp"
-
-#include "statement_block.hpp"
+#include "i_ast_node.hpp"
 
 namespace paracl::frontend::ast {
 
@@ -22,6 +19,8 @@ class print_statement : public i_statement_node {
 
 public:
   print_statement(i_expression_node_uptr p_expr) : m_expr{p_expr.release()} {}
+
+  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
 };
 
 } // namespace paracl::frontend::ast

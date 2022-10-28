@@ -10,8 +10,7 @@
 
 #pragma once
 
-#include "i_expression_node.hpp"
-#include "i_statement_node.hpp"
+#include "i_ast_node.hpp"
 
 namespace paracl::frontend::ast {
 
@@ -20,6 +19,8 @@ class statement_expression : public i_statement_node {
 
 public:
   statement_expression(i_expression_node_uptr p_expr) : m_expr{p_expr.release()} {}
+
+  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
 };
 
 using statement_expression_uptr = std::unique_ptr<statement_expression>;

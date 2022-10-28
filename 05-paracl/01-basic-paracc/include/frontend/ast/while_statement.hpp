@@ -10,8 +10,7 @@
 
 #pragma once
 
-#include "i_expression_node.hpp"
-#include "i_statement_node.hpp"
+#include "i_ast_node.hpp"
 
 #include "statement_block.hpp"
 
@@ -24,6 +23,8 @@ class while_statement : public i_statement_node {
 public:
   while_statement(i_expression_node_uptr cond, statement_block_uptr block)
       : m_condition{cond.release()}, m_block{block.release()} {}
+
+  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
 };
 
 } // namespace paracl::frontend::ast

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "i_expression_node.hpp"
+#include "i_ast_node.hpp"
 
 namespace paracl::frontend::ast {
 
@@ -39,6 +39,8 @@ public:
 
   unary_expression(unary_operation op_type, i_expression_node_uptr p_expr)
       : m_operation_type{op_type}, m_expr{p_expr.release()} {}
+
+  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
 };
 
 } // namespace paracl::frontend::ast

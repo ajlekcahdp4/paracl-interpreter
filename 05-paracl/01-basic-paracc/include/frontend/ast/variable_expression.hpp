@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "i_expression_node.hpp"
+#include "i_ast_node.hpp"
 #include <string>
 
 namespace paracl::frontend::ast {
@@ -21,10 +21,12 @@ public:
 
   variable_expression() = default;
   variable_expression(std::string p_name) : m_name{p_name} {}
+
+  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
 };
 
-static inline auto make_variable_expression(std::string name) {
-  return i_expression_node_uptr{new variable_expression{name}};
+static inline i_expression_node_uptr make_variable_expression(std::string name) {
+  return std::make_unique<variable_expression>(name);
 }
 
 } // namespace paracl::frontend::ast

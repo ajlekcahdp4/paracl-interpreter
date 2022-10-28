@@ -10,8 +10,7 @@
 
 #pragma once
 
-#include "i_expression_node.hpp"
-#include "i_statement_node.hpp"
+#include "i_ast_node.hpp"
 
 #include "statement_block.hpp"
 

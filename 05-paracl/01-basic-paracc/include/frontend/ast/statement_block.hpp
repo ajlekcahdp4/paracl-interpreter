@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "i_statement_node.hpp"
+#include "i_ast_node.hpp"
 
 namespace paracl::frontend::ast {
 
@@ -21,6 +21,8 @@ public:
   statement_block() = default;
 
   void append_statement(i_statement_node_uptr statement) { m_statements.emplace_back(statement.release()); }
+
+  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
 };
 
 using statement_block_uptr = std::unique_ptr<statement_block>;

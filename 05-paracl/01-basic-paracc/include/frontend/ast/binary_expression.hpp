@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "i_expression_node.hpp"
+#include "i_ast_node.hpp"
 
 namespace paracl::frontend::ast {
 
@@ -55,6 +55,8 @@ public:
 
   binary_expression(binary_operation op_type, i_expression_node_uptr left, i_expression_node_uptr right)
       : m_operation_type{op_type}, m_left{left.release()}, m_right{right.release()} {}
+
+  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
 };
 
 } // namespace paracl::frontend::ast

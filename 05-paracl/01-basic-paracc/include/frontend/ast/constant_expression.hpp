@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "i_expression_node.hpp"
+#include "i_ast_node.hpp"
 
 namespace paracl::frontend::ast {
 
@@ -19,8 +19,12 @@ public:
   int m_val;
 
   constant_expression(int p_val) : m_val{p_val} {}
+
+  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
 };
 
-static inline auto make_constant_expression(int val) { return i_expression_node_uptr{new constant_expression{val}}; }
+static inline i_expression_node_uptr make_constant_expression(int val) {
+  return std::make_unique<constant_expression>(val);
+}
 
 } // namespace paracl::frontend::ast
