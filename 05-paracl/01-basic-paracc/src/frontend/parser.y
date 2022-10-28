@@ -105,11 +105,12 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 
 %%
 
-program: additive_expression { std::cout << "This is a test\n"; }
+program: expression { std::cout << "This is a test\n"; }
 
-primary_expression: INTEGER_CONSTANT    { $$ = ast::make_constant_expression($1); }
-                    | IDENTIFIER        { $$ = ast::make_variable_expression($1); }
-                    | QMARK             { $$ = ast::make_read_expression(); }
+primary_expression: INTEGER_CONSTANT            { $$ = ast::make_constant_expression($1); }
+                    | IDENTIFIER                { $$ = ast::make_variable_expression($1); }
+                    | QMARK                     { $$ = ast::make_read_expression(); }
+                    | LPAREN expression RPAREN
 
 unary_operator: PLUS | MINUS | BANG { }
 
@@ -124,6 +125,9 @@ multiplicative_expression:  multiplicative_expression MULTIPLY unary_expression 
 additive_expression:  additive_expression PLUS multiplicative_expression      { }
                       | additive_expression MINUS multiplicative_expression   { }
                       | multiplicative_expression                             { }
+
+expression: additive_expression
+
 %%
 
 // Bison expects us to provide implementation - otherwise linker complains
