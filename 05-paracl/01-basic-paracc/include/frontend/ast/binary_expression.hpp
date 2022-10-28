@@ -49,10 +49,10 @@ static inline constexpr std::string_view binary_operation_to_string(binary_opera
 }
 
 class binary_expression_node : public i_expression_node {
+public:
   binary_operation       m_operation_type;
   i_expression_node_uptr m_left, m_right;
 
-public:
   binary_expression_node(binary_operation op_type, i_expression_node_uptr left, i_expression_node_uptr right)
       : m_operation_type{op_type}, m_left{left.release()}, m_right{right.release()} {}
 };

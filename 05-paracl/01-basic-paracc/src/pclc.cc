@@ -4,8 +4,10 @@
 #include <ostream>
 #include <string>
 
-#include "bison_paracl_parser.hpp"
-#include "frontend/ast.hpp"
-#include "frontend/scanner.hpp"
+#include "frontend.hpp"
 
-int main(int argc, char *argv[]) { return 0; }
+int main(int argc, char *argv[]) {
+  paracl::frontend::frontend_driver drv{};
+  drv.switch_input_stream(&std::cin);
+  drv.parse();
+}

@@ -9,3 +9,21 @@
  */
 
 #pragma once
+
+#include "bison_paracl_parser.hpp"
+#include "scanner.hpp"
+
+namespace paracl::frontend {
+
+class frontend_driver {
+private:
+  scanner m_scanner;
+  parser  m_parser;
+
+public:
+  frontend_driver() : m_scanner{}, m_parser{m_scanner, *this} {}
+
+  int  parse() { return m_parser.parse(); }
+  void switch_input_stream(std::istream *is) { m_scanner.switch_streams(is, nullptr); }
+};
+} // namespace paracl::frontend

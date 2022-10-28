@@ -10,25 +10,8 @@
 
 #pragma once
 
-#if !defined(yyFlexLexerOnce)
-#undef yyFlexLexer
-#define yyFlexLexer paracl_FlexLexer
-#include <FlexLexer.h>
-#endif
-
-#undef YY_DECL
-#define YY_DECL paracl::frontend::parser::symbol_type paracl::frontend::scanner::get_next_token()
-
 #include "bison_paracl_parser.hpp"
-
-namespace paracl::frontend {
-class frontend_driver;
-
-class scanner : public yyFlexLexer {
-private:
-public:
-  scanner() {}
-  paracl::frontend::parser::symbol_type get_next_token();
-};
-
-} // namespace paracl::frontend
+#include "frontend/ast.hpp"
+#include "frontend/frontend_driver.hpp"
+#include "frontend/scanner.hpp"
+#include "frontend/symtab.hpp"

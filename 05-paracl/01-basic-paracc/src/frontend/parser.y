@@ -12,6 +12,8 @@
 %require "3.8"
 
 %defines
+
+%define api.token.raw
 %define api.parser.class { parser }
 %define api.token.constructor
 %define api.value.type variant
@@ -57,11 +59,33 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %define parse.error verbose
 %define api.token.prefix {TOKEN_}
 
-%token EOF 0 "eof";
-%token <std::string> IDENTIFIER "identifier";
-%token LPAREN "lparen";
-%token RPAREN "rparen";
-%token SEMICOL "semicol";
+%token <std::string> IDENTIFIER "identifier"
+
+/* Signle letter tokens */
+%token LPAREN   "lparen"
+%token RPAREN   "rparen"
+%token LBRACE   "lbrace"
+%token RBRACE   "rbrace"
+
+%token EQ       "=="
+%token NE       "!="
+%token GT       "GT"
+%token LS       "LS"
+%token GE       "GE"
+%token LE       "LE"
+
+%token QMARK    "?"
+%token BANG     "!"
+
+%token SEMICOL  "semicol"
+%token EOF 0    "eof"
+
+/* Keywords */
+%token WHILE  "while"
+%token IF     "if"
+%token ELSE   "else"
+
+%token <int> INTEGER_CONSTANT
 
 %start program
 
