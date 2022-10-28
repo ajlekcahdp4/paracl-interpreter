@@ -58,8 +58,8 @@ identifier  [a-zA-Z_][a-zA-Z_0-9]*
 
 "="             { std::cout << "ASSIGN" << "\n"; return parser::make_ASSIGN(); }
 
-{identifier}    { return parser::make_IDENTIFIER(yytext); }
-{number}        { return parser::make_INTEGER_CONSTANT(std::atoi(yytext)); }
+{identifier}    { std::cout << yytext << "\n"; return parser::make_IDENTIFIER(yytext); }
+{number}        { std::cout << yytext << "\n"; return parser::make_INTEGER_CONSTANT(std::atoi(yytext)); }
 
 [ \t\n\r]       { }
 .               { }
