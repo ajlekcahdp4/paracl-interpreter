@@ -48,12 +48,12 @@ static inline constexpr std::string_view binary_operation_to_string(binary_opera
   throw std::runtime_error{"Broken binary_operation enum"};
 }
 
-class binary_expression_node : public i_expression_node {
+class binary_expression : public i_expression_node {
 public:
   binary_operation       m_operation_type;
   i_expression_node_uptr m_left, m_right;
 
-  binary_expression_node(binary_operation op_type, i_expression_node_uptr left, i_expression_node_uptr right)
+  binary_expression(binary_operation op_type, i_expression_node_uptr left, i_expression_node_uptr right)
       : m_operation_type{op_type}, m_left{left.release()}, m_right{right.release()} {}
 };
 

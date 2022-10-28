@@ -12,6 +12,7 @@
 
 #include "ast/assignment_statement.hpp"
 #include "ast/binary_expression.hpp"
+#include "ast/constant_expression.hpp"
 #include "ast/i_ast_node.hpp"
 #include "ast/i_expression_node.hpp"
 #include "ast/i_statement_node.hpp"
@@ -21,4 +22,5 @@
 #include "ast/statement_block.hpp"
 #include "ast/statement_expression.hpp"
 #include "ast/unary_expression.hpp"
+#include "ast/variable_expression.hpp"
 #include "ast/while_statement.hpp"

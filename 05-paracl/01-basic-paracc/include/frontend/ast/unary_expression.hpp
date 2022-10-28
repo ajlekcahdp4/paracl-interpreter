@@ -32,12 +32,12 @@ static inline constexpr std::string_view unary_operation_to_string(unary_operati
   throw std::runtime_error{"Broken unary_operation enum"};
 }
 
-class unary_expression_node : public i_expression_node {
+class unary_expression : public i_expression_node {
 public:
   unary_operation        m_operation_type;
   i_expression_node_uptr m_expr;
 
-  unary_expression_node(unary_operation op_type, i_expression_node_uptr p_expr)
+  unary_expression(unary_operation op_type, i_expression_node_uptr p_expr)
       : m_operation_type{op_type}, m_expr{p_expr.release()} {}
 };
 

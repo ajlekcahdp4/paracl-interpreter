@@ -11,17 +11,16 @@
 #pragma once
 
 #include "i_expression_node.hpp"
-#include "i_statement_node.hpp"
-
-#include "statement_block.hpp"
 
 namespace paracl::frontend::ast {
 
-class read_expression : public i_expression_node {
+class constant_expression : public i_expression_node {
 public:
-  read_expression() = default;
+  int m_val;
+
+  constant_expression(int p_val) : m_val{p_val} {}
 };
 
-static inline auto make_read_expression() { return i_expression_node_uptr{new read_expression{}}; }
+static inline auto make_constant_expression(int val) { return i_expression_node_uptr{new constant_expression{val}}; }
 
 } // namespace paracl::frontend::ast

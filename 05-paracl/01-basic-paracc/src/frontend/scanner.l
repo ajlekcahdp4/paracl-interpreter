@@ -16,6 +16,8 @@
 #include "frontend/scanner.hpp"
 
 #define yyterminate() paracl::frontend::parser::make_EOF();
+
+using namespace paracl::frontend;
 %}
 
 %option noyywrap nounput noinput nodefault 
@@ -24,33 +26,44 @@
 %option yyclass="scanner"
 
 number      [1-9][0-9]*
-identifier  [a-zA-Z_][a-zA-Z_0-9]
+identifier  [a-zA-Z_][a-zA-Z_0-9]*
 
 %%
 
-"while"         { std::cout << "WHILE" << "\n"; return paracl::frontend::parser::make_WHILE(); }
-"if"            { std::cout << "IF" << "\n"; return paracl::frontend::parser::make_IF(); }
-"else"          { std::cout << "ELSE" << "\n"; return paracl::frontend::parser::make_ELSE(); }
+"while"         { std::cout << "WHILE" << "\n"; return parser::make_WHILE(); }
+"if"            { std::cout << "IF" << "\n"; return parser::make_IF(); }
+"else"          { std::cout << "ELSE" << "\n"; return parser::make_ELSE(); }
 
-"("             { std::cout << "LPAREN" << "\n"; return paracl::frontend::parser::make_LPAREN(); }
-")"             { std::cout << "RPAREN" << "\n"; return paracl::frontend::parser::make_RPAREN(); }
-"{"             { std::cout << "LBRACE" << "\n"; return paracl::frontend::parser::make_LBRACE(); }
-"}"             { std::cout << "RBRACE" << "\n"; return paracl::frontend::parser::make_RBRACE(); }
-";"             { std::cout << "SEMICOL" << "\n"; return paracl::frontend::parser::make_SEMICOL(); }
+"("             { std::cout << "LPAREN" << "\n"; return parser::make_LPAREN(); }
+")"             { std::cout << "RPAREN" << "\n"; return parser::make_RPAREN(); }
+"{"             { std::cout << "LBRACE" << "\n"; return parser::make_LBRACE(); }
+"}"             { std::cout << "RBRACE" << "\n"; return parser::make_RBRACE(); }
+";"             { std::cout << "SEMICOL" << "\n"; return parser::make_SEMICOL(); }
 
-"=="            { std::cout << "EQ" << "\n"; return paracl::frontend::parser::make_EQ(); }
-"!="            { std::cout << "NE" << "\n"; return paracl::frontend::parser::make_NE(); }
-">"             { std::cout << "GT" << "\n"; return paracl::frontend::parser::make_GT(); }
-"<"             { std::cout << "LS" << "\n"; return paracl::frontend::parser::make_LS(); }
-">="            { std::cout << "GE" << "\n"; return paracl::frontend::parser::make_GE(); }
-"<="            { std::cout << "LE" << "\n"; return paracl::frontend::parser::make_LE(); }
+"=="            { std::cout << "EQ" << "\n"; return parser::make_COMP_EQ(); }
+"!="            { std::cout << "NE" << "\n"; return parser::make_COMP_NE(); }
+">"             { std::cout << "GT" << "\n"; return parser::make_COMP_GT(); }
+"<"             { std::cout << "LS" << "\n"; return parser::make_COMP_LS(); }
+">="            { std::cout << "GE" << "\n"; return parser::make_COMP_GE(); }
+"<="            { std::cout << "LE" << "\n"; return parser::make_COMP_LE(); }
 
-"!"             { std::cout << "BANG" << "\n"; return paracl::frontend::parser::make_BANG(); }
-"?"             { std::cout << "QMARK" << "\n"; return paracl::frontend::parser::make_QMARK(); }
+"!"             { std::cout << "BANG" << "\n"; return parser::make_BANG(); }
+"?"             { std::cout << "QMARK" << "\n"; return parser::make_QMARK(); }
 
-{identifier}    { return paracl::frontend::parser::make_IDENTIFIER(yytext); }
-{number}        { return paracl::frontend::parser::make_INTEGER_CONSTANT(std::atoi(yytext)); }
+"+"             { std::cout << "PLUS" << "\n"; return parser::make_PLUS(); }
+"-"             { std::cout << "MINUS" << "\n"; return parser::make_MINUS(); }
+"*"             { std::cout << "MULTIPLY" << "\n"; return parser::make_MULTIPLY(); }
+"/"             { std::cout << "DIVIDE" << "\n"; return parser::make_DIVIDE(); }
+"%"             { std::cout << "MODULUS" << "\n"; return parser::make_MODULUS(); }
 
-<<EOF>>     { return yyterminate(); }
+"="             { std::cout << "ASSIGN" << "\n"; return parser::make_ASSIGN(); }
+
+{identifier}    { return parser::make_IDENTIFIER(yytext); }
+{number}        { return parser::make_INTEGER_CONSTANT(std::atoi(yytext)); }
+
+[ \t\n\r]       { }
+.               { }
+
+<<EOF>>         { return yyterminate(); }
 
 %%

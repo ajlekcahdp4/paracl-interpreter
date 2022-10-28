@@ -32,6 +32,8 @@ namespace paracl::frontend {
   class frontend_driver;
 }
 
+using namespace paracl::frontend;
+
 }
 
 %code top
@@ -59,23 +61,32 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %define parse.error verbose
 %define api.token.prefix {TOKEN_}
 
-%token <std::string> IDENTIFIER "identifier"
-
 /* Signle letter tokens */
 %token LPAREN   "lparen"
 %token RPAREN   "rparen"
 %token LBRACE   "lbrace"
 %token RBRACE   "rbrace"
 
-%token EQ       "=="
-%token NE       "!="
-%token GT       "GT"
-%token LS       "LS"
-%token GE       "GE"
-%token LE       "LE"
+%token ASSIGN   "assign"
+
+%token COMP_EQ  "=="
+%token COMP_NE  "!="
+%token COMP_GT  "GT"
+%token COMP_LS  "LS"
+%token COMP_GE  "GE"
+%token COMP_LE  "LE"
 
 %token QMARK    "?"
 %token BANG     "!"
+
+%token PLUS       "plus"
+%token MINUS      "minus"
+%token MULTIPLY   "multiply"
+%token DIVIDE     "divide"
+%token MODULUS    "modulus"
+
+%token LOGICAL_AND  "and"
+%token LOGICAL_OR   "or"
 
 %token SEMICOL  "semicol"
 %token EOF 0    "eof"
@@ -85,13 +96,20 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %token IF     "if"
 %token ELSE   "else"
 
-%token <int> INTEGER_CONSTANT
+%token <int> INTEGER_CONSTANT "integer_constant"
+%token <std::string> IDENTIFIER "identifier"
+
+%type  <ast::i_expression_node_uptr> primary_expression
 
 %start program
 
 %%
 
-program: { std::cout << "This is a test\n"; }
+program: primary_expression { std::cout << "This is a test\n"; }
+
+primary_expression: INTEGER_CONSTANT    { $$ = ast::make_constant_expression($1); }
+                    | IDENTIFIER        { $$ = ast::make_variable_expression($1); }
+                    | QMARK             { $$ = ast::make_read_expression(); }
 
 %%
 
