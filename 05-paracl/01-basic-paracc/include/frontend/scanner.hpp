@@ -10,14 +10,16 @@
 
 #pragma once
 
+#if !defined(yyFlexLexerOnce)
 #undef yyFlexLexer
 #define yyFlexLexer paracl_FlexLexer
-#include <flex_paracl_lexer.hpp>
+#include <FlexLexer.h>
+#endif
 
 #undef YY_DECL
 #define YY_DECL paracl::frontend::parser::symbol_type paracl::frontend::scanner::get_next_token()
 
-#include <bison_paracl_parser.hpp>
+#include "bison_paracl_parser.hpp"
 
 namespace paracl::frontend {
 class frontend_driver;
@@ -28,9 +30,7 @@ private:
 
 public:
   scanner(frontend_driver &driver) : m_driver{driver} {}
-
-  virtual ~scanner() {}
-  virtual parser::symbol_type get_next_token();
+  paracl::frontend::parser::symbol_type get_next_token();
 };
 
-}; // namespace paracl::frontend
+} // namespace paracl::frontend

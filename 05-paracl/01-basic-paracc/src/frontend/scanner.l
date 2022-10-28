@@ -9,11 +9,17 @@
  */
 
 %{
+#include <iostream>
+#include "bison_paracl_parser.hpp"
+#include "frontend/scanner.hpp"
 
+#define yyterminate() paracl::frontend::parser::make_EOF();
 %}
 
-%option nodefault noyywrap c++
-%option prefix="paracl"
+%option noyywrap
+%option nodefault 
+%option c++
+%option prefix="paracl_"
 %option yyclass="scanner"
 
 alpha   [a-zA-Z_]
@@ -25,6 +31,8 @@ identifier  {alpha} ({alpha} | {digit})
 
 %%
 
-[]
+"("         { std::cout << "LPAREN" << "\n"; return paracl::frontend::parser::make_LPAREN(); }
+
+<<EOF>>     { return yyterminate(); }
 
 %%

@@ -90,3 +90,15 @@ set(PCLVM_SOURCES
 
 add_executable(pclvm ${PCLVM_SOURCES})
 target_link_libraries(pclvm popl bytecode_vm)
+
+# Find bison and flex and set CMP0098 policy to new to use binary dir 
+find_package(FLEX REQUIRED)
+find_package(BISON REQUIRED)
+cmake_policy(SET CMP0098 NEW)
+
+bison_target(parser src/frontend/parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.y.cc DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/bison_paracl_parser.hpp)
+flex_target(scanner src/frontend/scanner.l scanner.l.cc DEFINES_FILE)
+add_flex_bison_dependency(scanner parser)
+
+add_executable(pclc src/pclc.cc ${BISON_parser_OUTPUTS} ${FLEX_scanner_OUTPUTS})
+target_include_directories(pclc PRIVATE include ${CMAKE_CURRENT_BINARY_DIR})
