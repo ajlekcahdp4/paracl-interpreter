@@ -11,7 +11,7 @@
 #pragma once
 
 #undef yyFlexLexer
-#define yyFlexLexer paracl_lexer
+#define yyFlexLexer paracl_FlexLexer
 #include <flex_paracl_lexer.hpp>
 
 #undef YY_DECL
@@ -33,4 +33,4 @@ public:
   virtual parser::symbol_type get_next_token();
 };
 
-};
+}; // namespace paracl::frontend

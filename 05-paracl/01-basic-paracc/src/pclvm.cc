@@ -1,8 +1,8 @@
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <ostream>
-#include <fstream>
 #include <string>
-#include <filesystem>
 
 #include "bytecode_vm.hpp"
 #include "bytecode_vm/disassembly.hpp"
@@ -15,8 +15,8 @@ int main(int argc, char *argv[]) {
   std::string input_file_name;
 
   popl::OptionParser op("Allowed options");
-  auto help_option = op.add<popl::Switch>("h", "help", "Print this help message");
-  auto input_file_option = op.add<popl::Value<std::string>>("i", "input", "Specify input file");
+  auto               help_option = op.add<popl::Switch>("h", "help", "Print this help message");
+  auto               input_file_option = op.add<popl::Value<std::string>>("i", "input", "Specify input file");
   op.parse(argc, argv);
 
   if (help_option->is_set()) {
