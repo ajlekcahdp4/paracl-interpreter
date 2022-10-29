@@ -18,7 +18,7 @@ class statement_expression : public i_statement_node {
   i_expression_node_uptr m_expr;
 
 public:
-  statement_expression(i_expression_node_uptr p_expr) : m_expr{p_expr.release()} {}
+  statement_expression(i_expression_node_uptr &&p_expr) : m_expr{std::move(p_expr)} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
 };

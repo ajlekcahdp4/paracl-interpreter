@@ -100,5 +100,12 @@ bison_target(parser src/frontend/parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.y.c
 flex_target(scanner src/frontend/scanner.l scanner.l.cc DEFINES_FILE)
 add_flex_bison_dependency(scanner parser)
 
-add_executable(pclc src/pclc.cc ${BISON_parser_OUTPUTS} ${FLEX_scanner_OUTPUTS})
-target_include_directories(pclc PRIVATE include ${CMAKE_CURRENT_BINARY_DIR})
+set(PARACL_COMPILER_SOURCES
+  src/frontend/ast/dumper.cc
+)
+
+add_library(paracl_compiler STATIC ${PARACL_COMPILER_SOURCES} ${BISON_parser_OUTPUTS} ${FLEX_scanner_OUTPUTS})
+target_include_directories(paracl_compiler PUBLIC include ${CMAKE_CURRENT_BINARY_DIR})
+
+add_executable(pclc src/pclc.cc)
+target_link_libraries(pclc PUBLIC paracl_compiler)

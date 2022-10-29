@@ -20,10 +20,15 @@ private:
   scanner m_scanner;
   parser  m_parser;
 
+  ast::i_ast_node_uptr m_ast;
+
+  friend class parser;
+  friend class scanner;
+
 public:
   frontend_driver() : m_scanner{}, m_parser{m_scanner, *this} {}
 
-  int  parse() { return m_parser.parse(); }
+  bool parse() { return m_parser.parse(); }
   void switch_input_stream(std::istream *is) { m_scanner.switch_streams(is, nullptr); }
 };
 } // namespace paracl::frontend

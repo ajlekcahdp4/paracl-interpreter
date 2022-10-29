@@ -99,34 +99,37 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %token <int> INTEGER_CONSTANT "integer_constant"
 %token <std::string> IDENTIFIER "identifier"
 
-%type  <ast::i_expression_node_uptr> primary_expression
+%type <ast::unary_operation> unary_operator
+%type <ast::i_expression_node_uptr> primary_expression multiplicative_expression unary_expression additive_expression expression
 
 %start program
 
 %%
 
-program: expression { std::cout << "This is a test\n"; }
+program: expression { std::cout << "This is a test\n"; driver.m_ast.reset($1.release()); }
 
 primary_expression: INTEGER_CONSTANT            { $$ = ast::make_constant_expression($1); }
                     | IDENTIFIER                { $$ = ast::make_variable_expression($1); }
                     | QMARK                     { $$ = ast::make_read_expression(); }
-                    | LPAREN expression RPAREN
+                    | LPAREN expression RPAREN  { $$ = std::move($2); }
 
-unary_operator: PLUS | MINUS | BANG { }
+unary_operator: PLUS    { $$ = ast::unary_operation::E_UN_OP_POS; }
+                | MINUS { $$ = ast::unary_operation::E_UN_OP_NEG; }
+                | BANG  { $$ = ast::unary_operation::E_UN_OP_NOT; }
 
-unary_expression: unary_operator unary_expression { }
-                  | primary_expression 
+unary_expression: unary_operator unary_expression { $$ = ast::make_unary_expression($1, std::move($2)); }
+                  | primary_expression            { $$ = std::move($1); }
 
-multiplicative_expression:  multiplicative_expression MULTIPLY unary_expression   { }
-                            | multiplicative_expression DIVIDE unary_expression   { }
-                            | multiplicative_expression MODULUS unary_expression  { }
-                            | unary_expression                                    { }
+multiplicative_expression:  multiplicative_expression MULTIPLY unary_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_MUL, std::move($1), std::move($3)); }
+                            | multiplicative_expression DIVIDE unary_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_DIV, std::move($1), std::move($3)); }
+                            | multiplicative_expression MODULUS unary_expression  { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_MOD, std::move($1), std::move($3)); }
+                            | unary_expression                                    { $$ = std::move($1); }
 
-additive_expression:  additive_expression PLUS multiplicative_expression      { }
-                      | additive_expression MINUS multiplicative_expression   { }
-                      | multiplicative_expression                             { }
+additive_expression:  additive_expression PLUS multiplicative_expression      { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_ADD, std::move($1), std::move($3)); }
+                      | additive_expression MINUS multiplicative_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_SUB, std::move($1), std::move($3)); }
+                      | multiplicative_expression                             { $$ = std::move($1); }
 
-expression: additive_expression
+expression: additive_expression { $$ = std::move($1); }
 
 %%
 

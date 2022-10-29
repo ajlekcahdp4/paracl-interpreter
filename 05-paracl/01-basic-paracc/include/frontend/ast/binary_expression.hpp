@@ -53,10 +53,15 @@ public:
   binary_operation       m_operation_type;
   i_expression_node_uptr m_left, m_right;
 
-  binary_expression(binary_operation op_type, i_expression_node_uptr left, i_expression_node_uptr right)
-      : m_operation_type{op_type}, m_left{left.release()}, m_right{right.release()} {}
+  binary_expression(binary_operation op_type, i_expression_node_uptr &&left, i_expression_node_uptr &&right)
+      : m_operation_type{op_type}, m_left{std::move(left)}, m_right{std::move(right)} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
 };
+
+static inline i_expression_node_uptr make_binary_expression(binary_operation op_type, i_expression_node_uptr &&left,
+                                                            i_expression_node_uptr &&right) {
+  return std::make_unique<binary_expression>(op_type, std::move(left), std::move(right));
+}
 
 } // namespace paracl::frontend::ast

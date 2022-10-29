@@ -37,10 +37,14 @@ public:
   unary_operation        m_operation_type;
   i_expression_node_uptr m_expr;
 
-  unary_expression(unary_operation op_type, i_expression_node_uptr p_expr)
-      : m_operation_type{op_type}, m_expr{p_expr.release()} {}
+  unary_expression(unary_operation op_type, i_expression_node_uptr &&p_expr)
+      : m_operation_type{op_type}, m_expr{std::move(p_expr)} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
 };
+
+static inline i_expression_node_uptr make_unary_expression(unary_operation op, i_expression_node_uptr &&expr) {
+  return std::make_unique<unary_expression>(op, std::move(expr));
+}
 
 } // namespace paracl::frontend::ast

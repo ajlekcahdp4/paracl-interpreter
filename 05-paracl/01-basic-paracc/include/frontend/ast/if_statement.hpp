@@ -22,11 +22,11 @@ class if_statement : public i_statement_node {
   statement_block_uptr   m_else_block; // Optional, can be nullptr
 
 public:
-  if_statement(i_expression_node_uptr cond, statement_block_uptr true_block)
-      : m_condition{cond.release()}, m_true_block{true_block.release()}, m_else_block{nullptr} {}
+  if_statement(i_expression_node_uptr &&cond, statement_block_uptr &&true_block)
+      : m_condition{std::move(cond)}, m_true_block{std::move(true_block)}, m_else_block{nullptr} {}
 
-  if_statement(i_expression_node_uptr cond, statement_block_uptr true_block, statement_block_uptr else_block)
-      : m_condition{cond.release()}, m_true_block{true_block.release()}, m_else_block{else_block.release()} {}
+  if_statement(i_expression_node_uptr &&cond, statement_block_uptr &&true_block, statement_block_uptr &&else_block)
+      : m_condition{std::move(cond)}, m_true_block{std::move(true_block)}, m_else_block{std::move(else_block)} {}
 };
 
 } // namespace paracl::frontend::ast

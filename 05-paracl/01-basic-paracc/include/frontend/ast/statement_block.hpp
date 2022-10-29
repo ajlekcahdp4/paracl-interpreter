@@ -11,6 +11,7 @@
 #pragma once
 
 #include "i_ast_node.hpp"
+#include <vector>
 
 namespace paracl::frontend::ast {
 
@@ -20,7 +21,7 @@ class statement_block : public i_statement_node {
 public:
   statement_block() = default;
 
-  void append_statement(i_statement_node_uptr statement) { m_statements.emplace_back(statement.release()); }
+  void append_statement(i_statement_node_uptr &&statement) { m_statements.emplace_back(std::move(statement)); }
 
   void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
 };
