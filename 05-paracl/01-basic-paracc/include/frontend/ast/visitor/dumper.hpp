@@ -11,10 +11,17 @@
 #pragma once
 
 #include "visitor.hpp"
+#include <iostream>
 
 namespace paracl::frontend::ast {
 
 class ast_dump_visitor : public i_ast_visitor {
+private:
+  std::ostream &m_os;
+
+public:
+  ast_dump_visitor(std::ostream &os) : m_os{os} {}
+
   void visit(assignment_statement &) override;
   void visit(binary_expression &) override;
   void visit(constant_expression &) override;
@@ -27,5 +34,7 @@ class ast_dump_visitor : public i_ast_visitor {
   void visit(variable_expression &) override;
   void visit(while_statement &) override;
 };
+
+void ast_dump(i_ast_node &node, std::ostream &os);
 
 } // namespace paracl::frontend::ast

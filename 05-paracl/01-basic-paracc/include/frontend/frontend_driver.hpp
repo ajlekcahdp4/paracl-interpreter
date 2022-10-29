@@ -20,12 +20,12 @@ private:
   scanner m_scanner;
   parser  m_parser;
 
-  ast::i_ast_node_uptr m_ast;
-
   friend class parser;
   friend class scanner;
 
 public:
+  ast::i_ast_node_uptr m_ast;
+
   frontend_driver() : m_scanner{}, m_parser{m_scanner, *this} {}
 
   bool parse() { return m_parser.parse(); }

@@ -12,6 +12,7 @@
 
 namespace paracl::frontend::ast {
 
+class i_ast_node;
 class assignment_statement;
 class binary_expression;
 class constant_expression;
@@ -37,6 +38,8 @@ public:
   virtual void visit(unary_expression &) = 0;
   virtual void visit(variable_expression &) = 0;
   virtual void visit(while_statement &) = 0;
+
+  virtual ~i_ast_visitor() {}
 };
 
 } // namespace paracl::frontend::ast
@@ -53,3 +56,7 @@ public:
 #include "frontend/ast/unary_expression.hpp"
 #include "frontend/ast/variable_expression.hpp"
 #include "frontend/ast/while_statement.hpp"
+
+namespace paracl::frontend::ast {
+static inline void ast_node_visit(i_ast_visitor &visitor, i_ast_node &ast_node) { ast_node.accept(visitor); }
+} // namespace paracl::frontend::ast

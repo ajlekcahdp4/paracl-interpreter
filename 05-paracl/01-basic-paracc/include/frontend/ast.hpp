@@ -21,5 +21,6 @@
 #include "ast/statement_expression.hpp"
 #include "ast/unary_expression.hpp"
 #include "ast/variable_expression.hpp"
+#include "ast/visitor/dumper.hpp"
 #include "ast/visitor/visitor.hpp"
 #include "ast/while_statement.hpp"
