@@ -95,12 +95,25 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %token WHILE  "while"
 %token IF     "if"
 %token ELSE   "else"
+%token PRINT  "print"
 
+/* Terminals */
 %token <int> INTEGER_CONSTANT "integer_constant"
 %token <std::string> IDENTIFIER "identifier"
 
+/* Rules that model the AST */
+%type <ast::i_expression_node_uptr> primary_expression    
+%type <ast::i_expression_node_uptr> multiplicative_expression
+%type <ast::i_expression_node_uptr> unary_expression
+%type <ast::i_expression_node_uptr> additive_expression
+%type <ast::i_expression_node_uptr> comparison_expression
+%type <ast::i_expression_node_uptr> equality_expression
+%type <ast::i_expression_node_uptr> expression
+
+%type <ast::i_statement_node_uptr> print_statement
+
+/* Utility rules */
 %type <ast::unary_operation> unary_operator
-%type <ast::i_expression_node_uptr> primary_expression multiplicative_expression unary_expression additive_expression expression
 
 %start program
 
@@ -129,7 +142,23 @@ additive_expression:  additive_expression PLUS multiplicative_expression      { 
                       | additive_expression MINUS multiplicative_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_SUB, std::move($1), std::move($3)); }
                       | multiplicative_expression                             { $$ = std::move($1); }
 
-expression: additive_expression { $$ = std::move($1); }
+comparison_expression:  comparison_expression COMP_GT additive_expression     { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_GT, std::move($1), std::move($3)); }
+                        | comparison_expression COMP_LS additive_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_LS, std::move($1), std::move($3));  }
+                        | comparison_expression COMP_GE additive_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_GE, std::move($1), std::move($3)); }
+                        | comparison_expression COMP_LE additive_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_LE, std::move($1), std::move($3)); }
+                        | additive_expression                                 { $$ = std::move($1); }
+
+
+equality_expression:  equality_expression COMP_EQ comparison_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_EQ, std::move($1), std::move($3)); }
+                      | equality_expression COMP_NE comparison_expression { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_NE, std::move($1), std::move($3)); }
+                      | comparison_expression                             { $$ = std::move($1); }
+
+assignment_expression:  IDENTIFIER ASSIGN assignment_expression           { }
+                        | equality_expression                             { }
+
+expression: equality_expression { $$ = std::move($1); }
+
+print_statement: PRINT expression SEMICOL { $$ = make_print_statement($2); }
 
 %%
 

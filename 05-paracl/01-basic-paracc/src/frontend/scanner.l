@@ -33,6 +33,7 @@ identifier  [a-zA-Z_][a-zA-Z_0-9]*
 "while"         { std::cout << "WHILE" << "\n"; return parser::make_WHILE(); }
 "if"            { std::cout << "IF" << "\n"; return parser::make_IF(); }
 "else"          { std::cout << "ELSE" << "\n"; return parser::make_ELSE(); }
+"print"         { std::cout << "PRINT" << "\n"; return parser::make_PRINT(); }
 
 "("             { std::cout << "LPAREN" << "\n"; return parser::make_LPAREN(); }
 ")"             { std::cout << "RPAREN" << "\n"; return parser::make_RPAREN(); }
