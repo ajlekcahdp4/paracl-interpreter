@@ -18,16 +18,16 @@ namespace paracl::frontend::ast {
 
 class while_statement : public i_statement_node {
   i_expression_node_uptr m_condition;
-  statement_block_uptr   m_block;
+  i_statement_node_uptr  m_block;
 
 public:
-  while_statement(i_expression_node_uptr &&cond, statement_block_uptr &&block)
+  while_statement(i_expression_node_uptr &&cond, i_statement_node_uptr &&block)
       : m_condition{std::move(cond)}, m_block{std::move(block)} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
 };
 
-static inline i_statement_node_uptr make_while_statement(i_expression_node_uptr &&cond, statement_block_uptr &&block) {
+static inline i_statement_node_uptr make_while_statement(i_expression_node_uptr &&cond, i_statement_node_uptr &&block) {
   return std::make_unique<while_statement>(std::move(cond), std::move(block));
 }
 

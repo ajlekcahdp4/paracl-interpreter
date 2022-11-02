@@ -109,9 +109,11 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %type <ast::i_expression_node_uptr> comparison_expression
 %type <ast::i_expression_node_uptr> equality_expression
 %type <ast::i_expression_node_uptr> expression
+%type <ast::i_statement_node_uptr> statement
 %type <ast::i_statement_node_uptr> statement_block
 %type <ast::i_statement_node_uptr> assignment_statement
 %type <ast::i_statement_node_uptr> while_statement
+%type <ast::i_statement_node_uptr> if_statement
 
 %type <ast::i_statement_node_uptr> print_statement
 
@@ -159,7 +161,11 @@ equality_expression:  equality_expression COMP_EQ comparison_expression   { $$ =
 assignment_statement: IDENTIFIER ASSIGN assignment_statement SEMICOL            { $$ = ast::make_assignment_statement($1, std::move($3)); }
                       | IDENTIFIER ASSIGN expression SEMICOL                    { $$ = ast::make_assignment_statement($1, std::move($3)); }
 
-while_statement: LPAREN expression RPAREN statement_block { $$ = ast::make_while_statement(std::move($2), std::move($4)) }
+while_statement:  WHILE LPAREN expression RPAREN statement                        { $$ = ast::make_while_statement(std::move($3), std::move($5)); }
+
+if_statement: IF LPAREN expression RPAREN statement                                     { $$ = ast::make_if_statement(std::move($3), std::move($5)); }
+              | IF LPAREN expression RPAREN statement ELSE statement                    { $$ = ast::make_if_statement(std::move($3), std::move($5), std::move($7)); }
+
 
 expression: equality_expression { $$ = std::move($1); }
 
