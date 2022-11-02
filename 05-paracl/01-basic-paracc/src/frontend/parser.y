@@ -109,6 +109,7 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %type <ast::i_expression_node_uptr> comparison_expression
 %type <ast::i_expression_node_uptr> equality_expression
 %type <ast::i_expression_node_uptr> expression
+%type <ast::i_statement_node_uptr> assignment_statement
 
 %type <ast::i_statement_node_uptr> print_statement
 
@@ -153,8 +154,8 @@ equality_expression:  equality_expression COMP_EQ comparison_expression   { $$ =
                       | equality_expression COMP_NE comparison_expression { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_NE, std::move($1), std::move($3)); }
                       | comparison_expression                             { $$ = std::move($1); }
 
-assignment_expression:  IDENTIFIER ASSIGN assignment_expression           { }
-                        | equality_expression                             { }
+assignment_statement: IDENTIFIER ASSIGN assignment_statement SEMICOL            { $$ = ast::make_assignment_statement($1, std::move($3)); }
+                      | IDENTIFIER ASSIGN expression SEMICOL                    { $$ = ast::make_assignment_statement($1, std::move($3)); }
 
 expression: equality_expression { $$ = std::move($1); }
 
