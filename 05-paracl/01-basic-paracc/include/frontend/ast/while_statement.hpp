@@ -16,7 +16,7 @@
 
 namespace paracl::frontend::ast {
 
-class while_statement : public i_statement_node {
+class while_statement : public i_statement_node, public i_expression_node {
   i_expression_node_uptr m_condition;
   statement_block_uptr   m_block;
 
