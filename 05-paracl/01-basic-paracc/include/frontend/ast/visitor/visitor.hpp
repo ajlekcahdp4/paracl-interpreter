@@ -34,7 +34,6 @@ public:
   virtual void visit(print_statement &) = 0;
   virtual void visit(read_expression &) = 0;
   virtual void visit(statement_block &) = 0;
-  virtual void visit(statement_expression &) = 0;
   virtual void visit(unary_expression &) = 0;
   virtual void visit(variable_expression &) = 0;
   virtual void visit(while_statement &) = 0;
@@ -52,7 +51,6 @@ public:
 #include "frontend/ast/print_statement.hpp"
 #include "frontend/ast/read_expression.hpp"
 #include "frontend/ast/statement_block.hpp"
-#include "frontend/ast/statement_expression.hpp"
 #include "frontend/ast/unary_expression.hpp"
 #include "frontend/ast/variable_expression.hpp"
 #include "frontend/ast/while_statement.hpp"

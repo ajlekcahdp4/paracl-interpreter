@@ -29,7 +29,6 @@ public:
   void visit(print_statement &) override;
   void visit(read_expression &) override;
   void visit(statement_block &) override;
-  void visit(statement_expression &) override;
   void visit(unary_expression &) override;
   void visit(variable_expression &) override;
   void visit(while_statement &) override;

@@ -24,11 +24,14 @@ public:
 
 using i_ast_node_uptr = std::unique_ptr<i_ast_node>;
 
-class i_expression_node : public i_ast_node {};
+class i_expression_node : virtual public i_ast_node {};
 using i_expression_node_uptr = std::unique_ptr<i_expression_node>;
 
-class i_statement_node : public i_ast_node {};
+class i_statement_node : virtual public i_ast_node {};
 using i_statement_node_uptr = std::unique_ptr<i_statement_node>;
+
+class i_expression_statement_node : public i_expression_node, public i_statement_node {};
+using i_expression_statement_node_uptr = std::unique_ptr<i_expression_statement_node>;
 
 } // namespace paracl::frontend::ast
 

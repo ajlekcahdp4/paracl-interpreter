@@ -109,13 +109,14 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %type <ast::i_expression_node_uptr> comparison_expression
 %type <ast::i_expression_node_uptr> equality_expression
 %type <ast::i_expression_node_uptr> expression
-%type <ast::i_statement_node_uptr> statement
-%type <ast::i_statement_node_uptr> statement_block
-%type <ast::i_statement_node_uptr> assignment_statement
-%type <ast::i_statement_node_uptr> while_statement
-%type <ast::i_statement_node_uptr> if_statement
+
+%type <ast::i_expression_statement_node_uptr> assignment_expression_statement
 
 %type <ast::i_statement_node_uptr> print_statement
+%type <ast::i_statement_node_uptr> assignment_statement
+%type <ast::i_statement_node_uptr> statement_block
+%type <ast::i_statement_node_uptr> statement
+%type <std::vector<ast::i_statement_node_uptr>> statements
 
 /* Utility rules */
 %type <ast::unary_operation> unary_operator
@@ -124,7 +125,7 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 
 %%
 
-program: expression { std::cout << "This is a test\n"; driver.m_ast.reset($1.release()); }
+program: statements { driver.m_ast = ast::make_statement_block(std::move($1)); }
 
 primary_expression: INTEGER_CONSTANT            { $$ = ast::make_constant_expression($1); }
                     | IDENTIFIER                { $$ = ast::make_variable_expression($1); }
@@ -158,18 +159,23 @@ equality_expression:  equality_expression COMP_EQ comparison_expression   { $$ =
                       | equality_expression COMP_NE comparison_expression { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_NE, std::move($1), std::move($3)); }
                       | comparison_expression                             { $$ = std::move($1); }
 
-assignment_statement: IDENTIFIER ASSIGN assignment_statement SEMICOL            { $$ = ast::make_assignment_statement($1, std::move($3)); }
-                      | IDENTIFIER ASSIGN expression SEMICOL                    { $$ = ast::make_assignment_statement($1, std::move($3)); }
+expression: equality_expression                 { $$ = std::move($1); }
+            | assignment_expression_statement   { $$ = std::move($1); }
 
-while_statement:  WHILE LPAREN expression RPAREN statement                        { $$ = ast::make_while_statement(std::move($3), std::move($5)); }
+assignment_expression_statement: IDENTIFIER ASSIGN expression             { $$ = ast::make_assignment_statement(ast::make_variable_expression($1), std::move($3)); }
 
-if_statement: IF LPAREN expression RPAREN statement                                     { $$ = ast::make_if_statement(std::move($3), std::move($5)); }
-              | IF LPAREN expression RPAREN statement ELSE statement                    { $$ = ast::make_if_statement(std::move($3), std::move($5), std::move($7)); }
+assignment_statement: assignment_expression_statement SEMICOL             { $$ = std::move($1); }
 
+print_statement: PRINT expression SEMICOL { $$ = make_print_statement(std::move($2)); }
 
-expression: equality_expression { $$ = std::move($1); }
+statements: statements statement  { $$ = std::move($1); $$.push_back(std::move($2)); }
+            | %empty              { }
 
-print_statement: PRINT expression SEMICOL { $$ = make_print_statement($2); }
+statement_block: LBRACE statements RBRACE   { $$ = ast::make_statement_block(std::move($2)); }
+
+statement:  assignment_statement  { $$ = std::move($1); }
+            | print_statement     { $$ = std::move($1); }
+            | statement_block     { $$ = std::move($1); }
 
 %%
 

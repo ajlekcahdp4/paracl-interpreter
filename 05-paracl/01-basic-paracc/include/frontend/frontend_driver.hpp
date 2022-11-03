@@ -13,6 +13,8 @@
 #include "bison_paracl_parser.hpp"
 #include "scanner.hpp"
 
+#include <vector>
+
 namespace paracl::frontend {
 
 class frontend_driver {
@@ -24,7 +26,7 @@ private:
   friend class scanner;
 
 public:
-  ast::i_ast_node_uptr m_ast;
+  ast::i_statement_node_uptr m_ast;
 
   frontend_driver() : m_scanner{}, m_parser{m_scanner, *this} {}
 
