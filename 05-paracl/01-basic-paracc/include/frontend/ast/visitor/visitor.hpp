@@ -20,23 +20,22 @@ class if_statement;
 class print_statement;
 class read_expression;
 class statement_block;
-class statement_expression;
 class unary_expression;
 class variable_expression;
 class while_statement;
 
 class i_ast_visitor {
 public:
-  virtual void visit(assignment_statement &) = 0;
-  virtual void visit(binary_expression &) = 0;
-  virtual void visit(constant_expression &) = 0;
-  virtual void visit(if_statement &) = 0;
-  virtual void visit(print_statement &) = 0;
-  virtual void visit(read_expression &) = 0;
-  virtual void visit(statement_block &) = 0;
-  virtual void visit(unary_expression &) = 0;
-  virtual void visit(variable_expression &) = 0;
-  virtual void visit(while_statement &) = 0;
+  virtual void visit(assignment_statement *) = 0;
+  virtual void visit(binary_expression *) = 0;
+  virtual void visit(constant_expression *) = 0;
+  virtual void visit(if_statement *) = 0;
+  virtual void visit(print_statement *) = 0;
+  virtual void visit(read_expression *) = 0;
+  virtual void visit(statement_block *) = 0;
+  virtual void visit(unary_expression *) = 0;
+  virtual void visit(variable_expression *) = 0;
+  virtual void visit(while_statement *) = 0;
 
   virtual ~i_ast_visitor() {}
 };
@@ -56,5 +55,5 @@ public:
 #include "frontend/ast/while_statement.hpp"
 
 namespace paracl::frontend::ast {
-static inline void ast_node_visit(i_ast_visitor &visitor, i_ast_node &ast_node) { ast_node.accept(visitor); }
+static inline void ast_node_visit(i_ast_visitor &visitor, i_ast_node *ast_node) { ast_node->accept(visitor); }
 } // namespace paracl::frontend::ast

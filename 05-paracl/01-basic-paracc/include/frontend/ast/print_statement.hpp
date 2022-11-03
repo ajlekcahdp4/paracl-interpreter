@@ -20,7 +20,7 @@ public:
 
   print_statement(i_expression_node_uptr &&p_expr) : m_expr{std::move(p_expr)} {}
 
-  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
+  void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 };
 
 static inline i_statement_node_uptr make_print_statement(i_expression_node_uptr &&expr) {

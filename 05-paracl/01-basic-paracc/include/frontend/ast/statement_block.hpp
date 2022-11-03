@@ -24,7 +24,7 @@ public:
 
   void append_statement(i_statement_node_uptr &&statement) { m_statements.emplace_back(std::move(statement)); }
 
-  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
+  void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 };
 
 static inline i_statement_node_uptr make_statement_block(std::vector<i_statement_node_uptr> &&vec) {

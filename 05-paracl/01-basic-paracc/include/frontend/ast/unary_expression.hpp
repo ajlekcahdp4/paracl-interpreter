@@ -40,7 +40,7 @@ public:
   unary_expression(unary_operation op_type, i_expression_node_uptr &&p_expr)
       : m_operation_type{op_type}, m_expr{std::move(p_expr)} {}
 
-  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
+  void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 };
 
 static inline i_expression_node_uptr make_unary_expression(unary_operation op, i_expression_node_uptr &&expr) {

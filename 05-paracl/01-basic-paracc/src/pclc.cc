@@ -12,5 +12,5 @@ int main(int argc, char *argv[]) {
   drv.parse();
 
   std::ofstream os("dump.txt");
-  ast_dump(*drv.m_ast.get(), os);
+  ast_dump(drv.m_ast.get(), os);
 }

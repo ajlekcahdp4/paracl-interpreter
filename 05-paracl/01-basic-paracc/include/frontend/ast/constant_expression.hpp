@@ -15,12 +15,13 @@
 namespace paracl::frontend::ast {
 
 class constant_expression : public i_expression_node {
-public:
   int m_val;
 
+public:
   constant_expression(int p_val) : m_val{p_val} {}
 
-  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
+  void accept(i_ast_visitor &visitor) { visitor.visit(this); }
+  int  value() const { return m_val; }
 };
 
 static inline i_expression_node_uptr make_constant_expression(int val) {

@@ -18,10 +18,10 @@ class assignment_statement : public i_expression_statement_node {
 public:
   i_expression_node_uptr m_left, m_right;
 
-  assignment_statement(i_expression_node_uptr left, i_expression_node_uptr right)
-      : m_left{left.release()}, m_right{right.release()} {}
+  assignment_statement(i_expression_node_uptr &&left, i_expression_node_uptr &&right)
+      : m_left{std::move(left)}, m_right{std::move(right)} {}
 
-  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
+  void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 };
 
 static inline i_expression_statement_node_uptr make_assignment_statement(i_expression_node_uptr &&left,

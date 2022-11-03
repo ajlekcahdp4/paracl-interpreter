@@ -28,7 +28,7 @@ public:
   if_statement(i_expression_node_uptr &&cond, i_statement_node_uptr &&true_block, i_statement_node_uptr &&else_block)
       : m_condition{std::move(cond)}, m_true_block{std::move(true_block)}, m_else_block{std::move(else_block)} {}
 
-  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
+  void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 };
 
 static inline i_statement_node_uptr make_if_statement(i_expression_node_uptr &&cond,

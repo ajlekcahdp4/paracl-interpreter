@@ -22,18 +22,18 @@ private:
 public:
   ast_dump_visitor(std::ostream &os) : m_os{os} {}
 
-  void visit(assignment_statement &) override;
-  void visit(binary_expression &) override;
-  void visit(constant_expression &) override;
-  void visit(if_statement &) override;
-  void visit(print_statement &) override;
-  void visit(read_expression &) override;
-  void visit(statement_block &) override;
-  void visit(unary_expression &) override;
-  void visit(variable_expression &) override;
-  void visit(while_statement &) override;
+  void visit(assignment_statement *) override;
+  void visit(binary_expression *) override;
+  void visit(constant_expression *) override;
+  void visit(if_statement *) override;
+  void visit(print_statement *) override;
+  void visit(read_expression *) override;
+  void visit(statement_block *) override;
+  void visit(unary_expression *) override;
+  void visit(variable_expression *) override;
+  void visit(while_statement *) override;
 };
 
-void ast_dump(i_ast_node &node, std::ostream &os);
+void ast_dump(i_ast_node *node, std::ostream &os);
 
 } // namespace paracl::frontend::ast

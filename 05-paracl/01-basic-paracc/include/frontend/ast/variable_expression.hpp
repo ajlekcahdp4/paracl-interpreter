@@ -12,17 +12,19 @@
 
 #include "i_ast_node.hpp"
 #include <string>
+#include <string_view>
 
 namespace paracl::frontend::ast {
 
 class variable_expression : public i_expression_node {
-public:
   std::string m_name;
 
+public:
   variable_expression() = default;
   variable_expression(std::string p_name) : m_name{p_name} {}
 
-  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
+  void             accept(i_ast_visitor &visitor) { visitor.visit(this); }
+  std::string_view name() const & { return m_name; }
 };
 
 static inline i_expression_node_uptr make_variable_expression(std::string name) {

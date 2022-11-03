@@ -24,7 +24,7 @@ public:
   while_statement(i_expression_node_uptr cond, i_statement_node_uptr block)
       : m_condition{cond.release()}, m_block{block.release()} {}
 
-  void accept(i_ast_visitor &visitor) { visitor.visit(*this); }
+  void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 };
 
 } // namespace paracl::frontend::ast
