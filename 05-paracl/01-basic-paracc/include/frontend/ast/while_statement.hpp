@@ -31,7 +31,7 @@ public:
 };
 
 static inline i_statement_node_uptr make_while_statement(i_expression_node_uptr &&cond, i_statement_node_uptr &&block) {
-  return std::make_unique<if_statement>(std::move(cond), std::move(block));
+  return std::make_unique<while_statement>(std::move(cond), std::move(block));
 }
 
 } // namespace paracl::frontend::ast

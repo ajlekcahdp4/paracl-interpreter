@@ -25,8 +25,9 @@ static void print_declare_node(std::ostream &os, i_ast_node *ptr, std::string_vi
   os << "\tnode_0x" << std::hex << pointer_to_uintptr(ptr) << " [label = \"" << label << "\" ];\n";
 }
 
-static void print_bind_node(std::ostream &os, i_ast_node *parent, i_ast_node *child) {
-  os << "\tnode_0x" << std::hex << pointer_to_uintptr(parent) << " -> node_0x" << pointer_to_uintptr(child) << ";\n";
+static void print_bind_node(std::ostream &os, i_ast_node *parent, i_ast_node *child, std::string_view label = "") {
+  os << "\tnode_0x" << std::hex << pointer_to_uintptr(parent) << " -> node_0x" << pointer_to_uintptr(child)
+     << " [label = \"" << label << "\" ];\n";
 }
 
 void ast_dump_visitor::visit(variable_expression *ptr) {
@@ -78,7 +79,19 @@ void ast_dump_visitor::visit(assignment_statement *ptr) {
   ast_node_visit(*this, ptr->right());
 }
 
-void ast_dump_visitor::visit(if_statement *) {}
+void ast_dump_visitor::visit(if_statement *ptr) {
+  print_declare_node(m_os, ptr, "<if>");
+  print_bind_node(m_os, ptr, ptr->cond(), "<condition>");
+  print_bind_node(m_os, ptr, ptr->true_block(), "<then>");
+
+  ast_node_visit(*this, ptr->cond());
+  ast_node_visit(*this, ptr->true_block());
+
+  if (ptr->else_block()) {
+    print_bind_node(m_os, ptr, ptr->else_block(), "<else>");
+    ast_node_visit(*this, ptr->else_block());
+  }
+}
 
 void ast_dump_visitor::visit(print_statement *ptr) {
   print_declare_node(m_os, ptr, "<print_statement>");
@@ -95,7 +108,14 @@ void ast_dump_visitor::visit(statement_block *ptr) {
   }
 }
 
-void ast_dump_visitor::visit(while_statement *) {}
+void ast_dump_visitor::visit(while_statement *ptr) {
+  print_declare_node(m_os, ptr, "<while>");
+  print_bind_node(m_os, ptr, ptr->cond(), "<condition>");
+  print_bind_node(m_os, ptr, ptr->block(), "<body>");
+
+  ast_node_visit(*this, ptr->cond());
+  ast_node_visit(*this, ptr->block());
+}
 
 void ast_dump(i_ast_node *node, std::ostream &os) {
   ast_dump_visitor dumper{os};

@@ -25,7 +25,7 @@ using namespace paracl::frontend;
 %option prefix="paracl_"
 %option yyclass="scanner"
 
-number      [1-9][0-9]*
+number      (0|[1-9][0-9]*)
 identifier  [a-zA-Z_][a-zA-Z_0-9]*
 
 %%
