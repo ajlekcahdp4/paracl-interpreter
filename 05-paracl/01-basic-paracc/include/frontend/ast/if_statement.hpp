@@ -29,6 +29,10 @@ public:
       : m_condition{std::move(cond)}, m_true_block{std::move(true_block)}, m_else_block{std::move(else_block)} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
+
+  i_expression_node *cond() { return m_condition.get(); }
+  i_statement_node  *true_block() { return m_true_block.get(); }
+  i_statement_node  *else_block() { return m_else_block.get(); }
 };
 
 static inline i_statement_node_uptr make_if_statement(i_expression_node_uptr &&cond,

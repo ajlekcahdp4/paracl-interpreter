@@ -117,9 +117,14 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %type <ast::i_statement_node_uptr> statement_block
 %type <ast::i_statement_node_uptr> statement
 %type <std::vector<ast::i_statement_node_uptr>> statements
+%type <ast::i_statement_node_uptr> if_statement
+%type <ast::i_statement_node_uptr> while_statement
 
 /* Utility rules */
 %type <ast::unary_operation> unary_operator
+
+%precedence THEN
+%precedence ELSE
 
 %start program
 
@@ -173,10 +178,16 @@ statements: statements statement  { $$ = std::move($1); $$.push_back(std::move($
 
 statement_block: LBRACE statements RBRACE   { $$ = ast::make_statement_block(std::move($2)); }
 
+while_statement: WHILE LPAREN expression RPAREN statement { $$ = ast::make_while_statement(std::move($3), std::move($5)); }
+
+if_statement: IF LPAREN expression RPAREN statement %prec THEN        { $$ = ast::make_if_statement(std::move($3), std::move($5)); }
+              | IF LPAREN expression RPAREN statement ELSE statement  { $$ = ast::make_if_statement(std::move($3), std::move($5), std::move($7)); }
+
 statement:  assignment_statement  { $$ = std::move($1); }
             | print_statement     { $$ = std::move($1); }
             | statement_block     { $$ = std::move($1); }
-
+            | while_statement     { $$ = std::move($1); }
+            | if_statement        { $$ = std::move($1); }
 %%
 
 // Bison expects us to provide implementation - otherwise linker complains
