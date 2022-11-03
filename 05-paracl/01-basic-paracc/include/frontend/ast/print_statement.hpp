@@ -15,12 +15,14 @@
 namespace paracl::frontend::ast {
 
 class print_statement : public i_statement_node {
-public:
   i_expression_node_uptr m_expr;
 
+public:
   print_statement(i_expression_node_uptr &&p_expr) : m_expr{std::move(p_expr)} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
+
+  i_expression_node *expr() { return m_expr.get(); }
 };
 
 static inline i_statement_node_uptr make_print_statement(i_expression_node_uptr &&expr) {
