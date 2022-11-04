@@ -44,6 +44,8 @@ public:
     for (int i = m_stack.size() - 1; i >= 0; --i)
       if (m_stack[i]->declared(name)) return i;
   }
+
+  void declare(const std::strin &name) { m_stack.front()->declare(name); }
 };
 
 } // namespace paracl::frontend::ast

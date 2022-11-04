@@ -17,7 +17,7 @@ namespace paracl::frontend::ast {
 
 class ast_resolve_visitor : public i_ast_visitor {
 private:
-  symtab_stack m_symtab;
+  symtab_stack m_scopes;
 
 public:
   void visit(assignment_statement *) override;
