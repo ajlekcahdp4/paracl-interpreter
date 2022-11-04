@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
- * <tsimmerman.ss@phystech.edu>, wrote this file.  As long as you
+ * <tsimmerman.ss@phystech.edu>, <alex.rom23@mail.ru> wrote this file.  As long as you
  * retain this notice you can do whatever you want with this stuff. If we meet
  * some day, and you think this stuff is worth it, you can buy me a beer in
  * return.
@@ -11,12 +11,13 @@
 #pragma once
 
 #include "i_ast_node.hpp"
-
 #include "statement_block.hpp"
+#include "symtab.hpp"
 
 namespace paracl::frontend::ast {
 
 class if_statement : public i_statement_node {
+  symtab                 m_symtab;
   i_expression_node_uptr m_condition;
   i_statement_node_uptr  m_true_block;
   i_statement_node_uptr  m_else_block; // Optional, can be nullptr
