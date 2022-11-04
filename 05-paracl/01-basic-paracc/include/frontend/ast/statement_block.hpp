@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "frontend/symtab.hpp"
 #include "i_ast_node.hpp"
-#include "symtab.hpp"
 #include <vector>
 
 namespace paracl::frontend::ast {

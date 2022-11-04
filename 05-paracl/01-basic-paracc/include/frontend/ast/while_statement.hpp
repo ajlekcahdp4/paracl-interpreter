@@ -10,9 +10,9 @@
 
 #pragma once
 
+#include "frontend/symtab.hpp"
 #include "i_ast_node.hpp"
 #include "statement_block.hpp"
-#include "symtab.hpp"
 
 namespace paracl::frontend::ast {
 
@@ -29,7 +29,8 @@ public:
 
   i_expression_node *cond() { return m_condition.get(); }
   i_statement_node  *block() { return m_block.get(); }
-  symtab            *symtab() { return *m_symtab; }
+
+  symtab &symbol_table() { return m_symtab; }
 };
 
 static inline i_statement_node_uptr make_while_statement(i_expression_node_uptr &&cond, i_statement_node_uptr &&block) {
