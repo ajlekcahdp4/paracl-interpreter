@@ -17,7 +17,8 @@
 namespace paracl::frontend::ast {
 
 class if_statement : public i_statement_node {
-  symtab                 m_symtab;
+  symtab                 m_true_symtab;
+  symtab                 m_false_symtab;
   i_expression_node_uptr m_condition;
   i_statement_node_uptr  m_true_block;
   i_statement_node_uptr  m_else_block; // Optional, can be nullptr
@@ -34,6 +35,8 @@ public:
   i_expression_node *cond() { return m_condition.get(); }
   i_statement_node  *true_block() { return m_true_block.get(); }
   i_statement_node  *else_block() { return m_else_block.get(); }
+  symtab            *true_symtab() { return &m_true_symtab; }
+  symtab            *else_symtab() { return &m_false_symtab; }
 };
 
 static inline i_statement_node_uptr make_if_statement(i_expression_node_uptr &&cond,
