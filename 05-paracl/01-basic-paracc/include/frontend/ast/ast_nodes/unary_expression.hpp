@@ -32,21 +32,21 @@ static inline constexpr std::string_view unary_operation_to_string(unary_operati
   throw std::runtime_error{"Broken unary_operation enum"};
 }
 
-class unary_expression : public i_expression_node {
-  unary_operation        m_operation_type;
-  i_expression_node_uptr m_expr;
+class unary_expression : public i_ast_node {
+  unary_operation m_operation_type;
+  i_ast_node_uptr m_expr;
 
 public:
-  unary_expression(unary_operation op_type, i_expression_node_uptr &&p_expr)
+  unary_expression(unary_operation op_type, i_ast_node_uptr &&p_expr)
       : m_operation_type{op_type}, m_expr{std::move(p_expr)} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 
-  unary_operation    op_type() const { return m_operation_type; }
-  i_expression_node *child() { return m_expr.get(); }
+  unary_operation op_type() const { return m_operation_type; }
+  i_ast_node     *child() { return m_expr.get(); }
 };
 
-static inline i_expression_node_uptr make_unary_expression(unary_operation op, i_expression_node_uptr &&expr) {
+static inline i_ast_node_uptr make_unary_expression(unary_operation op, i_ast_node_uptr &&expr) {
   return std::make_unique<unary_expression>(op, std::move(expr));
 }
 

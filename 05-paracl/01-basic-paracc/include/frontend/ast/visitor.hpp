@@ -23,6 +23,7 @@ class statement_block;
 class unary_expression;
 class variable_expression;
 class while_statement;
+class error_node;
 
 class i_ast_visitor {
 public:
@@ -36,23 +37,14 @@ public:
   virtual void visit(unary_expression *) = 0;
   virtual void visit(variable_expression *) = 0;
   virtual void visit(while_statement *) = 0;
+  virtual void visit(error_node *) = 0;
 
   virtual ~i_ast_visitor() {}
 };
 
 } // namespace paracl::frontend::ast
 
-#include "frontend/ast/assignment_statement.hpp"
-#include "frontend/ast/binary_expression.hpp"
-#include "frontend/ast/constant_expression.hpp"
-#include "frontend/ast/i_ast_node.hpp"
-#include "frontend/ast/if_statement.hpp"
-#include "frontend/ast/print_statement.hpp"
-#include "frontend/ast/read_expression.hpp"
-#include "frontend/ast/statement_block.hpp"
-#include "frontend/ast/unary_expression.hpp"
-#include "frontend/ast/variable_expression.hpp"
-#include "frontend/ast/while_statement.hpp"
+#include "frontend/ast/ast_nodes.hpp"
 
 namespace paracl::frontend::ast {
 static inline void ast_node_visit(i_ast_visitor &visitor, i_ast_node *ast_node) { ast_node->accept(visitor); }

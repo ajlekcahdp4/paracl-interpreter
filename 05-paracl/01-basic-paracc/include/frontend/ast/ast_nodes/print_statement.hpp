@@ -11,24 +11,22 @@
 #pragma once
 
 #include "i_ast_node.hpp"
-#include <string>
-#include <string_view>
 
 namespace paracl::frontend::ast {
 
-class variable_expression : public i_expression_node {
-  std::string m_name;
+class print_statement : public i_ast_node {
+  i_ast_node_uptr m_expr;
 
 public:
-  variable_expression() = default;
-  variable_expression(std::string p_name) : m_name{p_name} {}
+  print_statement(i_ast_node_uptr &&p_expr) : m_expr{std::move(p_expr)} {}
 
-  void             accept(i_ast_visitor &visitor) { visitor.visit(this); }
-  std::string_view name() const & { return m_name; }
+  void accept(i_ast_visitor &visitor) { visitor.visit(this); }
+
+  i_ast_node *expr() { return m_expr.get(); }
 };
 
-static inline i_expression_node_uptr make_variable_expression(std::string name) {
-  return std::make_unique<variable_expression>(name);
+static inline i_ast_node_uptr make_print_statement(i_ast_node_uptr &&expr) {
+  return std::make_unique<print_statement>(std::move(expr));
 }
 
 } // namespace paracl::frontend::ast

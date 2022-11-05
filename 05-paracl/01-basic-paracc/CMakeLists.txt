@@ -102,6 +102,7 @@ add_flex_bison_dependency(scanner parser)
 
 set(PARACL_COMPILER_SOURCES
   src/frontend/ast/dumper.cc
+  src/frontend/ast/semantic_analyzer.cc
 )
 
 add_library(paracl_compiler STATIC ${PARACL_COMPILER_SOURCES} ${BISON_parser_OUTPUTS} ${FLEX_scanner_OUTPUTS})

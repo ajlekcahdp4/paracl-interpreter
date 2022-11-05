@@ -48,23 +48,23 @@ static inline constexpr std::string_view binary_operation_to_string(binary_opera
   throw std::runtime_error{"Broken binary_operation enum"};
 }
 
-class binary_expression : public i_expression_node {
-  binary_operation       m_operation_type;
-  i_expression_node_uptr m_left, m_right;
+class binary_expression : public i_ast_node {
+  binary_operation m_operation_type;
+  i_ast_node_uptr  m_left, m_right;
 
 public:
-  binary_expression(binary_operation op_type, i_expression_node_uptr &&left, i_expression_node_uptr &&right)
+  binary_expression(binary_operation op_type, i_ast_node_uptr &&left, i_ast_node_uptr &&right)
       : m_operation_type{op_type}, m_left{std::move(left)}, m_right{std::move(right)} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 
-  binary_operation   op_type() const { return m_operation_type; }
-  i_expression_node *left() { return m_left.get(); }
-  i_expression_node *right() { return m_right.get(); }
+  binary_operation op_type() const { return m_operation_type; }
+  i_ast_node      *left() { return m_left.get(); }
+  i_ast_node      *right() { return m_right.get(); }
 };
 
-static inline i_expression_node_uptr make_binary_expression(binary_operation op_type, i_expression_node_uptr &&left,
-                                                            i_expression_node_uptr &&right) {
+static inline i_ast_node_uptr make_binary_expression(binary_operation op_type, i_ast_node_uptr &&left,
+                                                     i_ast_node_uptr &&right) {
   return std::make_unique<binary_expression>(op_type, std::move(left), std::move(right));
 }
 

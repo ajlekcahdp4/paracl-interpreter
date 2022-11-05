@@ -14,7 +14,7 @@
 
 namespace paracl::frontend::ast {
 
-class constant_expression : public i_expression_node {
+class constant_expression : public i_ast_node {
   int m_val;
 
 public:
@@ -24,8 +24,6 @@ public:
   int  value() const { return m_val; }
 };
 
-static inline i_expression_node_uptr make_constant_expression(int val) {
-  return std::make_unique<constant_expression>(val);
-}
+static inline i_ast_node_uptr make_constant_expression(int val) { return std::make_unique<constant_expression>(val); }
 
 } // namespace paracl::frontend::ast

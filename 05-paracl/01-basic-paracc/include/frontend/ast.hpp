@@ -10,16 +10,5 @@
 
 #pragma once
 
-#include "ast/assignment_statement.hpp"
-#include "ast/binary_expression.hpp"
-#include "ast/constant_expression.hpp"
-#include "ast/i_ast_node.hpp"
-#include "ast/if_statement.hpp"
-#include "ast/print_statement.hpp"
-#include "ast/read_expression.hpp"
-#include "ast/statement_block.hpp"
-#include "ast/unary_expression.hpp"
-#include "ast/variable_expression.hpp"
-#include "ast/visitor/dumper.hpp"
-#include "ast/visitor/visitor.hpp"
-#include "ast/while_statement.hpp"
+#include "ast/ast_nodes.hpp"
+#include "ast/visitor.hpp"

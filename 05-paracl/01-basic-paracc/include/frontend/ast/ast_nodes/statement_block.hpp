@@ -16,20 +16,20 @@
 
 namespace paracl::frontend::ast {
 
-class statement_block : public i_statement_node {
+class statement_block : public i_ast_node {
 public:
-  std::vector<i_statement_node_uptr> m_statements;
-  symtab                             m_symtab;
+  std::vector<i_ast_node_uptr> m_statements;
+  symtab                       m_symtab;
 
   statement_block() = default;
-  statement_block(std::vector<i_statement_node_uptr> &&vec) : m_statements{std::move(vec)} {}
+  statement_block(std::vector<i_ast_node_uptr> &&vec) : m_statements{std::move(vec)} {}
 
-  void append_statement(i_statement_node_uptr &&statement) { m_statements.emplace_back(std::move(statement)); }
+  void append_statement(i_ast_node_uptr &&statement) { m_statements.emplace_back(std::move(statement)); }
 
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 };
 
-static inline i_statement_node_uptr make_statement_block(std::vector<i_statement_node_uptr> &&vec) {
+static inline i_ast_node_uptr make_statement_block(std::vector<i_ast_node_uptr> &&vec) {
   return std::make_unique<statement_block>(std::move(vec));
 }
 

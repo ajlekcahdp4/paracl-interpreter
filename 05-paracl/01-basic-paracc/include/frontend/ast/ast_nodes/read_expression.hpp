@@ -14,19 +14,13 @@
 
 namespace paracl::frontend::ast {
 
-class print_statement : public i_statement_node {
-  i_expression_node_uptr m_expr;
-
+class read_expression : public i_ast_node {
 public:
-  print_statement(i_expression_node_uptr &&p_expr) : m_expr{std::move(p_expr)} {}
+  read_expression() = default;
 
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
-
-  i_expression_node *expr() { return m_expr.get(); }
 };
 
-static inline i_statement_node_uptr make_print_statement(i_expression_node_uptr &&expr) {
-  return std::make_unique<print_statement>(std::move(expr));
-}
+static inline i_ast_node_uptr make_read_expression() { return std::make_unique<read_expression>(); }
 
 } // namespace paracl::frontend::ast

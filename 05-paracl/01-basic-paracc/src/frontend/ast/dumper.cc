@@ -8,9 +8,7 @@
  * ----------------------------------------------------------------------------
  */
 
-#include "frontend/ast/visitor/dumper.hpp"
-
-#include "frontend/ast/unary_expression.hpp"
+#include "frontend/dumper.hpp"
 #include "utils.hpp"
 
 #include <iostream>
@@ -116,6 +114,14 @@ void ast_dump_visitor::visit(while_statement *ptr) {
   ast_node_visit(*this, ptr->cond());
   ast_node_visit(*this, ptr->block());
 }
+
+// clang-format off
+
+void ast_dump_visitor::visit(error_node *ptr) {
+  print_declare_node(m_os, ptr, "<error>");
+}
+
+// clang-format on
 
 void ast_dump(i_ast_node *node, std::ostream &os) {
   ast_dump_visitor dumper{os};

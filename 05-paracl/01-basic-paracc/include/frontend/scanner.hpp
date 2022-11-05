@@ -20,15 +20,25 @@
 #define YY_DECL paracl::frontend::parser::symbol_type paracl::frontend::scanner::get_next_token()
 
 #include "bison_paracl_parser.hpp"
+#include "location.hpp"
 
 namespace paracl::frontend {
 class frontend_driver;
 
 class scanner : public yyFlexLexer {
 private:
+  frontend_driver &m_driver;
+  position         m_pos;
+
+  frontend_driver &driver() { return m_driver; }
+
 public:
-  scanner() {}
+  scanner(frontend_driver &driver) : m_driver{driver} {}
+
   paracl::frontend::parser::symbol_type get_next_token();
+  position                             &pos() { return m_pos; }
 };
 
 } // namespace paracl::frontend
+
+#include "frontend_driver.hpp"

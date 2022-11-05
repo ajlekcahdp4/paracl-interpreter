@@ -12,6 +12,8 @@
 
 #include "bison_paracl_parser.hpp"
 #include "frontend/ast.hpp"
+#include "frontend/dumper.hpp"
 #include "frontend/frontend_driver.hpp"
 #include "frontend/scanner.hpp"
+#include "frontend/semantic_analyzer.hpp"
 #include "frontend/symtab.hpp"

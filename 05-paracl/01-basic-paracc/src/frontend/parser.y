@@ -17,8 +17,8 @@
 %define api.parser.class { parser }
 %define api.token.constructor
 %define api.value.type variant
-%define parse.assert
 %define api.namespace { paracl::frontend }
+%define parse.error custom
 
 %code requires {
 #include <iostream>
@@ -41,6 +41,7 @@ using namespace paracl::frontend;
 
 #include <iostream>
 #include <string>
+#include <sstream>
 
 #include "frontend/scanner.hpp"
 #include "bison_paracl_parser.hpp"
@@ -58,8 +59,10 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %parse-param { paracl::frontend::frontend_driver &driver }
 
 %define parse.trace
-%define parse.error verbose
 %define api.token.prefix {TOKEN_}
+
+%locations
+%define api.location.file "location.hpp"
 
 /* Signle letter tokens */
 %token LPAREN   "lparen"
@@ -102,23 +105,23 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %token <std::string> IDENTIFIER "identifier"
 
 /* Rules that model the AST */
-%type <ast::i_expression_node_uptr> primary_expression    
-%type <ast::i_expression_node_uptr> multiplicative_expression
-%type <ast::i_expression_node_uptr> unary_expression
-%type <ast::i_expression_node_uptr> additive_expression
-%type <ast::i_expression_node_uptr> comparison_expression
-%type <ast::i_expression_node_uptr> equality_expression
-%type <ast::i_expression_node_uptr> expression
+%type <ast::i_ast_node_uptr> primary_expression    
+%type <ast::i_ast_node_uptr> multiplicative_expression
+%type <ast::i_ast_node_uptr> unary_expression
+%type <ast::i_ast_node_uptr> additive_expression
+%type <ast::i_ast_node_uptr> comparison_expression
+%type <ast::i_ast_node_uptr> equality_expression
+%type <ast::i_ast_node_uptr> expression
 
-%type <ast::i_expression_statement_node_uptr> assignment_expression_statement
+%type <ast::i_ast_node_uptr> assignment_expression_statement
 
-%type <ast::i_statement_node_uptr> print_statement
-%type <ast::i_statement_node_uptr> assignment_statement
-%type <ast::i_statement_node_uptr> statement_block
-%type <ast::i_statement_node_uptr> statement
-%type <std::vector<ast::i_statement_node_uptr>> statements
-%type <ast::i_statement_node_uptr> if_statement
-%type <ast::i_statement_node_uptr> while_statement
+%type <ast::i_ast_node_uptr> print_statement
+%type <ast::i_ast_node_uptr> assignment_statement
+%type <ast::i_ast_node_uptr> statement_block
+%type <ast::i_ast_node_uptr> statement
+%type <std::vector<ast::i_ast_node_uptr>> statements
+%type <ast::i_ast_node_uptr> if_statement
+%type <ast::i_ast_node_uptr> while_statement
 
 /* Utility rules */
 %type <ast::unary_operation> unary_operator
@@ -136,6 +139,7 @@ primary_expression: INTEGER_CONSTANT            { $$ = ast::make_constant_expres
                     | IDENTIFIER                { $$ = ast::make_variable_expression($1); }
                     | QMARK                     { $$ = ast::make_read_expression(); }
                     | LPAREN expression RPAREN  { $$ = std::move($2); }
+                    | LPAREN error RPAREN       { auto error = driver.take_error(); $$ = ast::make_error_node(error.error_message, error.loc);}
 
 unary_operator: PLUS    { $$ = ast::unary_operation::E_UN_OP_POS; }
                 | MINUS { $$ = ast::unary_operation::E_UN_OP_NEG; }
@@ -173,8 +177,9 @@ assignment_statement: assignment_expression_statement SEMICOL             { $$ =
 
 print_statement: PRINT expression SEMICOL { $$ = make_print_statement(std::move($2)); }
 
-statements: statements statement  { $$ = std::move($1); $$.push_back(std::move($2)); }
-            | %empty              { }
+statements: statements statement        { $$ = std::move($1); $$.push_back(std::move($2)); }
+            | statements error SEMICOL  { $$ = std::move($1); auto error = driver.take_error(); $$.push_back(ast::make_error_node(error.error_message, error.loc)); }
+            | %empty                    { }
 
 statement_block: LBRACE statements RBRACE   { $$ = ast::make_statement_block(std::move($2)); }
 
@@ -191,6 +196,17 @@ statement:  assignment_statement  { $$ = std::move($1); }
 %%
 
 // Bison expects us to provide implementation - otherwise linker complains
-void paracl::frontend::parser::error(const std::string &message) {
-  std::cout << "Error: " << message << "\n";
+void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
+  std::cout << "hello\n";
+
+  location loc = ctx.location();
+  std::stringstream error_message;
+  const auto &lookahead = ctx.lookahead();
+  error_message << "Syntax error at " << loc << " : " << "Unexpected " << lookahead.name();
+
+  driver.report_error(error_message.str(), loc);
+}
+
+void paracl::frontend::parser::error(const location &loc, const std::string &message) {
+  /* This never gets called, this is just here so that linker doesn't complain */
 }

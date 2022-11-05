@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "visitor.hpp"
+#include "ast/visitor.hpp"
 #include <iostream>
 
 namespace paracl::frontend::ast {
@@ -32,6 +32,7 @@ public:
   void visit(unary_expression *) override;
   void visit(variable_expression *) override;
   void visit(while_statement *) override;
+  void visit(error_node *) override;
 };
 
 void ast_dump(i_ast_node *node, std::ostream &os);
