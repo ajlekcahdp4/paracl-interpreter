@@ -65,7 +65,7 @@ void semantic_analyzer_visitor::visit(unary_expression *ptr) { ast_node_visit(*t
 
 void semantic_analyzer_visitor::visit(variable_expression *ptr) { m_scopes.declare(std::string{ptr->name()}); }
 
-void ast_resolve(i_ast_node *node) {
+void ast_analyze(i_ast_node *node) {
   semantic_analyzer_visitor resolver{};
   ast_node_visit(resolver, node);
 }

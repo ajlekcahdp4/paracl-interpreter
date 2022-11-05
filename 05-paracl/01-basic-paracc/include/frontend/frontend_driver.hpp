@@ -12,18 +12,13 @@
 
 #include "bison_paracl_parser.hpp"
 #include "scanner.hpp"
+#include "error.hpp"
 
 #include <vector>
 
 namespace paracl::frontend {
 
 class frontend_driver {
-public:
-  struct error_kind {
-    std::string error_message;
-    location    loc;
-  };
-
 private:
   scanner                   m_scanner;
   parser                    m_parser;

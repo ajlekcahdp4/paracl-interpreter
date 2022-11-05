@@ -197,8 +197,6 @@ statement:  assignment_statement  { $$ = std::move($1); }
 
 // Bison expects us to provide implementation - otherwise linker complains
 void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
-  std::cout << "hello\n";
-
   location loc = ctx.location();
   std::stringstream error_message;
   const auto &lookahead = ctx.lookahead();

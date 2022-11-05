@@ -33,6 +33,6 @@ public:
   void visit(error_node *) override;
 };
 
-void ast_resolve(i_ast_node *node);
+void ast_analyze(i_ast_node *node);
 
 } // namespace paracl::frontend::ast
