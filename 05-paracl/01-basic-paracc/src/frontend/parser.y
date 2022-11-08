@@ -92,7 +92,6 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %token LOGICAL_OR   "or"
 
 %token SEMICOL  "semicol"
-%token EOF 0    "eof"
 
 /* Keywords */
 %token WHILE  "while"
@@ -133,13 +132,13 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 
 %%
 
-program: statements { driver.m_ast = ast::make_statement_block(std::move($1)); }
+program:  statements    { driver.m_ast = ast::make_statement_block(std::move($1)); }
 
 primary_expression: INTEGER_CONSTANT            { $$ = ast::make_constant_expression($1); }
                     | IDENTIFIER                { $$ = ast::make_variable_expression($1); }
                     | QMARK                     { $$ = ast::make_read_expression(); }
                     | LPAREN expression RPAREN  { $$ = std::move($2); }
-                    | LPAREN error RPAREN       { auto error = driver.take_error(); $$ = ast::make_error_node(error.error_message, error.loc);}
+                    | LPAREN error RPAREN       { auto error = driver.take_error(); $$ = ast::make_error_node(error.error_message, error.loc); yyerrok; }
 
 unary_operator: PLUS    { $$ = ast::unary_operation::E_UN_OP_POS; }
                 | MINUS { $$ = ast::unary_operation::E_UN_OP_NEG; }
@@ -178,7 +177,8 @@ assignment_statement: assignment_expression_statement SEMICOL             { $$ =
 print_statement: PRINT expression SEMICOL { $$ = make_print_statement(std::move($2)); }
 
 statements: statements statement        { $$ = std::move($1); $$.push_back(std::move($2)); }
-            | statements error SEMICOL  { $$ = std::move($1); auto error = driver.take_error(); $$.push_back(ast::make_error_node(error.error_message, error.loc)); }
+            | statements error SEMICOL  { $$ = std::move($1); auto error = driver.take_error(); $$.push_back(ast::make_error_node(error.error_message, error.loc)); yyerrok; }
+            | statements error YYEOF    { $$ = std::move($1); auto error = driver.take_error(); $$.push_back(ast::make_error_node(error.error_message, error.loc)); yyerrok; }
             | %empty                    { }
 
 statement_block: LBRACE statements RBRACE   { $$ = ast::make_statement_block(std::move($2)); }
@@ -193,11 +193,13 @@ statement:  assignment_statement  { $$ = std::move($1); }
             | statement_block     { $$ = std::move($1); }
             | while_statement     { $$ = std::move($1); }
             | if_statement        { $$ = std::move($1); }
+
 %%
 
 // Bison expects us to provide implementation - otherwise linker complains
 void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
   location loc = ctx.location();
+
   std::stringstream error_message;
   const auto &lookahead = ctx.lookahead();
   error_message << "Syntax error at " << loc << " : " << "Unexpected " << lookahead.name();
