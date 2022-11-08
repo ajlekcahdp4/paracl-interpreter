@@ -48,7 +48,7 @@ public:
     return std::nullopt;
   }
 
-  void declare(std::string_view name) { m_stack.front()->declare(name); }
+  void declare(std::string_view name) { m_stack.back()->declare(name); }
 };
 
 } // namespace paracl::frontend::ast

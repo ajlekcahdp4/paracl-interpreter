@@ -66,43 +66,43 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %define api.location.file "location.hpp"
 
 /* Signle letter tokens */
-%token LPAREN   "lparen"
-%token RPAREN   "rparen"
-%token LBRACE   "lbrace"
-%token RBRACE   "rbrace"
+%token LPAREN   "\'(\'"
+%token RPAREN   "\')\'"
+%token LBRACE   "\'{\'"
+%token RBRACE   "\'}\'"
 
-%token ASSIGN   "assign"
+%token ASSIGN   "\'=\'"
 
-%token COMP_EQ  "=="
-%token COMP_NE  "!="
-%token COMP_GT  "GT"
-%token COMP_LS  "LS"
-%token COMP_GE  "GE"
-%token COMP_LE  "LE"
+%token COMP_EQ  "\'==\'"
+%token COMP_NE  "\'!=\'"
+%token COMP_GT  "\'>\'"
+%token COMP_LS  "\'<\'"
+%token COMP_GE  "\'>=\'"
+%token COMP_LE  "\'<=\'"
 
-%token QMARK    "?"
-%token BANG     "!"
+%token QMARK    "\'?\'"
+%token BANG     "\'!\'"
 
-%token PLUS       "plus"
-%token MINUS      "minus"
-%token MULTIPLY   "multiply"
-%token DIVIDE     "divide"
-%token MODULUS    "modulus"
+%token PLUS       "\'+\'"
+%token MINUS      "\'-\'"
+%token MULTIPLY   "\'*\'"
+%token DIVIDE     "\'/\'"
+%token MODULUS    "\'%\'"
 
-%token LOGICAL_AND  "and"
-%token LOGICAL_OR   "or"
+%token LOGICAL_AND  "\'&&\'"
+%token LOGICAL_OR   "\'||\'"
 
-%token SEMICOL  "semicol"
+%token SEMICOL  "\';\'"
 
 /* Keywords */
-%token WHILE  "while"
-%token IF     "if"
-%token ELSE   "else"
-%token PRINT  "print"
+%token WHILE  "\'while\'"
+%token IF     "\'if\'"
+%token ELSE   "\'else\'"
+%token PRINT  "\'print\'"
 
 /* Terminals */
-%token <int> INTEGER_CONSTANT "integer_constant"
-%token <std::string> IDENTIFIER "identifier"
+%token <int> INTEGER_CONSTANT "\'constant\'"
+%token <std::string> IDENTIFIER "\'identifier\'"
 
 /* Rules that model the AST */
 %type <ast::i_ast_node_uptr> primary_expression    
@@ -205,6 +205,4 @@ void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
 
 void paracl::frontend::parser::error(const location &loc, const std::string &message) {
   /* This only gets called when unexpected errors occur, like running out of memory */
-  std::cerr << "Fatal error: " << message << "\n";
-  std::exit(1);
 }
