@@ -171,7 +171,7 @@ logical_expression: logical_expression LOGICAL_AND equality_expression    { $$ =
 expression: logical_expression                  { $$ = std::move($1); }
             | assignment_expression_statement   { $$ = std::move($1); }
 
-assignment_expression_statement: IDENTIFIER ASSIGN expression             { $$ = ast::make_assignment_statement(ast::make_variable_expression($1, @1), std::move($3), @$); }
+assignment_expression_statement: IDENTIFIER ASSIGN expression             { $$ = ast::make_assignment_statement(std::make_unique<ast::variable_expression>($1, @1), std::move($3), @$); }
 
 assignment_statement: assignment_expression_statement SEMICOL             { $$ = std::move($1); }
 

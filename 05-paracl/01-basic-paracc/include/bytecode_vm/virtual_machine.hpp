@@ -21,8 +21,6 @@
 
 namespace paracl::bytecode_vm {
 
-namespace instruction_set {} // namespace instruction_set
-
 namespace instruction_set {
 
 using namespace decl_vm;
@@ -75,7 +73,7 @@ static constexpr auto                            mod_instr = mod_desc >> [](auto
 static constexpr instruction_desc<E_PRINT_NULLARY> print_desc = "print";
 static constexpr auto                              print_instr = print_desc >> [](auto &&ctx, auto &&) {
   auto first = ctx.pop();
-  std::cout << first << "\n";
+  std::cout << std::dec << first << "\n";
 };
 
 static constexpr instruction_desc<E_PUSH_READ_NULLARY> push_read_desc = "push_read";

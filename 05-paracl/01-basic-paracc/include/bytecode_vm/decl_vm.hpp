@@ -34,6 +34,8 @@ public:
   binary_code_buffer m_binary_code;
   constant_pool      m_constant_pool;
 
+  using value_type = uint8_t;
+
   chunk() = default;
 
   chunk(std::vector<uint8_t> &&p_bin, constant_pool &&p_const)
@@ -43,13 +45,15 @@ public:
   chunk(binary_it bin_begin, binary_it bin_end, constant_it const_begin, constant_it const_end)
       : m_binary_code{bin_begin, bin_end}, m_constant_pool{const_begin, const_end} {}
 
-  void push_byte(uint8_t code) { m_binary_code.push_back(code); }
-
   template <typename T> void push_value(T val) {
     utils::serialization::write_little_endian(val, std::back_inserter(m_binary_code));
   };
 
+  void push_back(uint8_t code) { m_binary_code.push_back(code); }
+  void push_byte(uint8_t code) { m_binary_code.push_back(code); }
   void push_signed_byte(int8_t val) { m_binary_code.push_back(std::bit_cast<uint8_t>(val)); }
+
+  void set_constant_pool(std::vector<int> &&constants) { m_constant_pool = std::move(constants); }
 };
 
 std::optional<chunk> read_chunk(std::istream &);
@@ -65,11 +69,16 @@ template <opcode_underlying_type ident, typename... Ts> struct instruction_desc 
   const std::string_view name;
   using attribute_types = std::tuple<Ts...>;
 
+  constexpr auto        get_name() const { return name; }
+  static constexpr auto get_opcode() { return opcode; }
+  static constexpr auto get_size() { return binary_size; }
+
   constexpr instruction_desc(const char *debug_name) : name{debug_name} {
     if (!debug_name || name[0] == '\0') throw std::runtime_error{"Empty debug names aren't allowed"};
   }
 
-  constexpr auto                     operator>>(auto action) const { return instruction(*this, action); }
+  constexpr auto operator>>(auto action) const { return instruction{*this, action}; }
+
   template <size_t... I> static void pretty_print(auto &os, const attribute_types &tuple, std::index_sequence<I...>) {
     (..., (os << (I == 0 ? "" : ", "), utils::serialization::padded_hex{}(os, std::get<I>(tuple))));
   }
@@ -93,9 +102,9 @@ template <typename t_desc, typename t_action> struct instruction {
   t_action     action = nullptr;
 
   constexpr instruction(t_desc p_description, t_action p_action) : description{p_description}, action{p_action} {}
-  constexpr auto get_name() const { return description.name; }
-  constexpr auto get_opcode() const { return t_desc::opcode; }
-  constexpr auto get_size() const { return t_desc::binary_size; }
+  constexpr auto get_name() const { return description.get_name(); }
+  constexpr auto get_opcode() const { return description.get_opcode(); }
+  constexpr auto get_size() const { return description.get_size(); }
 
   template <typename t_stream> t_stream &pretty_print(t_stream &os, const attribute_tuple_type &attr) const {
     description.pretty_print(os, attr);
@@ -133,6 +142,8 @@ using execution_value_type = int;
 
 template <typename... t_instructions> struct instruction_set_description {
   using instruction_variant_type = std::variant<std::monostate, const t_instructions *...>;
+  using instruction_tuple_type = std::tuple<t_instructions...>;
+
   std::array<instruction_variant_type, std::numeric_limits<opcode_underlying_type>::max() + 1> instruction_lookup_table;
 
   constexpr instruction_set_description(const t_instructions &...instructions)
@@ -166,7 +177,7 @@ public:
       m_ip_end = m_program_code.m_binary_code.end();
     }
 
-    const auto &ip() { return m_ip; }
+    auto ip() { return m_ip; }
 
     const auto &code() const { return m_program_code.m_binary_code; }
     const auto &pool() const { return m_program_code.m_constant_pool; }
@@ -185,9 +196,9 @@ public:
       return top;
     }
 
-    void push(execution_value_type val) { m_execution_stack.push_back(val); }
-    void halt() { halted = true; }
-    bool is_halted() const { return halted; }
+    void  push(execution_value_type val) { m_execution_stack.push_back(val); }
+    void  halt() { halted = true; }
+    bool  is_halted() const { return halted; }
     auto &state() { return m_state; }
   } execution_context;
 

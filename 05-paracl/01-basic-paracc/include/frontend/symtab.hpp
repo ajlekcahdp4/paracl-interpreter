@@ -29,6 +29,10 @@ public:
     auto it = m_table.find(std::string{name});
     return (it != m_table.end());
   }
+
+  auto begin() const { return m_table.begin(); }
+  auto end() const { return m_table.end(); }
+  auto size() const { return m_table.size(); }
 };
 
 class symtab_stack final {

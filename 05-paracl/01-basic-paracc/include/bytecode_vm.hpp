@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "bytecode_vm/opcodes.hpp"
-#include "bytecode_vm/disassembly.hpp"
-#include "bytecode_vm/virtual_machine.hpp"
+#include "bytecode_vm/bytecode_builder.hpp"
 #include "bytecode_vm/decl_vm.hpp"
+#include "bytecode_vm/disassembly.hpp"
+#include "bytecode_vm/opcodes.hpp"
+#include "bytecode_vm/virtual_machine.hpp"

@@ -26,6 +26,8 @@ public:
   std::string_view name() const & { return m_name; }
 };
 
+using variable_expression_uptr = std::unique_ptr<variable_expression>;
+
 static inline i_ast_node_uptr make_variable_expression(std::string name, location l) {
   return std::make_unique<variable_expression>(name, l);
 }
