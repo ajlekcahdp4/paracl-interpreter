@@ -198,7 +198,7 @@ void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
 
   std::stringstream error_message;
   const auto &lookahead = ctx.lookahead();
-  error_message << "Syntax error at " << loc << " : " << "Unexpected " << lookahead.name();
+  error_message << "Syntax error: Unexpected " << lookahead.name();
 
   driver.report_error(error_message.str(), loc);
 }
