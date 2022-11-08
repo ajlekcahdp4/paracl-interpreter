@@ -29,7 +29,9 @@ void semantic_analyzer_visitor::visit(binary_expression *ptr) {
   ast_node_visit(*this, ptr->left());
 }
 
-void semantic_analyzer_visitor::visit(constant_expression *ptr) {}
+void semantic_analyzer_visitor::visit(constant_expression *) { /* Do nothing */
+  ;
+}
 
 void semantic_analyzer_visitor::visit(print_statement *ptr) {}
 
@@ -38,9 +40,12 @@ void semantic_analyzer_visitor::visit(read_expression *ptr) {}
 void semantic_analyzer_visitor::visit(error_node *ptr) {}
 
 void semantic_analyzer_visitor::visit(statement_block *ptr) {
-  m_scopes.begin_scope(&ptr->m_symtab);
-  for (auto &statement : ptr->m_statements)
+  m_scopes.begin_scope(ptr->symbol_table());
+
+  for (auto &statement : ptr->m_statements) {
     ast_node_visit(*this, statement.get());
+  }
+
   m_scopes.end_scope();
 }
 
@@ -48,6 +53,7 @@ void semantic_analyzer_visitor::visit(if_statement *ptr) {
   m_scopes.begin_scope(ptr->true_symtab());
   ast_node_visit(*this, ptr->true_block());
   m_scopes.end_scope();
+
   if (ptr->else_block() != nullptr) {
     m_scopes.begin_scope(ptr->else_symtab());
     ast_node_visit(*this, ptr->else_block());

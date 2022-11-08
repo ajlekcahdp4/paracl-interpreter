@@ -16,11 +16,11 @@ namespace paracl::frontend::ast {
 
 class read_expression : public i_ast_node {
 public:
-  read_expression() = default;
+  read_expression(location l) : i_ast_node{l} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 };
 
-static inline i_ast_node_uptr make_read_expression() { return std::make_unique<read_expression>(); }
+static inline i_ast_node_uptr make_read_expression(location l) { return std::make_unique<read_expression>(l); }
 
 } // namespace paracl::frontend::ast

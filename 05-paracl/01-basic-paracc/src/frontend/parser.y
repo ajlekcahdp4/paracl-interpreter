@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstdlib>
 
 #include "frontend/ast.hpp"
 
@@ -122,9 +123,6 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %type <ast::i_ast_node_uptr> if_statement
 %type <ast::i_ast_node_uptr> while_statement
 
-/* Utility rules */
-%type <ast::unary_operation> unary_operator
-
 %precedence THEN
 %precedence ELSE
 
@@ -132,61 +130,59 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 
 %%
 
-program:  statements    { driver.m_ast = ast::make_statement_block(std::move($1)); }
+program:  statements    { driver.m_ast = ast::make_statement_block(std::move($1), @$); }
 
-primary_expression: INTEGER_CONSTANT            { $$ = ast::make_constant_expression($1); }
-                    | IDENTIFIER                { $$ = ast::make_variable_expression($1); }
-                    | QMARK                     { $$ = ast::make_read_expression(); }
+primary_expression: INTEGER_CONSTANT            { $$ = ast::make_constant_expression($1, @$); }
+                    | IDENTIFIER                { $$ = ast::make_variable_expression($1, @$); }
+                    | QMARK                     { $$ = ast::make_read_expression(@$); }
                     | LPAREN expression RPAREN  { $$ = std::move($2); }
                     | LPAREN error RPAREN       { auto error = driver.take_error(); $$ = ast::make_error_node(error.error_message, error.loc); yyerrok; }
 
-unary_operator: PLUS    { $$ = ast::unary_operation::E_UN_OP_POS; }
-                | MINUS { $$ = ast::unary_operation::E_UN_OP_NEG; }
-                | BANG  { $$ = ast::unary_operation::E_UN_OP_NOT; }
-
-unary_expression: unary_operator unary_expression { $$ = ast::make_unary_expression($1, std::move($2)); }
+unary_expression: PLUS unary_expression           { $$ = ast::make_unary_expression(ast::unary_operation::E_UN_OP_POS, std::move($2), @$); }
+                  | MINUS unary_expression        { $$ = ast::make_unary_expression(ast::unary_operation::E_UN_OP_NEG, std::move($2), @$); }
+                  | BANG unary_expression         { $$ = ast::make_unary_expression(ast::unary_operation::E_UN_OP_NOT, std::move($2), @$); }
                   | primary_expression            { $$ = std::move($1); }
 
-multiplicative_expression:  multiplicative_expression MULTIPLY unary_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_MUL, std::move($1), std::move($3)); }
-                            | multiplicative_expression DIVIDE unary_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_DIV, std::move($1), std::move($3)); }
-                            | multiplicative_expression MODULUS unary_expression  { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_MOD, std::move($1), std::move($3)); }
+multiplicative_expression:  multiplicative_expression MULTIPLY unary_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_MUL, std::move($1), std::move($3), @$); }
+                            | multiplicative_expression DIVIDE unary_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_DIV, std::move($1), std::move($3), @$); }
+                            | multiplicative_expression MODULUS unary_expression  { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_MOD, std::move($1), std::move($3), @$); }
                             | unary_expression                                    { $$ = std::move($1); }
 
-additive_expression:  additive_expression PLUS multiplicative_expression      { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_ADD, std::move($1), std::move($3)); }
-                      | additive_expression MINUS multiplicative_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_SUB, std::move($1), std::move($3)); }
+additive_expression:  additive_expression PLUS multiplicative_expression      { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_ADD, std::move($1), std::move($3), @$); }
+                      | additive_expression MINUS multiplicative_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_SUB, std::move($1), std::move($3), @$); }
                       | multiplicative_expression                             { $$ = std::move($1); }
 
-comparison_expression:  comparison_expression COMP_GT additive_expression     { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_GT, std::move($1), std::move($3)); }
-                        | comparison_expression COMP_LS additive_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_LS, std::move($1), std::move($3));  }
-                        | comparison_expression COMP_GE additive_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_GE, std::move($1), std::move($3)); }
-                        | comparison_expression COMP_LE additive_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_LE, std::move($1), std::move($3)); }
+comparison_expression:  comparison_expression COMP_GT additive_expression     { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_GT, std::move($1), std::move($3), @$); }
+                        | comparison_expression COMP_LS additive_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_LS, std::move($1), std::move($3), @$); }
+                        | comparison_expression COMP_GE additive_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_GE, std::move($1), std::move($3), @$); }
+                        | comparison_expression COMP_LE additive_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_LE, std::move($1), std::move($3), @$); }
                         | additive_expression                                 { $$ = std::move($1); }
 
 
-equality_expression:  equality_expression COMP_EQ comparison_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_EQ, std::move($1), std::move($3)); }
-                      | equality_expression COMP_NE comparison_expression { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_NE, std::move($1), std::move($3)); }
+equality_expression:  equality_expression COMP_EQ comparison_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_EQ, std::move($1), std::move($3), @$); }
+                      | equality_expression COMP_NE comparison_expression { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_NE, std::move($1), std::move($3), @$); }
                       | comparison_expression                             { $$ = std::move($1); }
 
 expression: equality_expression                 { $$ = std::move($1); }
             | assignment_expression_statement   { $$ = std::move($1); }
 
-assignment_expression_statement: IDENTIFIER ASSIGN expression             { $$ = ast::make_assignment_statement(ast::make_variable_expression($1), std::move($3)); }
+assignment_expression_statement: IDENTIFIER ASSIGN expression             { $$ = ast::make_assignment_statement(ast::make_variable_expression($1, @1), std::move($3), @$); }
 
 assignment_statement: assignment_expression_statement SEMICOL             { $$ = std::move($1); }
 
-print_statement: PRINT expression SEMICOL { $$ = make_print_statement(std::move($2)); }
+print_statement: PRINT expression SEMICOL { $$ = make_print_statement(std::move($2), @$); }
 
 statements: statements statement        { $$ = std::move($1); $$.push_back(std::move($2)); }
             | statements error SEMICOL  { $$ = std::move($1); auto error = driver.take_error(); $$.push_back(ast::make_error_node(error.error_message, error.loc)); yyerrok; }
             | statements error YYEOF    { $$ = std::move($1); auto error = driver.take_error(); $$.push_back(ast::make_error_node(error.error_message, error.loc)); yyerrok; }
             | %empty                    { }
 
-statement_block: LBRACE statements RBRACE   { $$ = ast::make_statement_block(std::move($2)); }
+statement_block: LBRACE statements RBRACE   { $$ = ast::make_statement_block(std::move($2), @$); }
 
-while_statement: WHILE LPAREN expression RPAREN statement { $$ = ast::make_while_statement(std::move($3), std::move($5)); }
+while_statement: WHILE LPAREN expression RPAREN statement { $$ = ast::make_while_statement(std::move($3), std::move($5), @$); }
 
-if_statement: IF LPAREN expression RPAREN statement %prec THEN        { $$ = ast::make_if_statement(std::move($3), std::move($5)); }
-              | IF LPAREN expression RPAREN statement ELSE statement  { $$ = ast::make_if_statement(std::move($3), std::move($5), std::move($7)); }
+if_statement: IF LPAREN expression RPAREN statement %prec THEN        { $$ = ast::make_if_statement(std::move($3), std::move($5), @$); }
+              | IF LPAREN expression RPAREN statement ELSE statement  { $$ = ast::make_if_statement(std::move($3), std::move($5), std::move($7), @$); }
 
 statement:  assignment_statement  { $$ = std::move($1); }
             | print_statement     { $$ = std::move($1); }
@@ -208,5 +204,7 @@ void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
 }
 
 void paracl::frontend::parser::error(const location &loc, const std::string &message) {
-  /* This never gets called, this is just here so that linker doesn't complain */
+  /* This only gets called when unexpected errors occur, like running out of memory */
+  std::cerr << "Fatal error: " << message << "\n";
+  std::exit(1);
 }

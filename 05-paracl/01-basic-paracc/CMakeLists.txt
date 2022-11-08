@@ -101,8 +101,8 @@ flex_target(scanner src/frontend/scanner.l scanner.l.cc DEFINES_FILE)
 add_flex_bison_dependency(scanner parser)
 
 set(PARACL_COMPILER_SOURCES
-  src/frontend/ast/dumper.cc
-  src/frontend/ast/semantic_analyzer.cc
+  src/frontend/dumper.cc
+  src/frontend/semantic_analyzer.cc
 )
 
 add_library(paracl_compiler STATIC ${PARACL_COMPILER_SOURCES} ${BISON_parser_OUTPUTS} ${FLEX_scanner_OUTPUTS})

@@ -23,13 +23,13 @@ private:
   location    m_loc;
 
 public:
-  error_node(std::string p_error, location p_l) : m_error_message{p_error}, m_loc{p_l} {};
+  error_node(std::string msg, location l) : i_ast_node{l}, m_error_message{msg} {};
 
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 };
 
-static inline i_ast_node_uptr make_error_node(std::string error, location l) {
-  return std::make_unique<error_node>(error, l);
+static inline i_ast_node_uptr make_error_node(std::string msg, location l) {
+  return std::make_unique<error_node>(msg, l);
 }
 
 } // namespace paracl::frontend::ast
