@@ -46,6 +46,9 @@ identifier  [a-zA-Z_][a-zA-Z_0-9]*
 ">="            { return parser::make_COMP_GE(location{pos(), pos() += yyleng}); }
 "<="            { return parser::make_COMP_LE(location{pos(), pos() += yyleng}); }
 
+"&&"            { return parser::make_LOGICAL_AND(location{pos(), pos() += yyleng}); }
+"||"            { return parser::make_LOGICAL_OR(location{pos(), pos() += yyleng}); }
+
 "!"             { return parser::make_BANG(location{pos(), pos() += yyleng}); }
 "?"             { return parser::make_QMARK(location{pos(), pos() += yyleng}); }
 

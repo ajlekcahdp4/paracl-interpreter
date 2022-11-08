@@ -25,7 +25,9 @@ enum class binary_operation {
   E_BIN_OP_GT,
   E_BIN_OP_LS,
   E_BIN_OP_GE,
-  E_BIN_OP_LE
+  E_BIN_OP_LE,
+  E_BIN_OP_AND,
+  E_BIN_OP_OR,
 };
 
 static inline constexpr std::string_view binary_operation_to_string(binary_operation op) {
@@ -43,6 +45,8 @@ static inline constexpr std::string_view binary_operation_to_string(binary_opera
   case E_BIN_OP_LS: return "<";
   case E_BIN_OP_GE: return ">=";
   case E_BIN_OP_LE: return "<=";
+  case E_BIN_OP_AND: return "&&";
+  case E_BIN_OP_OR: return "||";
   }
 
   throw std::runtime_error{"Broken binary_operation enum"};

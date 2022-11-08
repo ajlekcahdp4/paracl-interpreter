@@ -111,6 +111,7 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %type <ast::i_ast_node_uptr> additive_expression
 %type <ast::i_ast_node_uptr> comparison_expression
 %type <ast::i_ast_node_uptr> equality_expression
+%type <ast::i_ast_node_uptr> logical_expression
 %type <ast::i_ast_node_uptr> expression
 
 %type <ast::i_ast_node_uptr> assignment_expression_statement
@@ -163,7 +164,11 @@ equality_expression:  equality_expression COMP_EQ comparison_expression   { $$ =
                       | equality_expression COMP_NE comparison_expression { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_NE, std::move($1), std::move($3), @$); }
                       | comparison_expression                             { $$ = std::move($1); }
 
-expression: equality_expression                 { $$ = std::move($1); }
+logical_expression: logical_expression LOGICAL_AND equality_expression    { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_AND, std::move($1), std::move($3), @$); }
+                    | logical_expression LOGICAL_OR equality_expression   { $$ = ast::make_binary_expression(ast::binary_operation::E_BIN_OP_OR, std::move($1), std::move($3), @$); }
+                    | equality_expression                                 { $$ = std::move($1); }
+
+expression: logical_expression                  { $$ = std::move($1); }
             | assignment_expression_statement   { $$ = std::move($1); }
 
 assignment_expression_statement: IDENTIFIER ASSIGN expression             { $$ = ast::make_assignment_statement(ast::make_variable_expression($1, @1), std::move($3), @$); }
@@ -192,7 +197,7 @@ statement:  assignment_statement  { $$ = std::move($1); }
 
 %%
 
-// Bison expects us to provide implementation - otherwise linker complains
+// Custom error reporting function
 void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
   location loc = ctx.location();
 
@@ -204,5 +209,6 @@ void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
 }
 
 void paracl::frontend::parser::error(const location &loc, const std::string &message) {
-  /* This only gets called when unexpected errors occur, like running out of memory */
+  /* This only gets called when unexpected errors occur, like running out of memory or when an exception gets thrown. 
+  Don't know what to do about parser::syntax_error exception for now */
 }
