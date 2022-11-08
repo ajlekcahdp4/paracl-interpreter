@@ -23,10 +23,10 @@ private:
   std::unordered_set<std::string> m_table;
 
 public:
-  void declare(const std::string &name) { m_table.emplace(name); }
+  void declare(std::string_view name) { m_table.emplace(name); }
 
-  bool declared(const std::string &name) const {
-    auto it = m_table.find(name);
+  bool declared(std::string_view name) const {
+    auto it = m_table.find(std::string{name});
     return (it != m_table.end());
   }
 };
@@ -41,14 +41,14 @@ public:
   void end_scope() { m_stack.pop_back(); }
 
   // returns index of scope in which variable was declared. returns -1 if not declared.
-  std::optional<unsigned> declared(const std::string &name) const {
+  std::optional<unsigned> declared(std::string_view name) const {
     for (int i = m_stack.size() - 1; i >= 0; --i) {
       if (m_stack[i]->declared(name)) return i;
     }
     return std::nullopt;
   }
 
-  void declare(const std::string &name) { m_stack.front()->declare(name); }
+  void declare(std::string_view name) { m_stack.front()->declare(name); }
 };
 
 } // namespace paracl::frontend::ast

@@ -20,10 +20,10 @@ private:
   symtab_stack m_scopes;
 
   bool valid = true;
-  bool can_declare = true;
 
   enum class semantic_analysis_state {
-    E_CANT_DECLARE,
+    E_LVALUE,
+    E_RVALUE,
     E_DEFAULT,
   } current_state = semantic_analysis_state::E_DEFAULT;
 

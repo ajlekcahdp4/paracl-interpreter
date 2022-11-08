@@ -17,6 +17,7 @@
 namespace paracl::frontend::ast {
 
 class if_statement : public i_ast_node {
+  symtab          m_control_block_symtab;
   symtab          m_true_symtab;
   symtab          m_false_symtab;
   i_ast_node_uptr m_condition;
@@ -39,6 +40,7 @@ public:
 
   symtab *true_symtab() { return &m_true_symtab; }
   symtab *else_symtab() { return &m_false_symtab; }
+  symtab *control_block_symtab() { return &m_control_block_symtab; }
 };
 
 static inline i_ast_node_uptr make_if_statement(i_ast_node_uptr &&cond, i_ast_node_uptr &&true_block, location l) {

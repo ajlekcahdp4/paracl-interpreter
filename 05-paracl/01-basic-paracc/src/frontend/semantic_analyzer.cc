@@ -65,6 +65,10 @@ void semantic_analyzer_visitor::visit(statement_block *ptr) {
 }
 
 void semantic_analyzer_visitor::visit(if_statement *ptr) {
+  m_scopes.begin_scope(ptr->control_block_symtab());
+  ast_node_visit(*this, ptr->cond());
+  m_scopes.end_scope();
+  
   m_scopes.begin_scope(ptr->true_symtab());
   ast_node_visit(*this, ptr->true_block());
   m_scopes.end_scope();
@@ -78,13 +82,25 @@ void semantic_analyzer_visitor::visit(if_statement *ptr) {
 
 void semantic_analyzer_visitor::visit(while_statement *ptr) {
   m_scopes.begin_scope(ptr->symbol_table());
+
+  ast_node_visit(*this, ptr->cond());
   ast_node_visit(*this, ptr->block());
+  
   m_scopes.end_scope();
 }
 
 void semantic_analyzer_visitor::visit(unary_expression *ptr) { ast_node_visit(*this, ptr->child()); }
 
-void semantic_analyzer_visitor::visit(variable_expression *ptr) { m_scopes.declare(std::string{ptr->name()}); }
+void semantic_analyzer_visitor::visit(variable_expression *ptr) { 
+  if (!m_scopes.declared(ptr->name())) {
+    if (current_state == semantic_analysis_state::E_LVALUE) {
+      m_scopes.declare(ptr->name());
+    } else {
+      report_error("Use of undeclared variable", ptr->loc());
+    }
+  }
+  /* TODO[Sergei]: Bind the variable to it's declaration symbol table */
+}
 
 void ast_analyze(i_ast_node *node) {
   semantic_analyzer_visitor resolver{};
