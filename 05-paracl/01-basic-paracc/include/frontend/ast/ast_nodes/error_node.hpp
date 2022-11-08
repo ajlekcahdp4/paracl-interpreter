@@ -20,12 +20,12 @@ namespace paracl::frontend::ast {
 class error_node : public i_ast_node {
 private:
   std::string m_error_message;
-  location    m_loc;
 
 public:
   error_node(std::string msg, location l) : i_ast_node{l}, m_error_message{msg} {};
 
-  void accept(i_ast_visitor &visitor) { visitor.visit(this); }
+  void        accept(i_ast_visitor &visitor) { visitor.visit(this); }
+  std::string error_msg() { return m_error_message; }
 };
 
 static inline i_ast_node_uptr make_error_node(std::string msg, location l) {

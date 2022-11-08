@@ -19,25 +19,40 @@ using namespace paracl::utils::serialization;
 
 namespace paracl::frontend::ast {
 
+// clang-format off
+
+void semantic_analyzer_visitor::visit(constant_expression *) { /* Do nothing */ }
+void semantic_analyzer_visitor::visit(read_expression *) { /* Do nothing */ }
+
+// clang-format on
+
+void semantic_analyzer_visitor::report_error(std::string msg, location loc) {
+  valid = false; // As we have encountered an error the program is ill-formed
+  std::cerr << "Error at " << loc << " : " << msg << "\n";
+}
+
 void semantic_analyzer_visitor::visit(assignment_statement *ptr) {
-  ast_node_visit(*this, ptr->right());
+  set_state(semantic_analysis_state::E_LVALUE);
   ast_node_visit(*this, ptr->left());
+  set_state(semantic_analysis_state::E_RVALUE);
+  ast_node_visit(*this, ptr->right());
+  reset_state();
 }
 
 void semantic_analyzer_visitor::visit(binary_expression *ptr) {
+  set_state(semantic_analysis_state::E_RVALUE);
   ast_node_visit(*this, ptr->right());
   ast_node_visit(*this, ptr->left());
+  reset_state();
 }
 
-void semantic_analyzer_visitor::visit(constant_expression *) { /* Do nothing */
-  ;
+void semantic_analyzer_visitor::visit(print_statement *ptr) {
+  set_state(semantic_analysis_state::E_RVALUE);
+  ast_node_visit(*this, ptr->expr());
+  reset_state();
 }
 
-void semantic_analyzer_visitor::visit(print_statement *ptr) {}
-
-void semantic_analyzer_visitor::visit(read_expression *ptr) {}
-
-void semantic_analyzer_visitor::visit(error_node *ptr) {}
+void semantic_analyzer_visitor::visit(error_node *ptr) { report_error(ptr->error_msg(), ptr->loc()); }
 
 void semantic_analyzer_visitor::visit(statement_block *ptr) {
   m_scopes.begin_scope(ptr->symbol_table());

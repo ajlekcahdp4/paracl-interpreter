@@ -19,9 +19,11 @@ class semantic_analyzer_visitor : public i_ast_visitor {
 private:
   symtab_stack m_scopes;
 
+  bool valid = true;
+  bool can_declare = true;
+
   enum class semantic_analysis_state {
-    E_LVALUE,
-    E_RVALUE,
+    E_CANT_DECLARE,
     E_DEFAULT,
   } current_state = semantic_analysis_state::E_DEFAULT;
 
@@ -39,6 +41,8 @@ public:
   void visit(error_node *) override;
 
   void report_error(std::string msg, location loc);
+  void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
+  void set_state(semantic_analysis_state s) { current_state = s; }
 };
 
 void ast_analyze(i_ast_node *node);
