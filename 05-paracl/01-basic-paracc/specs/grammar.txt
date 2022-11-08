@@ -1,21 +1,59 @@
-This is a draft of ParaCL grammar, syntax and semantics
+program:  statements
 
-# 1. Literals
+primary_expression: INTEGER_CONSTANT
+                    | IDENTIFIER
+                    | QMARK
+                    | LPAREN expression RPAREN
+                    | LPAREN error RPAREN  
 
-literal: TOKEN_INT_LITERAL
+unary_expression: PLUS unary_expression
+                  | MINUS unary_expression
+                  | BANG unary_expression
+                  | primary_expression
 
-# 2. Expressions
+multiplicative_expression:  multiplicative_expression MULTIPLY unary_expression
+                            | multiplicative_expression DIVIDE unary_expression
+                            | multiplicative_expression MODULUS unary_expression
+                            | unary_expression
 
-term: literal
-      | ID
-      | ( expr )
-      | QMARK
+additive_expression:  additive_expression PLUS multiplicative_expression
+                      | additive_expression MINUS multiplicative_expression
+                      | multiplicative_expression
 
-expr: term
-      | expr + expr
-      | expr - expr
-      | expr / expr
-      | expr * expr
-      | expr % expr
-      | - expr
-      
+comparison_expression:  comparison_expression COMP_GT additive_expression
+                        | comparison_expression COMP_LS additive_expression
+                        | comparison_expression COMP_GE additive_expression
+                        | comparison_expression COMP_LE additive_expression
+                        | additive_expression
+
+
+equality_expression:  equality_expression COMP_EQ comparison_expression
+                      | equality_expression COMP_NE comparison_expression
+                      | comparison_expression
+
+expression: equality_expression
+            | assignment_expression_statement
+
+assignment_expression_statement: IDENTIFIER ASSIGN expression
+
+assignment_statement: assignment_expression_statement SEMICOL
+
+print_statement: PRINT expression SEMICOL
+
+statements: statements statement
+            | statements error SEMICOL
+            | statements error YYEOF
+            | %empty
+
+statement_block: LBRACE statements RBRACE
+
+while_statement: WHILE LPAREN expression RPAREN statement
+
+if_statement: IF LPAREN expression RPAREN statement %prec THEN
+              | IF LPAREN expression RPAREN statement ELSE statement
+
+statement:  assignment_statement
+            | print_statement
+            | statement_block
+            | while_statement
+            | if_statement
