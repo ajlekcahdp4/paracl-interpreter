@@ -11,8 +11,8 @@
 #pragma once
 
 #include "bison_paracl_parser.hpp"
-#include "scanner.hpp"
 #include "error.hpp"
+#include "scanner.hpp"
 
 #include <vector>
 
@@ -33,6 +33,7 @@ public:
   frontend_driver() : m_scanner{*this}, m_parser{m_scanner, *this} {}
 
   bool parse() { return m_parser.parse(); }
+
   void switch_input_stream(std::istream *is) { m_scanner.switch_streams(is, nullptr); }
   void report_error(std::string message, location l) { current_error = {message, l}; }
 

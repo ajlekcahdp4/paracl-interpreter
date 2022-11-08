@@ -101,12 +101,13 @@ flex_target(scanner src/frontend/scanner.l scanner.l.cc DEFINES_FILE)
 add_flex_bison_dependency(scanner parser)
 
 set(PARACL_COMPILER_SOURCES
-  src/frontend/ast/dumper.cc
-  src/frontend/ast/semantic_analyzer.cc
+  src/frontend/dumper.cc
+  src/frontend/semantic_analyzer.cc
+  src/codegen.cc
 )
 
 add_library(paracl_compiler STATIC ${PARACL_COMPILER_SOURCES} ${BISON_parser_OUTPUTS} ${FLEX_scanner_OUTPUTS})
 target_include_directories(paracl_compiler PUBLIC include ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(pclc src/pclc.cc)
-target_link_libraries(pclc PUBLIC paracl_compiler)
+target_link_libraries(pclc PUBLIC popl paracl_compiler)

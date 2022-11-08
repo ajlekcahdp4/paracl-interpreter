@@ -20,15 +20,16 @@ class variable_expression : public i_ast_node {
   std::string m_name;
 
 public:
-  variable_expression() = default;
-  variable_expression(std::string p_name) : m_name{p_name} {}
+  variable_expression(std::string p_name, location l) : i_ast_node{l}, m_name{p_name} {}
 
   void             accept(i_ast_visitor &visitor) { visitor.visit(this); }
   std::string_view name() const & { return m_name; }
 };
 
-static inline i_ast_node_uptr make_variable_expression(std::string name) {
-  return std::make_unique<variable_expression>(name);
+using variable_expression_uptr = std::unique_ptr<variable_expression>;
+
+static inline i_ast_node_uptr make_variable_expression(std::string name, location l) {
+  return std::make_unique<variable_expression>(name, l);
 }
 
 } // namespace paracl::frontend::ast

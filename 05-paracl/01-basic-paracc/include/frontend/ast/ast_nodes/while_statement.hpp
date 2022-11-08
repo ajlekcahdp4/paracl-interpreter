@@ -22,8 +22,8 @@ class while_statement : public i_ast_node {
   i_ast_node_uptr m_block;
 
 public:
-  while_statement(i_ast_node_uptr &&cond, i_ast_node_uptr &&block)
-      : m_condition{std::move(cond)}, m_block{std::move(block)} {}
+  while_statement(i_ast_node_uptr &&cond, i_ast_node_uptr &&block, location l)
+      : i_ast_node{l}, m_condition{std::move(cond)}, m_block{std::move(block)} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 
@@ -33,8 +33,8 @@ public:
   symtab *symbol_table() { return &m_symtab; }
 };
 
-static inline i_ast_node_uptr make_while_statement(i_ast_node_uptr &&cond, i_ast_node_uptr &&block) {
-  return std::make_unique<while_statement>(std::move(cond), std::move(block));
+static inline i_ast_node_uptr make_while_statement(i_ast_node_uptr &&cond, i_ast_node_uptr &&block, location l) {
+  return std::make_unique<while_statement>(std::move(cond), std::move(block), l);
 }
 
 } // namespace paracl::frontend::ast

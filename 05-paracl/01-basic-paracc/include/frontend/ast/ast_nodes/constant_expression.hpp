@@ -18,12 +18,14 @@ class constant_expression : public i_ast_node {
   int m_val;
 
 public:
-  constant_expression(int p_val) : m_val{p_val} {}
+  constant_expression(int p_val, location l) : i_ast_node{l}, m_val{p_val} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
   int  value() const { return m_val; }
 };
 
-static inline i_ast_node_uptr make_constant_expression(int val) { return std::make_unique<constant_expression>(val); }
+static inline i_ast_node_uptr make_constant_expression(int val, location loc) {
+  return std::make_unique<constant_expression>(val, loc);
+}
 
 } // namespace paracl::frontend::ast

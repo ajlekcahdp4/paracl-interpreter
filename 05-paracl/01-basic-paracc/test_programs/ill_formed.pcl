@@ -1,0 +1,11 @@
+print a = 5;
+b = ?;
+
+while (c = 1) {       
+        print a;
+        print c;
+        print d;
+}
+
+print c;
+if (() {hello;}
