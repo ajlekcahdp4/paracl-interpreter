@@ -44,14 +44,15 @@ void codegen_visitor::visit(variable_expression *ptr) {
 // clang-format on
 
 void codegen_visitor::visit(print_statement *ptr) {
+  reset_currently_statement();
   ast_node_visit(*this, ptr->expr());
   m_builder.emit_operation(encoded_instruction{print_desc});
 }
 
 void codegen_visitor::visit(assignment_statement *ptr) {
-  bool emit_push = !m_prev_statement;
-  m_prev_statement = false;
+  bool emit_push = !is_currently_statement();
 
+  reset_currently_statement();
   ast_node_visit(*this, ptr->right());
   auto left_index = m_symtab_stack.lookup_location(std::string{ptr->left()->name()});
 
@@ -60,7 +61,10 @@ void codegen_visitor::visit(assignment_statement *ptr) {
 }
 
 void codegen_visitor::visit(binary_expression *ptr) {
+  reset_currently_statement();
   ast_node_visit(*this, ptr->left());
+
+  reset_currently_statement();
   ast_node_visit(*this, ptr->right());
 
   using enum binary_operation;
@@ -90,7 +94,7 @@ void codegen_visitor::visit(statement_block *ptr) {
   }
 
   for (auto &statement : ptr->m_statements) {
-    m_prev_statement = false;
+    set_currently_statement();
     ast_node_visit(*this, statement.get());
   }
 
@@ -102,10 +106,12 @@ void codegen_visitor::visit(statement_block *ptr) {
 }
 
 void codegen_visitor::visit_if_no_else(if_statement *ptr) {
+  reset_currently_statement();
   ast_node_visit(*this, ptr->cond());
 
   auto index_jmp_to_false_block = m_builder.emit_operation(encoded_instruction{jmp_false_desc, 0});
 
+  set_currently_statement();
   ast_node_visit(*this, ptr->true_block());
 
   auto  jump_to_index = m_builder.current_loc();
@@ -115,16 +121,19 @@ void codegen_visitor::visit_if_no_else(if_statement *ptr) {
 }
 
 void codegen_visitor::visit_if_with_else(if_statement *ptr) {
+  reset_currently_statement();
   ast_node_visit(*this, ptr->cond());
 
   auto index_jmp_to_false_block = m_builder.emit_operation(encoded_instruction{jmp_false_desc, 0});
 
+  set_currently_statement();
   ast_node_visit(*this, ptr->true_block());
   auto index_jmp_to_after_true_block = m_builder.emit_operation(encoded_instruction{jmp_desc, 0});
 
   auto &to_relocate_else_jump = m_builder.get_as(jmp_false_desc, index_jmp_to_false_block);
   std::get<0>(to_relocate_else_jump.m_attr) = m_builder.current_loc();
 
+  set_currently_statement();
   ast_node_visit(*this, ptr->else_block());
 
   auto &to_relocate_after_true_block = m_builder.get_as(jmp_desc, index_jmp_to_after_true_block);
@@ -139,7 +148,6 @@ void codegen_visitor::visit(if_statement *ptr) {
     m_builder.emit_operation(encoded_instruction{push_const_desc, lookup_or_insert_constant(0)});
   }
 
-  m_prev_statement = false;
   if (!ptr->else_block()) {
     visit_if_no_else(ptr);
   }
@@ -159,9 +167,11 @@ void codegen_visitor::visit(while_statement *ptr) {
   m_symtab_stack.begin_scope();
 
   auto while_location_start = m_builder.current_loc();
+  reset_currently_statement();
   ast_node_visit(*this, ptr->cond());
 
   auto index_jmp_to_after_loop = m_builder.emit_operation(encoded_instruction{jmp_false_desc, 0});
+  set_currently_statement();
   ast_node_visit(*this, ptr->block());
   m_builder.emit_operation(encoded_instruction{jmp_desc, while_location_start});
 
@@ -174,6 +184,7 @@ void codegen_visitor::visit(while_statement *ptr) {
 void codegen_visitor::visit(unary_expression *ptr) {
   using enum unary_operation;
 
+  reset_currently_statement();
   switch (ptr->op_type()) {
   case E_UN_OP_NEG: {
     m_builder.emit_operation(encoded_instruction{push_const_desc, lookup_or_insert_constant(0)});
@@ -187,7 +198,11 @@ void codegen_visitor::visit(unary_expression *ptr) {
     break;
   }
 
-  case E_UN_OP_NOT: break;
+  case E_UN_OP_NOT: {
+    ast_node_visit(*this, ptr->child());
+    m_builder.emit_operation(encoded_instruction{not_desc});
+    break;
+  }
   }
 }
 

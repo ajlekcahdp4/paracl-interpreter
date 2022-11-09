@@ -13,6 +13,7 @@
 #include <array>
 #include <bits/utility.h>
 #include <cstdint>
+#include <iostream>
 #include <numeric>
 #include <stdexcept>
 #include <string_view>
@@ -157,6 +158,8 @@ public:
   t_desc instruction_set;
 
   struct context {
+    friend class virtual_machine<t_state, t_desc>;
+
   private:
     chunk                             m_program_code;
     std::vector<execution_value_type> m_execution_stack;
@@ -224,9 +227,13 @@ public:
     // clang-format on
   }
 
-  void execute() {
+  void execute(bool validate_stack = false) {
     while (!ctx().is_halted()) {
       execute_instruction();
+    }
+
+    if (validate_stack && ctx().m_execution_stack.size() != 0) {
+      std::cerr << "Warning: execution finished abnormally: stack size = " << ctx().m_execution_stack.size() << "\n";
     }
   }
 };
