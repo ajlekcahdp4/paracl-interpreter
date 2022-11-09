@@ -23,7 +23,8 @@ int main(int argc, char *argv[]) {
 
   auto help_option = op.add<popl::Switch>("h", "help", "Print this help message");
   auto input_file_option = op.add<popl::Value<std::string>>("i", "input", "Specify input file");
-  auto disas = op.add<popl::Switch>("d", "disas", "Disassemble generated code (does not run the program)");
+  auto output_file_option = op.add<popl::Value<std::string>>("o", "output", "Specify output file for compiled program");
+  auto disas_option = op.add<popl::Switch>("d", "disas", "Disassemble generated code (does not run the program)");
 
   op.parse(argc, argv);
 
@@ -37,9 +38,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (disas->is_set()) {
-    dump_binary = true;
-  }
+  dump_binary = disas_option->is_set();
 
   input_file_name = input_file_option->value();
   std::ifstream input_file;
@@ -67,6 +66,23 @@ int main(int argc, char *argv[]) {
   if (dump_binary) {
     chunk_complete_disassembler disas{paracl_isa};
     disas(std::cout, ch);
+    return 0;
+  }
+
+  if (output_file_option->is_set()) {
+    std::string   output_file_name = output_file_option->value();
+    std::ofstream output_file;
+
+    output_file.exceptions(exception_mask);
+
+    try {
+      output_file.open(output_file_name, std::ios::binary);
+    } catch (std::exception &e) {
+      std::cerr << "Error opening output file: " << e.what() << "\n";
+      return 1;
+    }
+
+    write_chunk(output_file, ch);
     return 0;
   }
 
