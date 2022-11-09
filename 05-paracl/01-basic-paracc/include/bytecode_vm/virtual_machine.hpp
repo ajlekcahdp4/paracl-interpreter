@@ -70,6 +70,62 @@ static constexpr auto                            mod_instr = mod_desc >> [](auto
   ctx.push(first % second);
 };
 
+static constexpr instruction_desc<E_AND_NULLARY> and_desc = "and";
+static constexpr auto                            and_instr = and_desc >> [](auto &&ctx, auto &&) {
+  auto second = ctx.pop();
+  auto first = ctx.pop();
+  ctx.push(first && second);
+};
+
+static constexpr instruction_desc<E_OR_NULLARY> or_desc = "or";
+static constexpr auto                           or_instr = or_desc >> [](auto &&ctx, auto &&) {
+  auto second = ctx.pop();
+  auto first = ctx.pop();
+  ctx.push(first || second);
+};
+
+static constexpr instruction_desc<E_CMP_EQ_NULLARY> cmp_eq_desc = "cmp_eq";
+static constexpr auto                               cmp_eq_instr = cmp_eq_desc >> [](auto &&ctx, auto &&) {
+  auto second = ctx.pop();
+  auto first = ctx.pop();
+  ctx.push(first == second);
+};
+
+static constexpr instruction_desc<E_CMP_NE_NULLARY> cmp_ne_desc = "cmp_ne";
+static constexpr auto                               cmp_ne_instr = cmp_ne_desc >> [](auto &&ctx, auto &&) {
+  auto second = ctx.pop();
+  auto first = ctx.pop();
+  ctx.push(first != second);
+};
+
+static constexpr instruction_desc<E_CMP_GT_NULLARY> cmp_gt_desc = "cmp_gt";
+static constexpr auto                               cmp_gt_instr = cmp_gt_desc >> [](auto &&ctx, auto &&) {
+  auto second = ctx.pop();
+  auto first = ctx.pop();
+  ctx.push(first > second);
+};
+
+static constexpr instruction_desc<E_CMP_LS_NULLARY> cmp_ls_desc = "cmp_ls";
+static constexpr auto                               cmp_ls_instr = cmp_ls_desc >> [](auto &&ctx, auto &&) {
+  auto second = ctx.pop();
+  auto first = ctx.pop();
+  ctx.push(first < second);
+};
+
+static constexpr instruction_desc<E_CMP_GE_NULLARY> cmp_ge_desc = "cmp_ge";
+static constexpr auto                               cmp_ge_instr = cmp_ge_desc >> [](auto &&ctx, auto &&) {
+  auto second = ctx.pop();
+  auto first = ctx.pop();
+  ctx.push(first >= second);
+};
+
+static constexpr instruction_desc<E_CMP_LE_NULLARY> cmp_le_desc = "cmp_le";
+static constexpr auto                               cmp_le_instr = cmp_le_desc >> [](auto &&ctx, auto &&) {
+  auto second = ctx.pop();
+  auto first = ctx.pop();
+  ctx.push(first <= second);
+};
+
 static constexpr instruction_desc<E_PRINT_NULLARY> print_desc = "print";
 static constexpr auto                              print_instr = print_desc >> [](auto &&ctx, auto &&) {
   auto first = ctx.pop();
@@ -106,58 +162,25 @@ static constexpr auto conditional_jump = [](auto &&ctx, auto &&attr, bool cond) 
   ctx.set_ip(std::get<0>(attr));
 };
 
-static constexpr instruction_desc<E_CMP_NULLARY> cmp_desc = "cmp";
-static constexpr auto                            cmp_instr = cmp_desc >> [](auto &&ctx, auto &&) {
-  auto &state = ctx.state();
-  auto  second = ctx.pop();
-  auto  first = ctx.pop();
-
-  if (first == second) {
-    state = E_CMP_EQ;
-  } else if (first < second) {
-    state = E_CMP_LS;
-  } else {
-    state = E_CMP_GT;
-  }
-};
-
-static constexpr instruction_desc<E_JMP_ABS_UNARY, uint32_t> jmp_desc = "jmp";
+static constexpr instruction_desc<E_JMP_UNARY, uint32_t> jmp_desc = "jmp";
 static constexpr auto jmp_instr = jmp_desc >> [](auto &&ctx, auto &&attr) { conditional_jump(ctx, attr, true); };
 
-static constexpr instruction_desc<E_JMP_EQ_ABS_UNARY, uint32_t> jmp_eq_desc = "jmp_eq";
-static constexpr auto jmp_eq_instr = jmp_eq_desc >> [](auto &&ctx, auto &&attr) {
-  conditional_jump(ctx, attr, ctx.state() == E_CMP_EQ);
+static constexpr instruction_desc<E_JMP_TRUE_UNARY, uint32_t> jmp_true_desc = "jmp_true";
+static constexpr auto jmp_true_instr = jmp_true_desc >> [](auto &&ctx, auto &&attr) {
+  auto first = ctx.pop();
+  conditional_jump(ctx, attr, first);
 };
 
-static constexpr instruction_desc<E_JMP_NE_ABS_UNARY, uint32_t> jmp_ne_desc = "jmp_eq";
-static constexpr auto jmp_ne_instr = jmp_ne_desc >> [](auto &&ctx, auto &&attr) {
-  conditional_jump(ctx, attr, ctx.state() != E_CMP_EQ);
-};
-
-static constexpr instruction_desc<E_JMP_GT_ABS_UNARY, uint32_t> jmp_gt_desc = "jmp_gt";
-static constexpr auto jmp_gt_instr = jmp_gt_desc >> [](auto &&ctx, auto &&attr) {
-  conditional_jump(ctx, attr, ctx.state() == E_CMP_GT);
-};
-
-static constexpr instruction_desc<E_JMP_LS_ABS_UNARY, uint32_t> jmp_ls_desc = "jmp_ls";
-static constexpr auto jmp_ls_instr = jmp_ls_desc >> [](auto &&ctx, auto &&attr) {
-  conditional_jump(ctx, attr, ctx.state() == E_CMP_LS);
-};
-
-static constexpr instruction_desc<E_JMP_GE_ABS_UNARY, uint32_t> jmp_ge_desc = "jmp_ge";
-static constexpr auto jmp_ge_instr = jmp_ge_desc >> [](auto &&ctx, auto &&attr) {
-  conditional_jump(ctx, attr, ctx.state() == E_CMP_GT || ctx.state() == E_CMP_EQ);
-};
-
-static constexpr instruction_desc<E_JMP_LE_ABS_UNARY, uint32_t> jmp_le_desc = "jmp_le";
-static constexpr auto jmp_le_instr = jmp_le_desc >> [](auto &&ctx, auto &&attr) {
-  conditional_jump(ctx, attr, ctx.state() == E_CMP_LS || ctx.state() == E_CMP_EQ);
+static constexpr instruction_desc<E_JMP_FALSE_UNARY, uint32_t> jmp_false_desc = "jmp_false";
+static constexpr auto jmp_false_instr = jmp_false_desc >> [](auto &&ctx, auto &&attr) {
+  auto first = ctx.pop();
+  conditional_jump(ctx, attr, !first);
 };
 
 static const auto paracl_isa = instruction_set_description(
-    push_const_instr, return_instr, pop_instr, add_instr, sub_instr, mul_instr, div_instr, mod_instr, print_instr,
-    push_read, mov_local_instr, push_local_instr, cmp_instr, jmp_instr, jmp_eq_instr, jmp_ne_instr, jmp_gt_instr,
-    jmp_ls_instr, jmp_ge_instr, jmp_le_instr);
+    push_const_instr, return_instr, pop_instr, add_instr, sub_instr, mul_instr, div_instr, mod_instr, and_instr,
+    or_instr, cmp_eq_instr, cmp_ne_instr, cmp_gt_instr, cmp_ls_instr, cmp_ge_instr, cmp_le_instr, print_instr,
+    push_read, mov_local_instr, push_local_instr, jmp_instr, jmp_true_instr, jmp_false_instr);
 
 } // namespace instruction_set
 

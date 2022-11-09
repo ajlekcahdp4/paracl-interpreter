@@ -61,6 +61,9 @@ class codegen_visitor : public paracl::frontend::ast::i_ast_visitor {
 public:
   codegen_visitor() {}
 
+  void visit_if_no_else(paracl::frontend::ast::if_statement *);
+  void visit_if_with_else(paracl::frontend::ast::if_statement *);
+
   void visit(paracl::frontend::ast::assignment_statement *) override;
   void visit(paracl::frontend::ast::binary_expression *) override;
   void visit(paracl::frontend::ast::constant_expression *) override;

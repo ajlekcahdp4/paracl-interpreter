@@ -70,14 +70,14 @@ void codegen_visitor::visit(binary_expression *ptr) {
   case E_BIN_OP_MUL: m_builder.emit_operation(encoded_instruction{mul_desc}); break;
   case E_BIN_OP_DIV: m_builder.emit_operation(encoded_instruction{div_desc}); break;
   case E_BIN_OP_MOD: m_builder.emit_operation(encoded_instruction{mod_desc}); break;
-  case E_BIN_OP_EQ: break;
-  case E_BIN_OP_NE: break;
-  case E_BIN_OP_GT: break;
-  case E_BIN_OP_LS: break;
-  case E_BIN_OP_GE: break;
-  case E_BIN_OP_LE: break;
-  case E_BIN_OP_AND: break;
-  case E_BIN_OP_OR: break;
+  case E_BIN_OP_EQ: m_builder.emit_operation(encoded_instruction{cmp_eq_desc}); break;
+  case E_BIN_OP_NE: m_builder.emit_operation(encoded_instruction{cmp_ne_desc}); break;
+  case E_BIN_OP_GT: m_builder.emit_operation(encoded_instruction{cmp_gt_desc}); break;
+  case E_BIN_OP_LS: m_builder.emit_operation(encoded_instruction{cmp_ls_desc}); break;
+  case E_BIN_OP_GE: m_builder.emit_operation(encoded_instruction{cmp_ge_desc}); break;
+  case E_BIN_OP_LE: m_builder.emit_operation(encoded_instruction{cmp_le_desc}); break;
+  case E_BIN_OP_AND: m_builder.emit_operation(encoded_instruction{and_desc}); break;
+  case E_BIN_OP_OR: m_builder.emit_operation(encoded_instruction{or_desc}); break;
   }
 }
 
@@ -101,7 +101,52 @@ void codegen_visitor::visit(statement_block *ptr) {
   m_symtab_stack.end_scope();
 }
 
-void codegen_visitor::visit(if_statement *ptr) {}
+void codegen_visitor::visit_if_no_else(if_statement *ptr) {
+  ast_node_visit(*this, ptr->cond());
+
+  auto index_jmp_to_false_block = m_builder.emit_operation(encoded_instruction{jmp_false_desc, 55555});
+
+  for (const auto &v : *ptr->control_block_symtab()) {
+    m_symtab_stack.push_variable(v);
+    m_builder.emit_operation(encoded_instruction{push_const_desc, lookup_or_insert_constant(0)});
+  }
+
+  ast_node_visit(*this, ptr->true_block());
+
+  auto  jump_to_index = m_builder.current_loc();
+  auto &to_relocate = m_builder.get_as(jmp_false_desc, index_jmp_to_false_block);
+
+  std::get<0>(to_relocate.m_attr) = jump_to_index;
+
+  for (uint32_t i = 0; i < ptr->control_block_symtab()->size(); ++i) {
+    m_builder.emit_operation(encoded_instruction{pop_desc});
+  }
+}
+
+void codegen_visitor::visit(if_statement *ptr) {
+  m_symtab_stack.begin_scope();
+
+  for (const auto &v : *ptr->control_block_symtab()) {
+    m_symtab_stack.push_variable(v);
+    m_builder.emit_operation(encoded_instruction{push_const_desc, lookup_or_insert_constant(0)});
+  }
+
+  m_prev_statement = false;
+
+  if (!ptr->else_block()) {
+    visit_if_no_else(ptr);
+  }
+
+  else {
+    // visit_if_with_else(ptr);
+  }
+
+  for (uint32_t i = 0; i < ptr->control_block_symtab()->size(); ++i) {
+    m_builder.emit_operation(encoded_instruction{pop_desc});
+  }
+
+  m_symtab_stack.end_scope();
+}
 
 void codegen_visitor::visit(while_statement *ptr) {}
 
@@ -113,6 +158,7 @@ void codegen_visitor::visit(unary_expression *ptr) {
     m_builder.emit_operation(encoded_instruction{push_const_desc, lookup_or_insert_constant(0)});
     ast_node_visit(*this, ptr->child());
     m_builder.emit_operation(encoded_instruction{sub_desc});
+    break;
   }
 
   case E_UN_OP_POS: {

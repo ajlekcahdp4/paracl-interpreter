@@ -31,7 +31,7 @@ namespace paracl::bytecode_vm::builder {
 
 class placeholder_t {
 public:
-  template <typename T> operator T() const { return T(); }
+  template <typename T> operator T() const { return T{}; }
 };
 
 constexpr placeholder_t placeholder = placeholder_t{};
@@ -80,15 +80,11 @@ private:
   std::vector<uint32_t>                 m_address_array;
 
 public:
+  bytecode_builder() { m_address_array.push_back(0); }
+
   template <typename t_desc> auto emit_operation(encoded_instruction<t_desc> instruction) {
     m_code.push_back(instruction_variant_type{instruction});
-
-    if (m_address_array.empty()) {
-      m_address_array.push_back(0);
-    } else {
-      m_address_array.push_back(instruction.get_size() + m_address_array.back());
-    }
-
+    m_address_array.push_back(instruction.get_size() + m_address_array.back());
     return m_code.size() - 1;
   }
 
@@ -106,6 +102,8 @@ public:
 
     return ch;
   }
+
+  uint32_t current_loc() const { return m_address_array.back(); }
 };
 
 } // namespace paracl::bytecode_vm::builder
