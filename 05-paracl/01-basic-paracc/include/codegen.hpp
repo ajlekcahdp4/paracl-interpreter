@@ -56,7 +56,7 @@ class codegen_visitor : public paracl::frontend::ast::i_ast_visitor {
   std::unordered_map<int, uint32_t> m_constant_map;
   codegen_symtab_stack              m_symtab_stack;
 
-  bool m_prev_statement = false;
+  bool m_is_currently_statement = false;
 
 public:
   codegen_visitor() {}
@@ -75,6 +75,10 @@ public:
   void visit(paracl::frontend::ast::variable_expression *) override;
   void visit(paracl::frontend::ast::while_statement *) override;
   void visit(paracl::frontend::ast::error_node *) override;
+
+  void set_currently_statement() { m_is_currently_statement = true; }
+  void reset_currently_statement() { m_is_currently_statement = false; }
+  bool is_currently_statement() const { return m_is_currently_statement; }
 
   uint32_t lookup_or_insert_constant(int constant) {
     auto     found = m_constant_map.find(constant);

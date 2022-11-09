@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
   vm.set_program_code(std::move(ch));
 
   try {
-    vm.execute();
+    vm.execute(true);
   } catch (std::exception &e) {
     std::cerr << "Encountered an unrecoverable error: " << e.what() << "\nExiting...\n";
     return 1;

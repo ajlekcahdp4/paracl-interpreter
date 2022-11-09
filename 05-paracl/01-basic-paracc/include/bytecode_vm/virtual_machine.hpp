@@ -84,6 +84,12 @@ static constexpr auto                           or_instr = or_desc >> [](auto &&
   ctx.push(first || second);
 };
 
+static constexpr instruction_desc<E_NOT_NULLARY> not_desc = "not";
+static constexpr auto                            not_instr = not_desc >> [](auto &&ctx, auto &&) {
+  auto first = ctx.pop();
+  ctx.push(!first);
+};
+
 static constexpr instruction_desc<E_CMP_EQ_NULLARY> cmp_eq_desc = "cmp_eq";
 static constexpr auto                               cmp_eq_instr = cmp_eq_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
@@ -180,7 +186,7 @@ static constexpr auto jmp_false_instr = jmp_false_desc >> [](auto &&ctx, auto &&
 static const auto paracl_isa = instruction_set_description(
     push_const_instr, return_instr, pop_instr, add_instr, sub_instr, mul_instr, div_instr, mod_instr, and_instr,
     or_instr, cmp_eq_instr, cmp_ne_instr, cmp_gt_instr, cmp_ls_instr, cmp_ge_instr, cmp_le_instr, print_instr,
-    push_read, mov_local_instr, push_local_instr, jmp_instr, jmp_true_instr, jmp_false_instr);
+    push_read, mov_local_instr, push_local_instr, jmp_instr, jmp_true_instr, jmp_false_instr, not_instr);
 
 } // namespace instruction_set
 
