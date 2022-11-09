@@ -104,12 +104,7 @@ void codegen_visitor::visit(statement_block *ptr) {
 void codegen_visitor::visit_if_no_else(if_statement *ptr) {
   ast_node_visit(*this, ptr->cond());
 
-  auto index_jmp_to_false_block = m_builder.emit_operation(encoded_instruction{jmp_false_desc, 55555});
-
-  for (const auto &v : *ptr->control_block_symtab()) {
-    m_symtab_stack.push_variable(v);
-    m_builder.emit_operation(encoded_instruction{push_const_desc, lookup_or_insert_constant(0)});
-  }
+  auto index_jmp_to_false_block = m_builder.emit_operation(encoded_instruction{jmp_false_desc, 0});
 
   ast_node_visit(*this, ptr->true_block());
 
@@ -117,10 +112,23 @@ void codegen_visitor::visit_if_no_else(if_statement *ptr) {
   auto &to_relocate = m_builder.get_as(jmp_false_desc, index_jmp_to_false_block);
 
   std::get<0>(to_relocate.m_attr) = jump_to_index;
+}
 
-  for (uint32_t i = 0; i < ptr->control_block_symtab()->size(); ++i) {
-    m_builder.emit_operation(encoded_instruction{pop_desc});
-  }
+void codegen_visitor::visit_if_with_else(if_statement *ptr) {
+  ast_node_visit(*this, ptr->cond());
+
+  auto index_jmp_to_false_block = m_builder.emit_operation(encoded_instruction{jmp_false_desc, 0});
+
+  ast_node_visit(*this, ptr->true_block());
+  auto index_jmp_to_after_true_block = m_builder.emit_operation(encoded_instruction{jmp_desc, 0});
+
+  auto &to_relocate_else_jump = m_builder.get_as(jmp_false_desc, index_jmp_to_false_block);
+  std::get<0>(to_relocate_else_jump.m_attr) = m_builder.current_loc();
+
+  ast_node_visit(*this, ptr->else_block());
+
+  auto &to_relocate_after_true_block = m_builder.get_as(jmp_desc, index_jmp_to_after_true_block);
+  std::get<0>(to_relocate_after_true_block.m_attr) = m_builder.current_loc();
 }
 
 void codegen_visitor::visit(if_statement *ptr) {
@@ -132,13 +140,12 @@ void codegen_visitor::visit(if_statement *ptr) {
   }
 
   m_prev_statement = false;
-
   if (!ptr->else_block()) {
     visit_if_no_else(ptr);
   }
 
   else {
-    // visit_if_with_else(ptr);
+    visit_if_with_else(ptr);
   }
 
   for (uint32_t i = 0; i < ptr->control_block_symtab()->size(); ++i) {
@@ -148,7 +155,21 @@ void codegen_visitor::visit(if_statement *ptr) {
   m_symtab_stack.end_scope();
 }
 
-void codegen_visitor::visit(while_statement *ptr) {}
+void codegen_visitor::visit(while_statement *ptr) {
+  m_symtab_stack.begin_scope();
+
+  auto while_location_start = m_builder.current_loc();
+  ast_node_visit(*this, ptr->cond());
+
+  auto index_jmp_to_after_loop = m_builder.emit_operation(encoded_instruction{jmp_false_desc, 0});
+  ast_node_visit(*this, ptr->block());
+  m_builder.emit_operation(encoded_instruction{jmp_desc, while_location_start});
+
+  auto &to_relocate_after_loop_jump = m_builder.get_as(jmp_false_desc, index_jmp_to_after_loop);
+  std::get<0>(to_relocate_after_loop_jump.m_attr) = m_builder.current_loc();
+
+  m_symtab_stack.end_scope();
+}
 
 void codegen_visitor::visit(unary_expression *ptr) {
   using enum unary_operation;

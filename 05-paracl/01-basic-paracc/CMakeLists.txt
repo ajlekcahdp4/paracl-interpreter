@@ -110,4 +110,4 @@ add_library(paracl_compiler STATIC ${PARACL_COMPILER_SOURCES} ${BISON_parser_OUT
 target_include_directories(paracl_compiler PUBLIC include ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(pclc src/pclc.cc)
-target_link_libraries(pclc PUBLIC paracl_compiler)
+target_link_libraries(pclc PUBLIC popl paracl_compiler)

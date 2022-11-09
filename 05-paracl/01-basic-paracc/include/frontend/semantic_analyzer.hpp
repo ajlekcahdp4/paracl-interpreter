@@ -19,8 +19,6 @@ class semantic_analyzer_visitor : public i_ast_visitor {
 private:
   symtab_stack m_scopes;
 
-  bool valid = true;
-
   enum class semantic_analysis_state {
     E_LVALUE,
     E_RVALUE,
@@ -28,6 +26,8 @@ private:
   } current_state = semantic_analysis_state::E_DEFAULT;
 
 public:
+  bool valid = true;
+
   void visit(assignment_statement *) override;
   void visit(binary_expression *) override;
   void visit(constant_expression *) override;
@@ -45,6 +45,6 @@ public:
   void set_state(semantic_analysis_state s) { current_state = s; }
 };
 
-void ast_analyze(i_ast_node *node);
+bool ast_analyze(i_ast_node *node);
 
 } // namespace paracl::frontend::ast

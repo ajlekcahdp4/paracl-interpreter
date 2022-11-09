@@ -17,9 +17,10 @@
 namespace paracl::frontend::ast {
 
 class if_statement : public i_ast_node {
-  symtab          m_control_block_symtab;
-  symtab          m_true_symtab;
-  symtab          m_false_symtab;
+  symtab m_control_block_symtab;
+  symtab m_true_symtab;
+  symtab m_false_symtab;
+
   i_ast_node_uptr m_condition;
   i_ast_node_uptr m_true_block;
   i_ast_node_uptr m_else_block; // Optional, can be nullptr
