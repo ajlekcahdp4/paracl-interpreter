@@ -12,12 +12,19 @@
 #include "popl.hpp"
 
 int main(int argc, char *argv[]) {
+  using namespace paracl::bytecode_vm;
+  using namespace instruction_set;
+  using namespace decl_vm::disassembly;
+
   std::string input_file_name;
+  bool        dump_binary = false;
 
   popl::OptionParser op("Allowed options");
 
   auto help_option = op.add<popl::Switch>("h", "help", "Print this help message");
   auto input_file_option = op.add<popl::Value<std::string>>("i", "input", "Specify input file");
+  auto disas = op.add<popl::Switch>("d", "disas", "Disassemble generated code (does not run the program)");
+
   op.parse(argc, argv);
 
   if (help_option->is_set()) {
@@ -28,6 +35,10 @@ int main(int argc, char *argv[]) {
   if (!input_file_option->is_set()) {
     std::cerr << "File not specified\n";
     return 1;
+  }
+
+  if (disas->is_set()) {
+    dump_binary = true;
   }
 
   input_file_name = input_file_option->value();
@@ -51,14 +62,13 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  using namespace paracl::bytecode_vm;
-  using namespace instruction_set;
-  using namespace decl_vm::disassembly;
-
   auto ch = paracl::codegen::generate_code(drv.m_ast.get());
 
-  chunk_complete_disassembler disas{paracl_isa};
-  disas(std::cout, ch);
+  if (dump_binary) {
+    chunk_complete_disassembler disas{paracl_isa};
+    disas(std::cout, ch);
+    return 0;
+  }
 
   auto vm = create_paracl_vm();
   vm.set_program_code(std::move(ch));
