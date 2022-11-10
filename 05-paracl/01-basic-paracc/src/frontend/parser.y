@@ -9,7 +9,7 @@
  */
 
 %skeleton "lalr1.cc"
-%require "3.1"
+%require "3.2"
 
 %defines
 
