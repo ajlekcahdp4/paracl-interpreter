@@ -79,6 +79,7 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %token COMP_LS  "\'<\'"
 %token COMP_GE  "\'>=\'"
 %token COMP_LE  "\'<=\'"
+%token EOF 0    "\'end of file\'"
 
 %token QMARK    "\'?\'"
 %token BANG     "\'!\'"
@@ -179,7 +180,7 @@ print_statement: PRINT expression SEMICOL { $$ = make_print_statement(std::move(
 
 statements: statements statement        { $$ = std::move($1); $$.push_back(std::move($2)); }
             | statements error SEMICOL  { $$ = std::move($1); auto error = driver.take_error(); $$.push_back(ast::make_error_node(error.error_message, error.loc)); yyerrok; }
-            | statements error YYEOF    { $$ = std::move($1); auto error = driver.take_error(); $$.push_back(ast::make_error_node(error.error_message, error.loc)); yyerrok; }
+            | statements error EOF    { $$ = std::move($1); auto error = driver.take_error(); $$.push_back(ast::make_error_node(error.error_message, error.loc)); yyerrok; }
             | %empty                    { }
 
 statement_block: LBRACE statements RBRACE   { $$ = ast::make_statement_block(std::move($2), @$); }

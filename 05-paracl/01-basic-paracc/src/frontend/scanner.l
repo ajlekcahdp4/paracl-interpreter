@@ -68,6 +68,6 @@ identifier  [a-zA-Z_][a-zA-Z_0-9]*
 
 .               { location loc = {pos(), pos() += yyleng}; std::string msg = "Unknown token"; m_driver.report_error(msg, loc); throw parser::syntax_error{loc, msg}; }
 
-<<EOF>>         { return paracl::frontend::parser::make_YYEOF(location{pos(), pos() += yyleng}); }
+<<EOF>>         { return paracl::frontend::parser::make_EOF(location{pos(), pos() += yyleng}); }
 
 %%
