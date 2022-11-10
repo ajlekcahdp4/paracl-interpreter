@@ -67,44 +67,44 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %define api.location.file "location.hpp"
 
 /* Signle letter tokens */
-%token LPAREN   "\'(\'"
-%token RPAREN   "\')\'"
-%token LBRACE   "\'{\'"
-%token RBRACE   "\'}\'"
+%token LPAREN   "("
+%token RPAREN   ")"
+%token LBRACE   "{"
+%token RBRACE   "}"
 
-%token ASSIGN   "\'=\'"
+%token ASSIGN   "="
 
-%token COMP_EQ  "\'==\'"
-%token COMP_NE  "\'!=\'"
-%token COMP_GT  "\'>\'"
-%token COMP_LS  "\'<\'"
-%token COMP_GE  "\'>=\'"
-%token COMP_LE  "\'<=\'"
-%token EOF 0    "\'end of file\'"
+%token COMP_EQ  "=="
+%token COMP_NE  "!="
+%token COMP_GT  ">"
+%token COMP_LS  "<"
+%token COMP_GE  ">="
+%token COMP_LE  "<="
+%token EOF 0    "end of file"
 
-%token QMARK    "\'?\'"
-%token BANG     "\'!\'"
+%token QMARK    "?"
+%token BANG     "!"
 
-%token PLUS       "\'+\'"
-%token MINUS      "\'-\'"
-%token MULTIPLY   "\'*\'"
-%token DIVIDE     "\'/\'"
-%token MODULUS    "\'%\'"
+%token PLUS       "+"
+%token MINUS      "-"
+%token MULTIPLY   "*"
+%token DIVIDE     "/"
+%token MODULUS    "%"
 
-%token LOGICAL_AND  "\'&&\'"
-%token LOGICAL_OR   "\'||\'"
+%token LOGICAL_AND  "&&"
+%token LOGICAL_OR   "||"
 
-%token SEMICOL  "\';\'"
+%token SEMICOL  ";"
 
 /* Keywords */
-%token WHILE  "\'while\'"
-%token IF     "\'if\'"
-%token ELSE   "\'else\'"
-%token PRINT  "\'print\'"
+%token WHILE  "while"
+%token IF     "if"
+%token ELSE   "else"
+%token PRINT  "print"
 
 /* Terminals */
-%token <int> INTEGER_CONSTANT "\'constant\'"
-%token <std::string> IDENTIFIER "\'identifier\'"
+%token <int> INTEGER_CONSTANT "constant"
+%token <std::string> IDENTIFIER "identifier"
 
 /* Rules that model the AST */
 %type <ast::i_ast_node_uptr> primary_expression    
@@ -200,9 +200,7 @@ statement:  assignment_statement  { $$ = std::move($1); }
 %%
 
 // Custom error reporting function
-/*
-
-void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
+/* void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
   location loc = ctx.location();
 
   std::stringstream error_message;
@@ -210,9 +208,7 @@ void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
   error_message << "Syntax error: Unexpected " << lookahead.name();
 
   driver.report_error(error_message.str(), loc);
-}
-
-*/
+} */
 
 void paracl::frontend::parser::error(const location &loc, const std::string &message) {
   /* When using custom error handling this only gets called when unexpected errors occur, like running out of memory or when an exception gets thrown. 
