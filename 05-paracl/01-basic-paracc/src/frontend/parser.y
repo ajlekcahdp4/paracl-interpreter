@@ -199,7 +199,7 @@ statement:  assignment_statement  { $$ = std::move($1); }
 %%
 
 // Custom error reporting function
-*/
+/*
 
 void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
   location loc = ctx.location();
