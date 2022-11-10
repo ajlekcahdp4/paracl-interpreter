@@ -9,7 +9,7 @@
  */
 
 %skeleton "lalr1.cc"
-%require "3.2"
+%require "3.5"
 
 %defines
 
@@ -18,7 +18,7 @@
 %define api.token.constructor
 %define api.value.type variant
 %define api.namespace { paracl::frontend }
-%define parse.error custom
+%define parse.error verbose
 
 %code requires {
 #include <iostream>
@@ -199,6 +199,8 @@ statement:  assignment_statement  { $$ = std::move($1); }
 %%
 
 // Custom error reporting function
+*/
+
 void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
   location loc = ctx.location();
 
@@ -209,7 +211,15 @@ void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
   driver.report_error(error_message.str(), loc);
 }
 
+*/
+
 void paracl::frontend::parser::error(const location &loc, const std::string &message) {
-  /* This only gets called when unexpected errors occur, like running out of memory or when an exception gets thrown. 
+  /* When using custom error handling this only gets called when unexpected errors occur, like running out of memory or when an exception gets thrown. 
   Don't know what to do about parser::syntax_error exception for now */
+
+  if (message == "memory exhausted") {
+    throw std::bad_alloc{"Bison memory exhausted"};
+  }
+
+  driver.report_error(message, loc); 
 }
