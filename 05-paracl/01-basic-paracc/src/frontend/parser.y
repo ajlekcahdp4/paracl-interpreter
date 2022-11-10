@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <stdexcept>
 
 #include "frontend/ast.hpp"
 
@@ -218,7 +219,7 @@ void paracl::frontend::parser::error(const location &loc, const std::string &mes
   Don't know what to do about parser::syntax_error exception for now */
 
   if (message == "memory exhausted") {
-    throw std::bad_alloc{"Bison memory exhausted"};
+    throw std::runtime_error{"Bison memory exhausted"};
   }
 
   driver.report_error(message, loc); 
