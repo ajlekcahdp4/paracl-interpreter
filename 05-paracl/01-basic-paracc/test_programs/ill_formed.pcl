@@ -5,7 +5,8 @@ b = ?;
 while (c = 1) {       
         print a;
         print c;
-        print d;
+        print d; 
+        $$;
 }
 
 print c;

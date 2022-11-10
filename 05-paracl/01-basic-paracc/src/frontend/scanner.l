@@ -69,7 +69,7 @@ cpp_style_comment "//".*"\n"
 [ \t]+              { pos().columns(yyleng); }
 {cpp_style_comment} { pos().lines(1); }
 
-.               { location loc = {pos(), pos() += yyleng}; std::string msg = "Unknown token"; m_driver.report_error(msg, loc); throw parser::syntax_error{loc, msg}; }
+.               { location loc = {pos(), pos() += yyleng}; std::string msg = "Unknown character"; m_driver.report_error(msg, loc); throw parser::syntax_error{loc, msg}; }
 
 <<EOF>>         { return paracl::frontend::parser::make_EOF(location{pos(), pos() += yyleng}); }
 
