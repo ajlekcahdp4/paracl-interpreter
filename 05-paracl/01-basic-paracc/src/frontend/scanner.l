@@ -26,6 +26,8 @@ using namespace paracl::frontend;
 number      (0|[1-9][0-9]*)
 identifier  [a-zA-Z_][a-zA-Z_0-9]*
 
+cpp_style_comment "//".*"\n"
+
 %%
 
 "while"         { return parser::make_WHILE(location{pos(), pos() += yyleng}); }
@@ -63,8 +65,9 @@ identifier  [a-zA-Z_][a-zA-Z_0-9]*
 {identifier}    { return parser::make_IDENTIFIER(yytext, location{pos(), pos() += yyleng}); }
 {number}        { return parser::make_INTEGER_CONSTANT(std::atoi(yytext), location{pos(), pos() += yyleng}); }
 
-[\n]+           { pos().lines(yyleng); }
-[ \t]+          { pos().columns(yyleng); }
+[\n]+               { pos().lines(yyleng); }
+[ \t]+              { pos().columns(yyleng); }
+{cpp_style_comment} { pos().lines(1); }
 
 .               { location loc = {pos(), pos() += yyleng}; std::string msg = "Unknown token"; m_driver.report_error(msg, loc); throw parser::syntax_error{loc, msg}; }
 
