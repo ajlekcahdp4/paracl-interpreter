@@ -11,7 +11,6 @@
 #pragma once
 
 #include <array>
-#include <bits/utility.h>
 #include <cstdint>
 #include <iostream>
 #include <numeric>
