@@ -33,7 +33,12 @@ public:
       : i_ast_node{l}, m_condition{std::move(cond)}, m_true_block{std::move(true_block)}, m_else_block{
                                                                                               std::move(else_block)} {}
 
-  void accept(i_ast_visitor &visitor) { visitor.visit(this); }
+  if_statement(const if_statement &) = delete;
+  if_statement &operator=(const if_statement &) = delete;
+
+  void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
+
+  i_ast_node_uptr clone() override;
 
   i_ast_node *cond() { return m_condition.get(); }
   i_ast_node *true_block() { return m_true_block.get(); }

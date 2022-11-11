@@ -100,6 +100,7 @@ flex_target(scanner src/frontend/scanner.l ${CMAKE_CURRENT_BINARY_DIR}/scanner.l
 add_flex_bison_dependency(scanner parser)
 
 set(PARACL_COMPILER_SOURCES
+  src/frontend/ast.cc
   src/frontend/dumper.cc
   src/frontend/semantic_analyzer.cc
   src/codegen.cc

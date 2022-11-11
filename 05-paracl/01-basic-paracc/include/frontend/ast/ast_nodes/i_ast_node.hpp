@@ -16,6 +16,9 @@
 namespace paracl::frontend::ast {
 
 class i_ast_visitor;
+class i_ast_node;
+
+using i_ast_node_uptr = std::unique_ptr<i_ast_node>;
 
 class i_ast_node {
 private:
@@ -25,13 +28,17 @@ public:
   i_ast_node() = default;
   i_ast_node(location l) : m_loc{l} {}
 
+  i_ast_node(const i_ast_node &) = delete;
+  i_ast_node &operator=(const i_ast_node &) = delete;
+
   virtual ~i_ast_node() {}
+
   virtual void accept(i_ast_visitor &) = 0;
+
+  virtual i_ast_node_uptr clone() = 0;
 
   location loc() { return m_loc; }
 };
-
-using i_ast_node_uptr = std::unique_ptr<i_ast_node>;
 
 } // namespace paracl::frontend::ast
 

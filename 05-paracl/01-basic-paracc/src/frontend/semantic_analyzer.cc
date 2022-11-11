@@ -16,8 +16,9 @@
 #include <string>
 
 using namespace paracl::utils::serialization;
+using namespace paracl::frontend::ast;
 
-namespace paracl::frontend::ast {
+namespace paracl::frontend {
 
 // clang-format off
 
@@ -109,4 +110,4 @@ bool ast_analyze(i_ast_node *node) {
   return analyzer.valid();
 }
 
-} // namespace paracl::frontend::ast
+} // namespace paracl::frontend

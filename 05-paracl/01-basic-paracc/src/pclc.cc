@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   auto input_file_option = op.add<popl::Value<std::string>>("i", "input", "Specify input file");
   auto output_file_option = op.add<popl::Value<std::string>>("o", "output", "Specify output file for compiled program");
   auto disas_option = op.add<popl::Switch>("d", "disas", "Disassemble generated code (does not run the program)");
-  
+
   op.parse(argc, argv);
 
   if (help_option->is_set()) {
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  if (!ast::ast_analyze(parse_tree.get())) {
+  if (!ast_analyze(parse_tree.get())) {
     return 1;
   }
 

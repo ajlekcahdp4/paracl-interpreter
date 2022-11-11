@@ -13,9 +13,9 @@
 #include "ast/visitor.hpp"
 #include "symtab.hpp"
 
-namespace paracl::frontend::ast {
+namespace paracl::frontend {
 
-class semantic_analyzer_visitor : public i_ast_visitor {
+class semantic_analyzer_visitor : public ast::i_ast_visitor {
 private:
   symtab_stack m_scopes;
 
@@ -33,21 +33,21 @@ private:
   bool m_valid = true;
 
 public:
-  void visit(assignment_statement *) override;
-  void visit(binary_expression *) override;
-  void visit(constant_expression *) override;
-  void visit(if_statement *) override;
-  void visit(print_statement *) override;
-  void visit(read_expression *) override;
-  void visit(statement_block *) override;
-  void visit(unary_expression *) override;
-  void visit(variable_expression *) override;
-  void visit(while_statement *) override;
-  void visit(error_node *) override;
+  void visit(ast::assignment_statement *) override;
+  void visit(ast::binary_expression *) override;
+  void visit(ast::constant_expression *) override;
+  void visit(ast::if_statement *) override;
+  void visit(ast::print_statement *) override;
+  void visit(ast::read_expression *) override;
+  void visit(ast::statement_block *) override;
+  void visit(ast::unary_expression *) override;
+  void visit(ast::variable_expression *) override;
+  void visit(ast::while_statement *) override;
+  void visit(ast::error_node *) override;
 
   bool valid() const { return m_valid; }
 };
 
-bool ast_analyze(i_ast_node *node);
+bool ast_analyze(ast::i_ast_node *node);
 
-} // namespace paracl::frontend::ast
+} // namespace paracl::frontend

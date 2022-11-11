@@ -16,7 +16,7 @@
 #include <unordered_set>
 #include <vector>
 
-namespace paracl::frontend::ast {
+namespace paracl::frontend {
 
 class symtab final {
 private:
@@ -55,4 +55,4 @@ public:
   void declare(std::string_view name) { m_stack.back()->declare(name); }
 };
 
-} // namespace paracl::frontend::ast
+} // namespace paracl::frontend

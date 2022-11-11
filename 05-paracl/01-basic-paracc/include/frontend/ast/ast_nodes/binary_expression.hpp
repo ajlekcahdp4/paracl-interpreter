@@ -60,7 +60,12 @@ public:
   binary_expression(binary_operation op_type, i_ast_node_uptr left, i_ast_node_uptr right, location l)
       : i_ast_node{l}, m_operation_type{op_type}, m_left{std::move(left)}, m_right{std::move(right)} {}
 
-  void accept(i_ast_visitor &visitor) { visitor.visit(this); }
+  binary_expression(const binary_expression &) = delete;
+  binary_expression &operator=(const binary_expression &) = delete;
+
+  void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
+
+  i_ast_node_uptr clone() override;
 
   binary_operation op_type() const { return m_operation_type; }
   i_ast_node      *left() { return m_left.get(); }

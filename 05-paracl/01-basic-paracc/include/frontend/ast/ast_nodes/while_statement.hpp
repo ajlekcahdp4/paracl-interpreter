@@ -25,7 +25,12 @@ public:
   while_statement(i_ast_node_uptr cond, i_ast_node_uptr block, location l)
       : i_ast_node{l}, m_condition{std::move(cond)}, m_block{std::move(block)} {}
 
+  while_statement(const while_statement &) = delete;
+  while_statement &operator=(const while_statement &) = delete;
+
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
+
+  i_ast_node_uptr clone() override;
 
   i_ast_node *cond() { return m_condition.get(); }
   i_ast_node *block() { return m_block.get(); }

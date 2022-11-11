@@ -40,7 +40,12 @@ public:
   unary_expression(unary_operation op_type, i_ast_node_uptr p_expr, location l)
       : i_ast_node{l}, m_operation_type{op_type}, m_expr{std::move(p_expr)} {}
 
-  void accept(i_ast_visitor &visitor) { visitor.visit(this); }
+  unary_expression(const unary_expression &) = delete;
+  unary_expression &operator=(const unary_expression &) = delete;
+
+  void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
+
+  i_ast_node_uptr clone() override;
 
   unary_operation op_type() const { return m_operation_type; }
   i_ast_node     *child() { return m_expr.get(); }

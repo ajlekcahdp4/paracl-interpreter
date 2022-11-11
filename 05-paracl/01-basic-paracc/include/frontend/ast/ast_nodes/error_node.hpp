@@ -24,7 +24,13 @@ private:
 public:
   error_node(std::string msg, location l) : i_ast_node{l}, m_error_message{msg} {};
 
-  void        accept(i_ast_visitor &visitor) { visitor.visit(this); }
+  error_node(const error_node &) = delete;
+  error_node &operator=(const error_node &) = delete;
+
+  void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
+
+  i_ast_node_uptr clone() override;
+
   std::string error_msg() { return m_error_message; }
 };
 
