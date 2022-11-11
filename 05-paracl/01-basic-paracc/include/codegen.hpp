@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
@@ -28,13 +29,13 @@ private:
   uint32_t total_count = 0;
 
 public:
-  uint32_t lookup_location(const std::string &name) {
-    for (int i = m_stack.size() - 1; i >= 0; --i) {
-      const auto &elem = m_stack[i];
+  uint32_t lookup_location(const std::string &name) const {
+    for (auto its = m_stack.rbegin(), ite = m_stack.rend(); its != ite; ++its) {
+      const auto &elem = *its;
       auto        found = elem.find(name);
-      if (found == elem.end()) continue;
-      return found->second;
+      if (found != elem.end()) return found->second;
     }
+
     throw std::logic_error{"Codegen: trying to look up location of a variable not present in the symbol table"};
   }
 
@@ -52,17 +53,27 @@ public:
 };
 
 class codegen_visitor : public paracl::frontend::ast::i_ast_visitor {
-  paracl::bytecode_vm::builder::bytecode_builder<decltype(paracl::bytecode_vm::instruction_set::paracl_isa)> m_builder;
+  using builder_type =
+      paracl::bytecode_vm::builder::bytecode_builder<decltype(paracl::bytecode_vm::instruction_set::paracl_isa)>;
+
   std::unordered_map<int, uint32_t> m_constant_map;
-  codegen_symtab_stack              m_symtab_stack;
+
+  codegen_symtab_stack m_symtab_stack;
+  builder_type         m_builder;
 
   bool m_is_currently_statement = false;
 
-public:
-  codegen_visitor() = default;
+  void set_currently_statement();
+  void reset_currently_statement();
+  bool is_currently_statement() const;
 
   void visit_if_no_else(paracl::frontend::ast::if_statement *);
   void visit_if_with_else(paracl::frontend::ast::if_statement *);
+
+  uint32_t lookup_or_insert_constant(int constant);
+
+public:
+  codegen_visitor() = default;
 
   void visit(paracl::frontend::ast::assignment_statement *) override;
   void visit(paracl::frontend::ast::binary_expression *) override;
@@ -76,11 +87,6 @@ public:
   void visit(paracl::frontend::ast::while_statement *) override;
   void visit(paracl::frontend::ast::error_node *) override;
 
-  void set_currently_statement();
-  void reset_currently_statement();
-  bool is_currently_statement() const;
-
-  uint32_t lookup_or_insert_constant(int constant);
   paracl::bytecode_vm::decl_vm::chunk to_chunk();
 };
 
