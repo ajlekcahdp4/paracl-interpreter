@@ -7,6 +7,7 @@
 #include "bytecode_vm.hpp"
 #include "codegen.hpp"
 #include "frontend.hpp"
+#include "frontend/dumper.hpp"
 #include "frontend/semantic_analyzer.hpp"
 
 #include "popl.hpp"
@@ -22,10 +23,11 @@ int main(int argc, char *argv[]) {
   popl::OptionParser op("Allowed options");
 
   auto help_option = op.add<popl::Switch>("h", "help", "Print this help message");
+  auto ast_dump_option = op.add<popl::Switch>("a", "ast-dump", "Dump AST");
   auto input_file_option = op.add<popl::Value<std::string>>("i", "input", "Specify input file");
   auto output_file_option = op.add<popl::Value<std::string>>("o", "output", "Specify output file for compiled program");
   auto disas_option = op.add<popl::Switch>("d", "disas", "Disassemble generated code (does not run the program)");
-
+  
   op.parse(argc, argv);
 
   if (help_option->is_set()) {
@@ -57,6 +59,11 @@ int main(int argc, char *argv[]) {
   drv.switch_input_stream(&input_file);
   drv.parse();
   auto parse_tree = std::move(drv).take_ast();
+
+  if (ast_dump_option->is_set()) {
+    paracl::frontend::ast::ast_dump(parse_tree.get(), std::cout);
+    return 0;
+  }
 
   if (!ast::ast_analyze(parse_tree.get())) {
     return 1;

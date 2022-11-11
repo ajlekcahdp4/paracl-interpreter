@@ -1,10 +1,10 @@
 n = ?;
 fact = 1;
+i = 1;
 
-while (n > 0)
+while (i <= n)
 {
-  fact = fact * n;
-  n = n - 1;
+  fact = fact * i;
+  i = i + 1;
+  print fact;
 }
-
-print fact;
