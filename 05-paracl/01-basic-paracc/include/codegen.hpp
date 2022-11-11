@@ -59,7 +59,7 @@ class codegen_visitor : public paracl::frontend::ast::i_ast_visitor {
   bool m_is_currently_statement = false;
 
 public:
-  codegen_visitor() {}
+  codegen_visitor() = default;
 
   void visit_if_no_else(paracl::frontend::ast::if_statement *);
   void visit_if_with_else(paracl::frontend::ast::if_statement *);
@@ -76,45 +76,12 @@ public:
   void visit(paracl::frontend::ast::while_statement *) override;
   void visit(paracl::frontend::ast::error_node *) override;
 
-  void set_currently_statement() { m_is_currently_statement = true; }
-  void reset_currently_statement() { m_is_currently_statement = false; }
-  bool is_currently_statement() const { return m_is_currently_statement; }
+  void set_currently_statement();
+  void reset_currently_statement();
+  bool is_currently_statement() const;
 
-  uint32_t lookup_or_insert_constant(int constant) {
-    auto     found = m_constant_map.find(constant);
-    uint32_t index;
-
-    if (found == m_constant_map.end()) {
-      index = m_constant_map.size();
-      m_constant_map.insert({constant, index});
-    }
-
-    else {
-      index = found->second;
-    }
-
-    return index;
-  }
-
-  paracl::bytecode_vm::decl_vm::chunk to_chunk() {
-    using namespace paracl::bytecode_vm::builder;
-    using namespace paracl::bytecode_vm::instruction_set;
-
-    // Last instruction is ret
-    m_builder.emit_operation(encoded_instruction{return_desc});
-
-    auto ch = m_builder.to_chunk();
-
-    std::vector<int> constants;
-    constants.resize(m_constant_map.size());
-
-    for (const auto &v : m_constant_map) {
-      constants[v.second] = v.first;
-    }
-
-    ch.set_constant_pool(std::move(constants));
-    return ch;
-  }
+  uint32_t lookup_or_insert_constant(int constant);
+  paracl::bytecode_vm::decl_vm::chunk to_chunk();
 };
 
 paracl::bytecode_vm::decl_vm::chunk generate_code(paracl::frontend::ast::i_ast_node *);

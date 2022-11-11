@@ -206,8 +206,48 @@ void codegen_visitor::visit(unary_expression *ptr) {
   }
 }
 
+void codegen_visitor::set_currently_statement() { m_is_currently_statement = true; }
+void codegen_visitor::reset_currently_statement() { m_is_currently_statement = false; }
+bool codegen_visitor::is_currently_statement() const { return m_is_currently_statement; }
+
+uint32_t codegen_visitor::lookup_or_insert_constant(int constant) {
+  auto     found = m_constant_map.find(constant);
+  uint32_t index;
+
+  if (found == m_constant_map.end()) {
+    index = m_constant_map.size();
+    m_constant_map.insert({constant, index});
+  }
+
+  else {
+    index = found->second;
+  }
+
+  return index;
+}
+
+paracl::bytecode_vm::decl_vm::chunk codegen_visitor::to_chunk() {
+  using namespace paracl::bytecode_vm::builder;
+  using namespace paracl::bytecode_vm::instruction_set;
+
+  // Last instruction is ret
+  m_builder.emit_operation(encoded_instruction{return_desc});
+
+  auto ch = m_builder.to_chunk();
+
+  std::vector<int> constants;
+  constants.resize(m_constant_map.size());
+
+  for (const auto &v : m_constant_map) {
+    constants[v.second] = v.first;
+  }
+
+  ch.set_constant_pool(std::move(constants));
+  return ch;
+}
+
 chunk generate_code(i_ast_node *ptr) {
-  codegen_visitor generator{};
+  codegen_visitor generator;
   ast_node_visit(generator, ptr);
   return generator.to_chunk();
 }

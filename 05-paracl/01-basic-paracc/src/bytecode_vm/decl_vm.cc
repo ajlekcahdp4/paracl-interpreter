@@ -60,14 +60,14 @@ std::optional<chunk> read_chunk(std::istream &is) {
   }
 
   first = after_binary_length_it;
-  constant_pool pool;
+  constant_pool_type pool;
   for (uint32_t i = 0; i < count_constants.value(); ++i) {
     auto [constant, iter] = utils::serialization::read_little_endian<int>(first, last);
     first = iter;
     pool.push_back(constant.value());
   }
 
-  binary_code_buffer buf;
+  binary_code_buffer_type buf;
   buf.reserve(length_binary.value());
   std::copy(first, last, std::back_inserter(buf));
 
@@ -80,22 +80,22 @@ void write_chunk(std::ostream &os, const chunk &ch) {
   std::array<uint8_t, sizeof(uint32_t)> size_buffer;
 
   // Write number of constants
-  utils::serialization::write_little_endian(ch.m_constant_pool.size(), size_buffer.begin());
+  utils::serialization::write_little_endian(ch.constant_pool().size(), size_buffer.begin());
   os.write(reinterpret_cast<const char *>(size_buffer.data()), size_buffer.size());
 
   // Write length of binary code (in bytes)
-  utils::serialization::write_little_endian(ch.m_binary_code.size(), size_buffer.begin());
+  utils::serialization::write_little_endian(ch.binary_code().size(), size_buffer.begin());
   os.write(reinterpret_cast<const char *>(size_buffer.data()), size_buffer.size());
 
   // Write constants
   std::vector<uint8_t> raw_constants;
-  raw_constants.reserve(ch.m_constant_pool.size() * sizeof(int));
-  for (const auto &v : ch.m_constant_pool) {
+  raw_constants.reserve(ch.constant_pool().size() * sizeof(int));
+  for (const auto &v : ch.constant_pool()) {
     utils::serialization::write_little_endian(v, std::back_inserter(raw_constants));
   }
 
   os.write(reinterpret_cast<const char *>(raw_constants.data()), raw_constants.size());
-  os.write(reinterpret_cast<const char *>(ch.m_binary_code.data()), ch.m_binary_code.size());
+  os.write(reinterpret_cast<const char *>(ch.binary_code().data()), ch.binary_code().size());
 }
 
 } // namespace paracl::bytecode_vm

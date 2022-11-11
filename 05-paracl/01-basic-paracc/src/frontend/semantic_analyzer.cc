@@ -27,7 +27,7 @@ void semantic_analyzer_visitor::visit(read_expression *) { /* Do nothing */ }
 // clang-format on
 
 void semantic_analyzer_visitor::report_error(std::string msg, location loc) {
-  valid = false; // As we have encountered an error the program is ill-formed
+  m_valid = false; // As we have encountered an error the program is ill-formed
   std::cerr << "Error at " << loc << " : " << msg << "\n";
 }
 
@@ -104,9 +104,9 @@ void semantic_analyzer_visitor::visit(variable_expression *ptr) {
 }
 
 bool ast_analyze(i_ast_node *node) {
-  semantic_analyzer_visitor resolver{};
-  ast_node_visit(resolver, node);
-  return resolver.valid;
+  semantic_analyzer_visitor analyzer;
+  ast_node_visit(analyzer, node);
+  return analyzer.valid();
 }
 
 } // namespace paracl::frontend::ast

@@ -11,6 +11,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <numeric>
@@ -18,6 +19,7 @@
 #include <string_view>
 
 #include <tuple>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -26,19 +28,20 @@
 
 namespace paracl::bytecode_vm::decl_vm {
 
-using constant_pool = std::vector<int>;
-using binary_code_buffer = std::vector<uint8_t>;
+using constant_pool_type = std::vector<int>;
+using binary_code_buffer_type = std::vector<uint8_t>;
 
 class chunk {
-public:
-  binary_code_buffer m_binary_code;
-  constant_pool      m_constant_pool;
+private:
+  binary_code_buffer_type m_binary_code;
+  constant_pool_type      m_constant_pool;
 
+public:
   using value_type = uint8_t;
 
   chunk() = default;
 
-  chunk(std::vector<uint8_t> &&p_bin, constant_pool &&p_const)
+  chunk(std::vector<uint8_t> &&p_bin, constant_pool_type &&p_const)
       : m_binary_code{std::move(p_bin)}, m_constant_pool{std::move(p_const)} {}
 
   template <std::input_iterator binary_it, std::input_iterator constant_it>
@@ -54,6 +57,11 @@ public:
   void push_signed_byte(int8_t val) { m_binary_code.push_back(std::bit_cast<uint8_t>(val)); }
 
   void set_constant_pool(std::vector<int> &&constants) { m_constant_pool = std::move(constants); }
+
+  auto       &binary_code() { return m_binary_code; }
+  auto       &constant_pool() { return m_constant_pool; }
+  const auto &binary_code() const { return m_binary_code; }
+  const auto &constant_pool() const { return m_constant_pool; }
 };
 
 std::optional<chunk> read_chunk(std::istream &);
@@ -146,45 +154,43 @@ template <typename... t_instructions> struct instruction_set_description {
 
   std::array<instruction_variant_type, std::numeric_limits<opcode_underlying_type>::max() + 1> instruction_lookup_table;
 
-  constexpr instruction_set_description(const t_instructions &...instructions)
-      : instruction_lookup_table{std::monostate{}} {
+  instruction_set_description(const t_instructions &...instructions) : instruction_lookup_table{std::monostate{}} {
     ((instruction_lookup_table[instructions.get_opcode()] = std::addressof(instructions)), ...);
   }
 };
 
-template <typename t_state, typename t_desc> class virtual_machine {
+template <typename t_desc> class virtual_machine {
 public:
   t_desc instruction_set;
 
   struct context {
-    friend class virtual_machine<t_state, t_desc>;
+    friend class virtual_machine<t_desc>;
 
   private:
-    chunk                             m_program_code;
-    std::vector<execution_value_type> m_execution_stack;
-    t_state                           m_state;
-    bool                              halted = false;
+    std::vector<execution_value_type>  m_execution_stack;
+    binary_code_buffer_type::const_iterator m_ip, m_ip_end;
+
+    chunk m_program_code;
+    bool  m_halted = false;
 
   public:
-    binary_code_buffer::const_iterator m_ip, m_ip_end;
     context() = default;
 
     context(const chunk &ch) : m_program_code{ch} {
-      m_ip = m_program_code.m_binary_code.begin();
-      m_ip_end = m_program_code.m_binary_code.end();
+      m_ip = m_program_code.binary_code().begin();
+      m_ip_end = m_program_code.binary_code().end();
     }
 
     context(chunk &&ch) : m_program_code{std::move(ch)} {
-      m_ip = m_program_code.m_binary_code.begin();
-      m_ip_end = m_program_code.m_binary_code.end();
+      m_ip = m_program_code.binary_code().begin();
+      m_ip_end = m_program_code.binary_code().end();
     }
 
     auto ip() { return m_ip; }
 
-    const auto &code() const { return m_program_code.m_binary_code; }
-    const auto &pool() const { return m_program_code.m_constant_pool; }
-
-    auto &at_stack(uint32_t index) { return m_execution_stack.at(index); }
+    const auto &code() const { return m_program_code.binary_code(); }
+    const auto &pool() const { return m_program_code.constant_pool(); }
+    auto       &at_stack(uint32_t index) { return m_execution_stack.at(index); }
 
     void set_ip(uint32_t new_ip) {
       m_ip = code().begin();
@@ -198,15 +204,18 @@ public:
       return top;
     }
 
-    void  push(execution_value_type val) { m_execution_stack.push_back(val); }
-    void  halt() { halted = true; }
-    bool  is_halted() const { return halted; }
-    auto &state() { return m_state; }
-  } execution_context;
+    void push(execution_value_type val) { m_execution_stack.push_back(val); }
 
-  auto &ctx() { return execution_context; }
+    void halt() { m_halted = true; }
+    bool is_halted() const { return m_halted; }
+  };
 
-  constexpr virtual_machine(t_desc desc) : instruction_set{desc} {}
+  context m_execution_context;
+
+public:
+  auto &ctx() { return m_execution_context; }
+
+  virtual_machine(t_desc desc) : instruction_set{desc}, m_execution_context{} {}
 
   void set_program_code(chunk &&ch) { ctx() = context{std::move(ch)}; }
   void set_program_code(const chunk &ch) { ctx() = context{ch}; }

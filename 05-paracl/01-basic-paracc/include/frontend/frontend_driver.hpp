@@ -21,27 +21,30 @@ namespace paracl::frontend {
 
 class frontend_driver {
 private:
-  scanner                   m_scanner;
-  parser                    m_parser;
-  std::optional<error_kind> current_error;
+  scanner m_scanner;
+  parser  m_parser;
+
+  std::optional<error_kind> m_current_error;
   ast::i_ast_node_uptr      m_ast;
 
   friend class parser;
   friend class scanner;
+
+private:
+  void report_error(std::string message, location l) { m_current_error = {message, l}; }
+
+  error_kind take_error() {
+    auto error = m_current_error.value();
+    m_current_error = std::nullopt;
+    return error;
+  }
 
 public:
   frontend_driver() : m_scanner{*this}, m_parser{m_scanner, *this} {}
 
   bool parse() { return m_parser.parse(); }
   void switch_input_stream(std::istream *is) { m_scanner.switch_streams(is, nullptr); }
-  void report_error(std::string message, location l) { current_error = {message, l}; }
 
   ast::i_ast_node_uptr take_ast() && { return std::move(m_ast); }
-
-  error_kind take_error() {
-    auto error = current_error.value();
-    current_error = std::nullopt;
-    return error;
-  }
 };
 } // namespace paracl::frontend

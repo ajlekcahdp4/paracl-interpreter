@@ -28,13 +28,6 @@
 
 namespace paracl::bytecode_vm::builder {
 
-class placeholder_t {
-public:
-  template <typename T> operator T() const { return T{}; }
-};
-
-constexpr placeholder_t placeholder = placeholder_t{};
-
 template <typename t_desc> struct encoded_instruction {
   using attribute_types = typename t_desc::attribute_types;
 
@@ -76,14 +69,14 @@ public:
 
 private:
   std::vector<instruction_variant_type> m_code;
-  std::vector<uint32_t>                 m_address_array;
+  uint32_t m_cur_loc = 0;
 
 public:
-  bytecode_builder() { m_address_array.push_back(0); }
+  bytecode_builder() = default;
 
   template <typename t_desc> auto emit_operation(encoded_instruction<t_desc> instruction) {
     m_code.push_back(instruction_variant_type{instruction});
-    m_address_array.push_back(instruction.get_size() + m_address_array.back());
+    m_cur_loc += instruction.get_size();
     return m_code.size() - 1;
   }
 
@@ -102,7 +95,7 @@ public:
     return ch;
   }
 
-  uint32_t current_loc() const { return m_address_array.back(); }
+  uint32_t current_loc() const { return m_cur_loc; }
 };
 
 } // namespace paracl::bytecode_vm::builder

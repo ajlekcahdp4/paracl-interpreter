@@ -26,10 +26,10 @@ namespace paracl::bytecode_vm::decl_vm::disassembly {
 
 class constant_pool_disassembler {
 public:
-  template <typename t_stream> t_stream &operator()(t_stream &os, const constant_pool &pool) const {
+  template <typename t_stream> t_stream &operator()(t_stream &os, const constant_pool_type &pool) const {
     os << ".constant_pool\n";
 
-    for (constant_pool::size_type i = 0; i < pool.size(); ++i) {
+    for (constant_pool_type::size_type i = 0; i < pool.size(); ++i) {
       utils::serialization::padded_hex_printer(os, i) << " = { " << std::dec << pool[i] << " }\n";
     }
 
@@ -64,7 +64,7 @@ public:
   template <typename t_stream> t_stream &operator()(t_stream &os, const chunk &chk) const {
     os << ".code\n";
 
-    const auto &binary = chk.m_binary_code;
+    const auto &binary = chk.binary_code();
     auto        start = binary.begin();
 
     for (auto first = binary.begin(), last = binary.end(); first != last;) {
@@ -84,7 +84,7 @@ public:
   chunk_complete_disassembler(t_instr_set isa) : binary_disas{isa} {}
 
   template <typename t_stream> t_stream &operator()(t_stream &os, const chunk &chk) const {
-    constant_pool_disassembler{}(os, chk.m_constant_pool);
+    constant_pool_disassembler{}(os, chk.constant_pool());
     os << "\n";
     binary_disas(os, chk);
     return os;

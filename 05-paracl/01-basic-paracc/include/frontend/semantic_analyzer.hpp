@@ -25,9 +25,14 @@ private:
     E_DEFAULT,
   } current_state = semantic_analysis_state::E_DEFAULT;
 
-public:
-  bool valid = true;
+  void set_state(semantic_analysis_state s) { current_state = s; }
 
+  void report_error(std::string msg, location loc);
+  void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
+
+  bool m_valid = true;
+
+public:
   void visit(assignment_statement *) override;
   void visit(binary_expression *) override;
   void visit(constant_expression *) override;
@@ -40,9 +45,7 @@ public:
   void visit(while_statement *) override;
   void visit(error_node *) override;
 
-  void report_error(std::string msg, location loc);
-  void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
-  void set_state(semantic_analysis_state s) { current_state = s; }
+  bool valid() const { return m_valid; }
 };
 
 bool ast_analyze(i_ast_node *node);

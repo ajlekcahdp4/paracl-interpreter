@@ -11,9 +11,9 @@ set(CMAKE_CXX_STANDARD 20)
 
 # Possibly support windows and MSVC compiler
 if(MSVC)
-  add_compile_options(/W3)
+  add_compile_options(/W2)
 else()
-  add_compile_options(-Wall -Wextra)
+  add_compile_options(-Wall)
 endif()
 
 find_package(GTest)
