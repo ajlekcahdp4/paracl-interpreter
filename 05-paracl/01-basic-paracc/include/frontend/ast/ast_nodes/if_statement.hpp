@@ -26,10 +26,10 @@ class if_statement : public i_ast_node {
   i_ast_node_uptr m_else_block; // Optional, can be nullptr
 
 public:
-  if_statement(i_ast_node_uptr &&cond, i_ast_node_uptr &&true_block, location l)
+  if_statement(i_ast_node_uptr cond, i_ast_node_uptr true_block, location l)
       : i_ast_node{l}, m_condition{std::move(cond)}, m_true_block{std::move(true_block)}, m_else_block{nullptr} {}
 
-  if_statement(i_ast_node_uptr &&cond, i_ast_node_uptr &&true_block, i_ast_node_uptr &&else_block, location l)
+  if_statement(i_ast_node_uptr cond, i_ast_node_uptr true_block, i_ast_node_uptr else_block, location l)
       : i_ast_node{l}, m_condition{std::move(cond)}, m_true_block{std::move(true_block)}, m_else_block{
                                                                                               std::move(else_block)} {}
 
@@ -44,12 +44,12 @@ public:
   symtab *control_block_symtab() { return &m_control_block_symtab; }
 };
 
-static inline i_ast_node_uptr make_if_statement(i_ast_node_uptr &&cond, i_ast_node_uptr &&true_block, location l) {
+static inline i_ast_node_uptr make_if_statement(i_ast_node_uptr cond, i_ast_node_uptr true_block, location l) {
   return std::make_unique<if_statement>(std::move(cond), std::move(true_block), l);
 }
 
-static inline i_ast_node_uptr make_if_statement(i_ast_node_uptr &&cond, i_ast_node_uptr &&true_block,
-                                                i_ast_node_uptr &&else_block, location l) {
+static inline i_ast_node_uptr make_if_statement(i_ast_node_uptr cond, i_ast_node_uptr true_block,
+                                                i_ast_node_uptr else_block, location l) {
   return std::make_unique<if_statement>(std::move(cond), std::move(true_block), std::move(else_block), l);
 }
 

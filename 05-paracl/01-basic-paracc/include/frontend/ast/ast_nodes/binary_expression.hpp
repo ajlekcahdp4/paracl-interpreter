@@ -57,7 +57,7 @@ class binary_expression : public i_ast_node {
   i_ast_node_uptr  m_left, m_right;
 
 public:
-  binary_expression(binary_operation op_type, i_ast_node_uptr &&left, i_ast_node_uptr &&right, location l)
+  binary_expression(binary_operation op_type, i_ast_node_uptr left, i_ast_node_uptr right, location l)
       : i_ast_node{l}, m_operation_type{op_type}, m_left{std::move(left)}, m_right{std::move(right)} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
@@ -67,8 +67,8 @@ public:
   i_ast_node      *right() { return m_right.get(); }
 };
 
-static inline i_ast_node_uptr make_binary_expression(binary_operation op_type, i_ast_node_uptr &&left,
-                                                     i_ast_node_uptr &&right, location l) {
+static inline i_ast_node_uptr make_binary_expression(binary_operation op_type, i_ast_node_uptr left,
+                                                     i_ast_node_uptr right, location l) {
   return std::make_unique<binary_expression>(op_type, std::move(left), std::move(right), l);
 }
 

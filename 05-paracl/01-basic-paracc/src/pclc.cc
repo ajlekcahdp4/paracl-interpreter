@@ -56,12 +56,13 @@ int main(int argc, char *argv[]) {
   paracl::frontend::frontend_driver drv{};
   drv.switch_input_stream(&input_file);
   drv.parse();
+  auto parse_tree = std::move(drv).take_ast();
 
-  if (!ast::ast_analyze(drv.m_ast.get())) {
+  if (!ast::ast_analyze(parse_tree.get())) {
     return 1;
   }
 
-  auto ch = paracl::codegen::generate_code(drv.m_ast.get());
+  auto ch = paracl::codegen::generate_code(parse_tree.get());
 
   if (dump_binary) {
     chunk_complete_disassembler disas{paracl_isa};

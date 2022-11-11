@@ -37,7 +37,7 @@ class unary_expression : public i_ast_node {
   i_ast_node_uptr m_expr;
 
 public:
-  unary_expression(unary_operation op_type, i_ast_node_uptr &&p_expr, location l)
+  unary_expression(unary_operation op_type, i_ast_node_uptr p_expr, location l)
       : i_ast_node{l}, m_operation_type{op_type}, m_expr{std::move(p_expr)} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
@@ -46,7 +46,7 @@ public:
   i_ast_node     *child() { return m_expr.get(); }
 };
 
-static inline i_ast_node_uptr make_unary_expression(unary_operation op, i_ast_node_uptr &&expr, location l) {
+static inline i_ast_node_uptr make_unary_expression(unary_operation op, i_ast_node_uptr expr, location l) {
   return std::make_unique<unary_expression>(op, std::move(expr), l);
 }
 

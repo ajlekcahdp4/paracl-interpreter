@@ -12,6 +12,7 @@
 
 #include "bison_paracl_parser.hpp"
 #include "error.hpp"
+#include "frontend/ast/ast_nodes/i_ast_node.hpp"
 #include "scanner.hpp"
 
 #include <vector>
@@ -23,19 +24,19 @@ private:
   scanner                   m_scanner;
   parser                    m_parser;
   std::optional<error_kind> current_error;
+  ast::i_ast_node_uptr      m_ast;
 
   friend class parser;
   friend class scanner;
 
 public:
-  ast::i_ast_node_uptr m_ast;
-
   frontend_driver() : m_scanner{*this}, m_parser{m_scanner, *this} {}
 
   bool parse() { return m_parser.parse(); }
-
   void switch_input_stream(std::istream *is) { m_scanner.switch_streams(is, nullptr); }
   void report_error(std::string message, location l) { current_error = {message, l}; }
+
+  ast::i_ast_node_uptr take_ast() && { return std::move(m_ast); }
 
   error_kind take_error() {
     auto error = current_error.value();

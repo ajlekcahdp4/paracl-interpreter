@@ -18,14 +18,14 @@ class print_statement : public i_ast_node {
   i_ast_node_uptr m_expr;
 
 public:
-  print_statement(i_ast_node_uptr &&p_expr, location l) : i_ast_node{l}, m_expr{std::move(p_expr)} {}
+  print_statement(i_ast_node_uptr p_expr, location l) : i_ast_node{l}, m_expr{std::move(p_expr)} {}
 
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 
   i_ast_node *expr() { return m_expr.get(); }
 };
 
-static inline i_ast_node_uptr make_print_statement(i_ast_node_uptr &&expr, location l) {
+static inline i_ast_node_uptr make_print_statement(i_ast_node_uptr expr, location l) {
   return std::make_unique<print_statement>(std::move(expr), l);
 }
 

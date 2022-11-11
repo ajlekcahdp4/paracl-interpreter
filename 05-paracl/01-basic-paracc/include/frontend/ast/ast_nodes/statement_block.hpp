@@ -21,15 +21,15 @@ public:
   std::vector<i_ast_node_uptr> m_statements;
   symtab                       m_symtab;
 
-  statement_block(std::vector<i_ast_node_uptr> &&vec, location l) : i_ast_node{l}, m_statements{std::move(vec)} {}
+  statement_block(std::vector<i_ast_node_uptr> vec, location l) : i_ast_node{l}, m_statements{std::move(vec)} {}
 
-  void append_statement(i_ast_node_uptr &&statement) { m_statements.emplace_back(std::move(statement)); }
+  void append_statement(i_ast_node_uptr statement) { m_statements.emplace_back(std::move(statement)); }
 
   void    accept(i_ast_visitor &visitor) { visitor.visit(this); }
   symtab *symbol_table() { return &m_symtab; }
 };
 
-static inline i_ast_node_uptr make_statement_block(std::vector<i_ast_node_uptr> &&vec, location l) {
+static inline i_ast_node_uptr make_statement_block(std::vector<i_ast_node_uptr> vec, location l) {
   return std::make_unique<statement_block>(std::move(vec), l);
 }
 
