@@ -111,3 +111,7 @@ target_include_directories(paracl_compiler PUBLIC include ${CMAKE_CURRENT_BINARY
 
 add_executable(pclc src/pclc.cc)
 target_link_libraries(pclc PUBLIC popl paracl_compiler bytecode_vm)
+
+if(BASH_PROGRAM)
+  add_test(NAME test.paracl COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/test/test.sh "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/test)
+endif()

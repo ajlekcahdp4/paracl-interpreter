@@ -26,7 +26,7 @@ using namespace paracl::frontend;
 number      (0|[1-9][0-9]*)
 identifier  [a-zA-Z_][a-zA-Z_0-9]*
 
-cpp_style_comment "//".*"\n"
+cpp_style_comment ([/][/].*)
 
 %%
 
@@ -67,7 +67,7 @@ cpp_style_comment "//".*"\n"
 
 [\n]+               { pos().lines(yyleng); }
 [ \t]+              { pos().columns(yyleng); }
-{cpp_style_comment} { pos().lines(1); }
+{cpp_style_comment} { }
 
 .               { location loc = {pos(), pos() += yyleng}; std::string msg = "Unknown character"; m_driver.report_error(msg, loc); throw parser::syntax_error{loc, msg}; }
 
