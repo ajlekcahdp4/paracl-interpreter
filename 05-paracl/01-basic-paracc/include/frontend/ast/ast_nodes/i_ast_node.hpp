@@ -28,6 +28,9 @@ public:
   i_ast_node() = default;
   i_ast_node(location l) : m_loc{l} {}
 
+  i_ast_node(const i_ast_node &) = default;
+  i_ast_node &operator=(const i_ast_node &) = default;
+
   virtual ~i_ast_node() {}
 
   virtual void accept(i_ast_visitor &) = 0;

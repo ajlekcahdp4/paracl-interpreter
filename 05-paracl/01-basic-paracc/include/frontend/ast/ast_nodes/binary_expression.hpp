@@ -60,6 +60,9 @@ public:
   binary_expression(binary_operation op_type, i_ast_node *left, i_ast_node *right, location l)
       : i_ast_node{l}, m_operation_type{op_type}, m_left{left}, m_right{right} {}
 
+  binary_expression(const binary_expression &) = default;
+  binary_expression &operator=(const binary_expression &) = default;
+
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
   binary_operation op_type() const { return m_operation_type; }

@@ -18,6 +18,9 @@ class read_expression : public i_ast_node {
 public:
   read_expression(location l) : i_ast_node{l} {}
 
+  read_expression(const read_expression &) = default;
+  read_expression &operator=(const read_expression &) = default;
+
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 };
 
