@@ -24,9 +24,6 @@ class while_statement : public i_ast_node {
 public:
   while_statement(i_ast_node *cond, i_ast_node *block, location l) : i_ast_node{l}, m_condition{cond}, m_block{block} {}
 
-  while_statement(const while_statement &) = delete;
-  while_statement &operator=(const while_statement &) = delete;
-
   void accept(i_ast_visitor &visitor) { visitor.visit(this); }
 
   i_ast_node *cond() { return m_condition; }

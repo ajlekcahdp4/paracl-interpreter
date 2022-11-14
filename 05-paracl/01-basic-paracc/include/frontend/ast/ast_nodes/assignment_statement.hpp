@@ -23,9 +23,6 @@ public:
   assignment_statement(variable_expression *left, i_ast_node *right, location l)
       : i_ast_node{l}, m_left{left}, m_right{right} {}
 
-  assignment_statement(const assignment_statement &) = delete;
-  assignment_statement &operator=(const assignment_statement &) = delete;
-
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
   variable_expression *left() { return m_left; }

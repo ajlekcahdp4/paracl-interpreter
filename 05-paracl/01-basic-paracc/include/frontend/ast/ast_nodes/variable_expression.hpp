@@ -22,9 +22,6 @@ class variable_expression : public i_ast_node {
 public:
   variable_expression(std::string p_name, location l) : i_ast_node{l}, m_name{p_name} {}
 
-  variable_expression(const variable_expression &) = delete;
-  variable_expression &operator=(const variable_expression &) = delete;
-
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
   std::string_view name() const & { return m_name; }

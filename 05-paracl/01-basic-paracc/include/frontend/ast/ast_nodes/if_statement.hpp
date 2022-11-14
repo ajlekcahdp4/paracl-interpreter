@@ -32,9 +32,6 @@ public:
   if_statement(i_ast_node *cond, i_ast_node *true_block, i_ast_node *else_block, location l)
       : i_ast_node{l}, m_condition{cond}, m_true_block{true_block}, m_else_block{else_block} {}
 
-  if_statement(const if_statement &) = delete;
-  if_statement &operator=(const if_statement &) = delete;
-
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
   i_ast_node *cond() { return m_condition; }

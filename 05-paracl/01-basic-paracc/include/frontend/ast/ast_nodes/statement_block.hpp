@@ -25,9 +25,6 @@ public:
 
   statement_block(std::vector<i_ast_node *> vec, location l) : i_ast_node{l}, m_statements{vec} {}
 
-  statement_block(const statement_block &) = delete;
-  statement_block &operator=(const statement_block &) = delete;
-
   void append_statement(i_ast_node *statement) { m_statements.push_back(statement); }
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }

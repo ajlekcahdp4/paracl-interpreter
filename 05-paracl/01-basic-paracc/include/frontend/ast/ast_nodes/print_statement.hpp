@@ -20,9 +20,6 @@ class print_statement : public i_ast_node {
 public:
   print_statement(i_ast_node *p_expr, location l) : i_ast_node{l}, m_expr{p_expr} {}
 
-  print_statement(const print_statement &) = delete;
-  print_statement &operator=(const print_statement &) = delete;
-
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
   i_ast_node *expr() { return m_expr; }
