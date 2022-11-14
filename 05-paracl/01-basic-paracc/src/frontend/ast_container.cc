@@ -48,7 +48,7 @@ if_statement *ast_container::make_if_statement(i_ast_node *cond, i_ast_node *tru
 
 if_statement *ast_container::make_if_statement(i_ast_node *cond, i_ast_node *true_block, i_ast_node *else_block,
                                                location l) {
-  m_nodes.emplace_back(std::make_unique<if_statement>(cond, true_block, l));
+  m_nodes.emplace_back(std::make_unique<if_statement>(cond, true_block, else_block, l));
   m_root = m_nodes.back().get();
   return static_cast<if_statement *>(m_nodes.back().get());
 }
@@ -69,6 +69,10 @@ statement_block *ast_container::make_statement_block(std::vector<i_ast_node *> &
   m_nodes.emplace_back(std::make_unique<statement_block>(std::move(vec), l));
   m_root = m_nodes.back().get();
   return static_cast<statement_block *>(m_nodes.back().get());
+}
+
+statement_block *ast_container::make_statement_block(const std::vector<i_ast_node *> &vec, location l) {
+  return make_statement_block(std::vector<i_ast_node *>{vec}, l);
 }
 
 unary_expression *ast_container::make_unary_expression(unary_operation op, i_ast_node *expr, location l) {

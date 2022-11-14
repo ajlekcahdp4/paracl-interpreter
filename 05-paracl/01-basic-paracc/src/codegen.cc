@@ -166,6 +166,11 @@ void codegen_visitor::visit(if_statement *ptr) {
 void codegen_visitor::visit(while_statement *ptr) {
   m_symtab_stack.begin_scope();
 
+  for (const auto &v : *ptr->symbol_table()) {
+    m_symtab_stack.push_variable(v);
+    m_builder.emit_operation(encoded_instruction{push_const_desc, lookup_or_insert_constant(0)});
+  }
+
   auto while_location_start = m_builder.current_loc();
   reset_currently_statement();
   ast_node_visit(*this, ptr->cond());
@@ -177,6 +182,10 @@ void codegen_visitor::visit(while_statement *ptr) {
 
   auto &to_relocate_after_loop_jump = m_builder.get_as(jmp_false_desc, index_jmp_to_after_loop);
   std::get<0>(to_relocate_after_loop_jump.m_attr) = m_builder.current_loc();
+
+  for (uint32_t i = 0; i < ptr->symbol_table()->size(); ++i) {
+    m_builder.emit_operation(encoded_instruction{pop_desc});
+  }
 
   m_symtab_stack.end_scope();
 }

@@ -104,6 +104,7 @@ set(PARACL_COMPILER_SOURCES
   src/frontend/dumper.cc
   src/frontend/semantic_analyzer.cc
   src/frontend/ast_container.cc
+  src/frontend/ast_copier.cc
   src/codegen.cc
 )
 

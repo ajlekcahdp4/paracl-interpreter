@@ -10,14 +10,19 @@
 
 #pragma once
 
-#include "ast_container.hpp"
 #include "visitor.hpp"
 
 namespace paracl::frontend::ast {
 
+class ast_container;
+
 class ast_copier : public i_ast_visitor {
 private:
   ast_container &m_container;
+  i_ast_node    *m_ret_node;
+
+  void                     return_node(i_ast_node *ptr) { m_ret_node = ptr; }
+  template <typename T> T *get_return_as() { return static_cast<T *>(m_ret_node); }
 
 public:
   ast_copier(ast_container &container) : m_container{container} {}
@@ -35,6 +40,8 @@ public:
   void visit(error_node *) override;
 };
 
-void ast_copy(i_ast_node *node, ast_container &container);
+i_ast_node *ast_copy(i_ast_node *node, ast_container &container);
 
 } // namespace paracl::frontend::ast
+
+#include "ast_container.hpp"

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "ast_copier.hpp"
 #include "ast_nodes.hpp"
 
 #include <memory>
@@ -24,6 +25,8 @@ private:
   std::vector<i_ast_node_uptr> m_nodes;
 
   i_ast_node *m_root = nullptr;
+
+  friend class ast_copier;
 
 public:
   ast_container() = default;
@@ -49,4 +52,7 @@ public:
   variable_expression *make_variable_expression(std::string &, location);
   while_statement     *make_while_statement(i_ast_node *, i_ast_node *, location);
 };
+
 } // namespace paracl::frontend::ast
+
+#include "ast_copier.hpp"
