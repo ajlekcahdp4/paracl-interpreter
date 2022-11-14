@@ -8,8 +8,6 @@
  * ----------------------------------------------------------------------------
  */
 
-#pragma once
-
 #include "ast_container.hpp"
 
 namespace paracl::frontend::ast {
