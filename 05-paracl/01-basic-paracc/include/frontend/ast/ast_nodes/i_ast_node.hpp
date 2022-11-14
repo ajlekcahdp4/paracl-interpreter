@@ -35,7 +35,7 @@ public:
 
   virtual void accept(i_ast_visitor &) = 0;
 
-  virtual i_ast_node_uptr clone() = 0;
+  virtual i_ast_node *clone() = 0;
 
   location loc() { return m_loc; }
 };

@@ -23,9 +23,7 @@ public:
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node_uptr clone() override;
+  i_ast_node *clone() override;
 };
-
-static inline i_ast_node_uptr make_read_expression(location l) { return std::make_unique<read_expression>(l); }
 
 } // namespace paracl::frontend::ast

@@ -27,15 +27,11 @@ public:
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node_uptr clone() override;
+  i_ast_node *clone() override;
 
   std::string_view name() const & { return m_name; }
 };
 
 using variable_expression_uptr = std::unique_ptr<variable_expression>;
-
-static inline i_ast_node_uptr make_variable_expression(std::string name, location l) {
-  return std::make_unique<variable_expression>(name, l);
-}
 
 } // namespace paracl::frontend::ast

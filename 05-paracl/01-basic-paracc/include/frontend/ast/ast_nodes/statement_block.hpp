@@ -21,24 +21,20 @@ private:
   symtab m_symtab;
 
 public:
-  std::vector<i_ast_node_uptr> m_statements;
+  std::vector<i_ast_node *> m_statements;
 
-  statement_block(std::vector<i_ast_node_uptr> vec, location l) : i_ast_node{l}, m_statements{std::move(vec)} {}
+  statement_block(std::vector<i_ast_node *> vec, location l) : i_ast_node{l}, m_statements{vec} {}
 
   statement_block(const statement_block &) = delete;
   statement_block &operator=(const statement_block &) = delete;
 
-  void append_statement(i_ast_node_uptr statement) { m_statements.emplace_back(std::move(statement)); }
+  void append_statement(i_ast_node *statement) { m_statements.push_back(statement); }
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node_uptr clone() override;
+  i_ast_node *clone() override;
 
   symtab *symbol_table() { return &m_symtab; }
 };
-
-static inline i_ast_node_uptr make_statement_block(std::vector<i_ast_node_uptr> vec, location l) {
-  return std::make_unique<statement_block>(std::move(vec), l);
-}
 
 } // namespace paracl::frontend::ast

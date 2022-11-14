@@ -54,27 +54,22 @@ static inline constexpr std::string_view binary_operation_to_string(binary_opera
 
 class binary_expression : public i_ast_node {
   binary_operation m_operation_type;
-  i_ast_node_uptr  m_left, m_right;
+  i_ast_node      *m_left, *m_right;
 
 public:
-  binary_expression(binary_operation op_type, i_ast_node_uptr left, i_ast_node_uptr right, location l)
-      : i_ast_node{l}, m_operation_type{op_type}, m_left{std::move(left)}, m_right{std::move(right)} {}
+  binary_expression(binary_operation op_type, i_ast_node *left, i_ast_node *right, location l)
+      : i_ast_node{l}, m_operation_type{op_type}, m_left{left}, m_right{right} {}
 
   binary_expression(const binary_expression &) = delete;
   binary_expression &operator=(const binary_expression &) = delete;
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node_uptr clone() override;
+  i_ast_node *clone() override;
 
   binary_operation op_type() const { return m_operation_type; }
-  i_ast_node      *left() { return m_left.get(); }
-  i_ast_node      *right() { return m_right.get(); }
+  i_ast_node      *left() { return m_left; }
+  i_ast_node      *right() { return m_right; }
 };
-
-static inline i_ast_node_uptr make_binary_expression(binary_operation op_type, i_ast_node_uptr left,
-                                                     i_ast_node_uptr right, location l) {
-  return std::make_unique<binary_expression>(op_type, std::move(left), std::move(right), l);
-}
 
 } // namespace paracl::frontend::ast

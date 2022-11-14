@@ -15,23 +15,19 @@
 namespace paracl::frontend::ast {
 
 class print_statement : public i_ast_node {
-  i_ast_node_uptr m_expr;
+  i_ast_node *m_expr;
 
 public:
-  print_statement(i_ast_node_uptr p_expr, location l) : i_ast_node{l}, m_expr{std::move(p_expr)} {}
+  print_statement(i_ast_node *p_expr, location l) : i_ast_node{l}, m_expr{p_expr} {}
 
   print_statement(const print_statement &) = delete;
   print_statement &operator=(const print_statement &) = delete;
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node_uptr clone() override;
+  i_ast_node *clone() override;
 
-  i_ast_node *expr() { return m_expr.get(); }
+  i_ast_node *expr() { return m_expr; }
 };
-
-static inline i_ast_node_uptr make_print_statement(i_ast_node_uptr expr, location l) {
-  return std::make_unique<print_statement>(std::move(expr), l);
-}
 
 } // namespace paracl::frontend::ast

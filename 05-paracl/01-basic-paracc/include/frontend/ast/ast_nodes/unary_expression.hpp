@@ -34,25 +34,21 @@ static inline constexpr std::string_view unary_operation_to_string(unary_operati
 
 class unary_expression : public i_ast_node {
   unary_operation m_operation_type;
-  i_ast_node_uptr m_expr;
+  i_ast_node     *m_expr;
 
 public:
-  unary_expression(unary_operation op_type, i_ast_node_uptr p_expr, location l)
-      : i_ast_node{l}, m_operation_type{op_type}, m_expr{std::move(p_expr)} {}
+  unary_expression(unary_operation op_type, i_ast_node *p_expr, location l)
+      : i_ast_node{l}, m_operation_type{op_type}, m_expr{p_expr} {}
 
   unary_expression(const unary_expression &) = delete;
   unary_expression &operator=(const unary_expression &) = delete;
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node_uptr clone() override;
+  i_ast_node *clone() override;
 
   unary_operation op_type() const { return m_operation_type; }
-  i_ast_node     *child() { return m_expr.get(); }
+  i_ast_node     *child() { return m_expr; }
 };
-
-static inline i_ast_node_uptr make_unary_expression(unary_operation op, i_ast_node_uptr expr, location l) {
-  return std::make_unique<unary_expression>(op, std::move(expr), l);
-}
 
 } // namespace paracl::frontend::ast

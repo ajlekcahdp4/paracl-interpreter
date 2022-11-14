@@ -16,27 +16,22 @@
 namespace paracl::frontend::ast {
 
 class assignment_statement : public i_ast_node {
-  variable_expression_uptr m_left;
-  i_ast_node_uptr          m_right;
+  variable_expression *m_left;
+  i_ast_node          *m_right;
 
 public:
-  assignment_statement(variable_expression_uptr left, i_ast_node_uptr right, location l)
-      : i_ast_node{l}, m_left{std::move(left)}, m_right{std::move(right)} {}
+  assignment_statement(variable_expression *left, i_ast_node *right, location l)
+      : i_ast_node{l}, m_left{left}, m_right{right} {}
 
   assignment_statement(const assignment_statement &) = delete;
   assignment_statement &operator=(const assignment_statement &) = delete;
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node_uptr clone() override;
+  i_ast_node *clone() override;
 
-  variable_expression *left() { return m_left.get(); }
-  i_ast_node          *right() { return m_right.get(); }
+  variable_expression *left() { return m_left; }
+  i_ast_node          *right() { return m_right; }
 };
-
-static inline i_ast_node_uptr make_assignment_statement(variable_expression_uptr left, i_ast_node_uptr right,
-                                                        location l) {
-  return std::make_unique<assignment_statement>(std::move(left), std::move(right), l);
-}
 
 } // namespace paracl::frontend::ast

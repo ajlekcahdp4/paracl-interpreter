@@ -10,5 +10,5 @@
 
 #pragma once
 
-#include "ast/ast_nodes.hpp"
+#include "ast/ast_tree.hpp"
 #include "ast/visitor.hpp"
