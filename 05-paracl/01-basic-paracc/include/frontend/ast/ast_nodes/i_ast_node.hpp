@@ -11,14 +11,10 @@
 #pragma once
 
 #include "location.hpp"
-#include <memory>
 
 namespace paracl::frontend::ast {
 
 class i_ast_visitor;
-class i_ast_node;
-
-using i_ast_node_uptr = std::unique_ptr<i_ast_node>;
 
 class i_ast_node {
 private:

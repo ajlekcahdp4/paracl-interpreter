@@ -95,7 +95,7 @@ void codegen_visitor::visit(statement_block *ptr) {
 
   for (auto &statement : ptr->m_statements) {
     set_currently_statement();
-    ast_node_visit(*this, statement.get());
+    ast_node_visit(*this, statement);
   }
 
   for (uint32_t i = 0; i < ptr->symbol_table()->size(); ++i) {

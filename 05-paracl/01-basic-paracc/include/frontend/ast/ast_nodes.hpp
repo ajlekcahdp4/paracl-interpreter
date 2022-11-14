@@ -22,5 +22,4 @@
 #include "ast_nodes/unary_expression.hpp"
 #include "ast_nodes/variable_expression.hpp"
 #include "ast_nodes/while_statement.hpp"
-
 #include "visitor.hpp"

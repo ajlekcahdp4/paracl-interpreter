@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------------
  */
 
-#include "frontend/copier.hpp"
+#include "frontend/ast/ast_copier.hpp"
 
 namespace paracl::frontend::ast {
 
@@ -35,7 +35,7 @@ void ast_copier::visit(while_statement *) {}
 void ast_copier::visit(error_node *) {}
 
 void ast_copy(i_ast_node *node, ast_container &container) {
-  ast_copier copier(container);
+  ast_copier copier = {container};
   ast_node_visit(copier, node);
 }
 

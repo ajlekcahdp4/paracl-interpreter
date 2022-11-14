@@ -10,9 +10,8 @@
 
 #pragma once
 
-#include "ast/ast_container.hpp"
-#include "ast/visitor.hpp"
-#include <iostream>
+#include "ast_container.hpp"
+#include "visitor.hpp"
 
 namespace paracl::frontend::ast {
 

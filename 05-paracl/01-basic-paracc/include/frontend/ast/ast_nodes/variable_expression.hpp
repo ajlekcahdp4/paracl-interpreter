@@ -30,6 +30,4 @@ public:
   std::string_view name() const & { return m_name; }
 };
 
-using variable_expression_uptr = std::unique_ptr<variable_expression>;
-
 } // namespace paracl::frontend::ast
