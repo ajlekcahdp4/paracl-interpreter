@@ -45,8 +45,6 @@ public:
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node *clone() override;
-
   unary_operation op_type() const { return m_operation_type; }
   i_ast_node     *child() { return m_expr; }
 };

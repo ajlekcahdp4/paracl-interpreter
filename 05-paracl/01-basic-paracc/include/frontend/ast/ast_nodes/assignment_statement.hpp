@@ -28,8 +28,6 @@ public:
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node *clone() override;
-
   variable_expression *left() { return m_left; }
   i_ast_node          *right() { return m_right; }
 };

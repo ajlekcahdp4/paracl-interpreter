@@ -29,8 +29,6 @@ public:
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node *clone() override;
-
   std::string error_msg() { return m_error_message; }
 };
 

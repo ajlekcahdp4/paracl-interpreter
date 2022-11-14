@@ -27,8 +27,6 @@ public:
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node *clone() override;
-
   std::string_view name() const & { return m_name; }
 };
 

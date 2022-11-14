@@ -25,8 +25,6 @@ public:
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node *clone() override;
-
   int value() const { return m_val; }
 };
 
