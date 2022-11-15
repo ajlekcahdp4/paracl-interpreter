@@ -33,6 +33,7 @@ static inline constexpr std::string_view unary_operation_to_string(unary_operati
 }
 
 class unary_expression : public i_ast_node {
+private:
   unary_operation m_operation_type;
   i_ast_node     *m_expr;
 

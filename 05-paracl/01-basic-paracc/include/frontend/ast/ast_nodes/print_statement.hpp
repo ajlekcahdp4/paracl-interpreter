@@ -15,6 +15,7 @@
 namespace paracl::frontend::ast {
 
 class print_statement : public i_ast_node {
+private:
   i_ast_node *m_expr;
 
 public:
