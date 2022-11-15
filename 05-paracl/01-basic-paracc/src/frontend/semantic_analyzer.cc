@@ -58,8 +58,8 @@ void semantic_analyzer_visitor::visit(error_node *ptr) { report_error(ptr->error
 void semantic_analyzer_visitor::visit(statement_block *ptr) {
   m_scopes.begin_scope(ptr->symbol_table());
 
-  for (auto &statement : ptr->m_statements) {
-    ast_node_visit(*this, statement.get());
+  for (auto &statement : ptr->statements()) {
+    ast_node_visit(*this, statement);
   }
 
   m_scopes.end_scope();

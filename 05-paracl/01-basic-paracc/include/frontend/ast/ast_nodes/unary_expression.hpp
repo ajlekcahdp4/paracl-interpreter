@@ -33,6 +33,7 @@ static inline constexpr std::string_view unary_operation_to_string(unary_operati
 }
 
 class unary_expression : public i_ast_node {
+private:
   unary_operation m_operation_type;
   i_ast_node     *m_expr;
 
@@ -40,15 +41,13 @@ public:
   unary_expression(unary_operation op_type, i_ast_node *p_expr, location l)
       : i_ast_node{l}, m_operation_type{op_type}, m_expr{p_expr} {}
 
-  unary_expression(const unary_expression &) = delete;
-  unary_expression &operator=(const unary_expression &) = delete;
+  unary_expression(const unary_expression &) = default;
+  unary_expression &operator=(const unary_expression &) = default;
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node *clone() override;
-
   unary_operation op_type() const { return m_operation_type; }
-  i_ast_node     *child() { return m_expr; }
+  i_ast_node    *&child() { return m_expr; }
 };
 
 } // namespace paracl::frontend::ast

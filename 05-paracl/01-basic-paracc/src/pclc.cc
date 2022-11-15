@@ -7,6 +7,7 @@
 #include "bytecode_vm.hpp"
 #include "codegen.hpp"
 #include "frontend.hpp"
+#include "frontend/ast/ast_copier.hpp"
 #include "frontend/dumper.hpp"
 #include "frontend/semantic_analyzer.hpp"
 
@@ -58,18 +59,19 @@ int main(int argc, char *argv[]) {
   paracl::frontend::frontend_driver drv{};
   drv.switch_input_stream(&input_file);
   drv.parse();
-  auto parse_tree = std::move(drv).take_ast();
+
+  auto parse_tree = drv.take_ast();
 
   if (ast_dump_option->is_set()) {
-    paracl::frontend::ast::ast_dump(parse_tree.get(), std::cout);
+    paracl::frontend::ast::ast_dump(parse_tree.get_root_ptr(), std::cout);
     return 0;
   }
 
-  if (!ast_analyze(parse_tree.get())) {
+  if (!ast_analyze(parse_tree.get_root_ptr())) {
     return 1;
   }
 
-  auto ch = paracl::codegen::generate_code(parse_tree.get());
+  auto ch = paracl::codegen::generate_code(parse_tree.get_root_ptr());
 
   if (dump_binary) {
     chunk_complete_disassembler disas{paracl_isa};

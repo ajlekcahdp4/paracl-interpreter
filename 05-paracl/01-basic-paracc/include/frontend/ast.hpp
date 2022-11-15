@@ -10,5 +10,7 @@
 
 #pragma once
 
-#include "ast/ast_tree.hpp"
+#include "ast/ast_container.hpp"
+#include "ast/ast_copier.hpp"
+#include "ast/ast_nodes.hpp"
 #include "ast/visitor.hpp"

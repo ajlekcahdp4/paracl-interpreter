@@ -17,22 +17,21 @@
 namespace paracl::frontend::ast {
 
 class while_statement : public i_ast_node {
-  symtab          m_symtab;
-  i_ast_node     *m_condition;
-  i_ast_node     *m_block;
+private:
+  symtab      m_symtab;
+  i_ast_node *m_condition;
+  i_ast_node *m_block;
 
 public:
   while_statement(i_ast_node *cond, i_ast_node *block, location l) : i_ast_node{l}, m_condition{cond}, m_block{block} {}
 
-  while_statement(const while_statement &) = delete;
-  while_statement &operator=(const while_statement &) = delete;
+  while_statement(const while_statement &) = default;
+  while_statement &operator=(const while_statement &) = default;
 
-  void accept(i_ast_visitor &visitor) { visitor.visit(this); }
+  void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node *clone() override;
-
-  i_ast_node *cond() { return m_condition; }
-  i_ast_node *block() { return m_block; }
+  i_ast_node *&cond() { return m_condition; }
+  i_ast_node *&block() { return m_block; }
 
   symtab *symbol_table() { return &m_symtab; }
 };

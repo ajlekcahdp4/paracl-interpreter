@@ -16,6 +16,7 @@
 namespace paracl::frontend::ast {
 
 class assignment_statement : public i_ast_node {
+private:
   variable_expression *m_left;
   i_ast_node          *m_right;
 
@@ -23,15 +24,13 @@ public:
   assignment_statement(variable_expression *left, i_ast_node *right, location l)
       : i_ast_node{l}, m_left{left}, m_right{right} {}
 
-  assignment_statement(const assignment_statement &) = delete;
-  assignment_statement &operator=(const assignment_statement &) = delete;
+  assignment_statement(const assignment_statement &) = default;
+  assignment_statement &operator=(const assignment_statement &) = default;
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node *clone() override;
-
-  variable_expression *left() { return m_left; }
-  i_ast_node          *right() { return m_right; }
+  variable_expression *&left() { return m_left; }
+  i_ast_node          *&right() { return m_right; }
 };
 
 } // namespace paracl::frontend::ast
