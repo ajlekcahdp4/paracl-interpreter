@@ -36,8 +36,14 @@ private:
 public:
   ast_container() = default;
 
+  ast_container(const ast_container &other);
+  ast_container &operator=(const ast_container &other);
+  ast_container(ast_container &&other) = default;
+  ast_container &operator=(ast_container &&other) = default;
+  ~ast_container() = default;
+
   void        set_root_ptr(i_ast_node *ptr) { m_root = ptr; }
-  i_ast_node *get_root_ptr() { return m_root; }
+  i_ast_node *get_root_ptr() const { return m_root; }
 
   assignment_statement *make_assignment_statement(variable_expression *, i_ast_node *, location);
   binary_expression    *make_binary_expression(binary_operation, i_ast_node *, i_ast_node *, location);

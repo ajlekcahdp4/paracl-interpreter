@@ -116,6 +116,7 @@ void ast_copier::visit(error_node *ptr) {
 }
 
 i_ast_node *ast_copy(i_ast_node *node, ast_container &container) {
+  if (!node) return nullptr;
   ast_copier copier = {container};
   ast_node_visit(copier, node);
   return copier.get_return();

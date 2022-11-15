@@ -9,10 +9,25 @@
  */
 
 #include "frontend/ast/ast_container.hpp"
+#include "frontend/ast/ast_copier.hpp"
 
 #include <memory>
 
 namespace paracl::frontend::ast {
+
+ast_container::ast_container(const ast_container &other) {
+  ast_container temp = {};
+  auto          root_ptr = ast_copy(other.get_root_ptr(), temp);
+  temp.set_root_ptr(root_ptr);
+  *this = std::move(temp);
+}
+
+ast_container &ast_container::operator=(const ast_container &other) {
+  if (this == &other) return *this;
+  ast_container temp = {other};
+  *this = std::move(temp);
+  return *this;
+}
 
 assignment_statement *ast_container::make_assignment_statement(variable_expression *left, i_ast_node *right,
                                                                location l) {
