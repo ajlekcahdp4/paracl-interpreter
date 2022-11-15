@@ -21,6 +21,23 @@ while (n > 0)
 print fact;
 ```
 
+### More complex example.
+
+In ParaCL assignments are chainable and multiple variables can be declared in a single line. Futhermore, like in C, assignment is a statement as well as an expression. Here is a more complex examples which prints the absolute value of the input number in a loop:
+
+```sh
+// Testing assignments as expressions
+while ((x = ?) != 0) {
+  if ((y = ?) > 0) {
+    print y;
+  } else {
+    print -y;
+  }
+}
+
+As a bonus, single line C++ style comments are allowed.
+```
+
 ## 1. How to build
 
 This interpreter relies on GNU Bison and Flex. You have to have them installed to build this project.
