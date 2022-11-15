@@ -44,7 +44,6 @@ public:
 
   void end_scope() { m_stack.pop_back(); }
 
-  // returns index of scope in which variable was declared. returns -1 if not declared.
   std::optional<unsigned> declared(std::string_view name) const {
     for (int i = m_stack.size() - 1; i >= 0; --i) {
       if (m_stack[i]->declared(name)) return i;

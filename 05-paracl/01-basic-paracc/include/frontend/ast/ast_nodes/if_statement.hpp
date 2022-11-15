@@ -37,9 +37,9 @@ public:
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node *cond() { return m_condition; }
-  i_ast_node *true_block() { return m_true_block; }
-  i_ast_node *else_block() { return m_else_block; }
+  i_ast_node *&cond() { return m_condition; }
+  i_ast_node *&true_block() { return m_true_block; }
+  i_ast_node *&else_block() { return m_else_block; }
 
   symtab *true_symtab() { return &m_true_symtab; }
   symtab *else_symtab() { return &m_false_symtab; }

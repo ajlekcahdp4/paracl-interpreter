@@ -93,7 +93,7 @@ void codegen_visitor::visit(statement_block *ptr) {
     m_builder.emit_operation(encoded_instruction{push_const_desc, lookup_or_insert_constant(0)});
   }
 
-  for (auto &statement : ptr->m_statements) {
+  for (auto &statement : ptr->statements()) {
     set_currently_statement();
     ast_node_visit(*this, statement);
   }

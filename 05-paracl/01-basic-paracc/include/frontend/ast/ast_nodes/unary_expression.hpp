@@ -47,7 +47,7 @@ public:
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
   unary_operation op_type() const { return m_operation_type; }
-  i_ast_node     *child() { return m_expr; }
+  i_ast_node    *&child() { return m_expr; }
 };
 
 } // namespace paracl::frontend::ast

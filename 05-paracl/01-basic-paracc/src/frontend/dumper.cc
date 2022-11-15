@@ -100,7 +100,7 @@ void ast_dump_visitor::visit(print_statement *ptr) {
 void ast_dump_visitor::visit(statement_block *ptr) {
   print_declare_node(m_os, ptr, "<statement_block>");
 
-  for (const auto &v : ptr->m_statements) {
+  for (const auto &v : ptr->statements()) {
     print_bind_node(m_os, ptr, v);
     ast_node_visit(*this, v);
   }

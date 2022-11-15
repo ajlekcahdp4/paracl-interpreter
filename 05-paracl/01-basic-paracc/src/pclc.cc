@@ -7,6 +7,7 @@
 #include "bytecode_vm.hpp"
 #include "codegen.hpp"
 #include "frontend.hpp"
+#include "frontend/ast/ast_copier.hpp"
 #include "frontend/dumper.hpp"
 #include "frontend/semantic_analyzer.hpp"
 

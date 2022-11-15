@@ -29,8 +29,8 @@ public:
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  variable_expression *left() { return m_left; }
-  i_ast_node          *right() { return m_right; }
+  variable_expression *&left() { return m_left; }
+  i_ast_node          *&right() { return m_right; }
 };
 
 } // namespace paracl::frontend::ast

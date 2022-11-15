@@ -66,8 +66,8 @@ public:
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
   binary_operation op_type() const { return m_operation_type; }
-  i_ast_node      *left() { return m_left; }
-  i_ast_node      *right() { return m_right; }
+  i_ast_node     *&left() { return m_left; }
+  i_ast_node     *&right() { return m_right; }
 };
 
 } // namespace paracl::frontend::ast

@@ -30,8 +30,8 @@ public:
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  i_ast_node *cond() { return m_condition; }
-  i_ast_node *block() { return m_block; }
+  i_ast_node *&cond() { return m_condition; }
+  i_ast_node *&block() { return m_block; }
 
   symtab *symbol_table() { return &m_symtab; }
 };

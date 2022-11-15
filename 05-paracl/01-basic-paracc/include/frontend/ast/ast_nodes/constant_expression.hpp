@@ -25,7 +25,7 @@ public:
 
   void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
-  int value() const { return m_val; }
+  int &value() { return m_val; }
 };
 
 } // namespace paracl::frontend::ast
