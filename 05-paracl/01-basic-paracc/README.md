@@ -34,9 +34,9 @@ while ((x = ?) != 0) {
     print -y;
   }
 }
+```
 
 As a bonus, single line C++ style comments are allowed.
-```
 
 ## 1. How to build
 

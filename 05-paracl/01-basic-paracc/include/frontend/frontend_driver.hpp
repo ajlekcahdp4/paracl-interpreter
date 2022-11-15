@@ -46,5 +46,6 @@ public:
   void switch_input_stream(std::istream *is) { m_scanner.switch_streams(is, nullptr); }
 
   ast::ast_container take_ast() && { return std::move(m_ast); }
+  ast::ast_container take_ast() & { return m_ast; }
 };
 } // namespace paracl::frontend
