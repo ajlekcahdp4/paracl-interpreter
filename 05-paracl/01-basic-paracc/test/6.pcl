@@ -16,9 +16,9 @@ while (c < a) {
 }
 
 if (c == a) {
-    print i;
+  print i;
 }
 
 if (c != a) {
-    print 0;
+  print 0;
 }
