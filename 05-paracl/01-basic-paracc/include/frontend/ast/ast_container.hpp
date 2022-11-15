@@ -14,6 +14,7 @@
 #include "ast_nodes.hpp"
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace paracl::frontend::ast {
@@ -23,10 +24,14 @@ using i_ast_node_uptr = std::unique_ptr<i_ast_node>;
 class ast_container {
 private:
   std::vector<i_ast_node_uptr> m_nodes;
-
-  i_ast_node *m_root = nullptr;
+  i_ast_node                  *m_root = nullptr;
 
   friend class ast_copier;
+
+  template <typename T, typename... Ts> T *emplace_back(Ts... args) {
+    m_nodes.emplace_back(std::make_unique<T>(std::forward<Ts>(args)...));
+    return static_cast<T *>(m_nodes.back().get());
+  }
 
 public:
   ast_container() = default;

@@ -10,67 +10,58 @@
 
 #include "frontend/ast/ast_copier.hpp"
 #include "frontend/ast/ast_nodes/error_node.hpp"
+#include "frontend/ast/ast_nodes/if_statement.hpp"
 #include "frontend/ast/ast_nodes/unary_expression.hpp"
 #include "frontend/ast/ast_nodes/variable_expression.hpp"
 #include "frontend/ast/visitor.hpp"
+
 #include <memory>
 
 namespace paracl::frontend::ast {
 
 void ast_copier::visit(assignment_statement *ptr) {
-  auto unique_copy = std::make_unique<assignment_statement>(*ptr);
-  auto ptr_copy = unique_copy.get();
+  auto ptr_copy = m_container.emplace_back<assignment_statement>(*ptr);
 
   ast_node_visit(*this, ptr->left());
   ptr_copy->left() = get_return_as<variable_expression>();
   ast_node_visit(*this, ptr->right());
   ptr_copy->right() = get_return();
 
-  m_container.m_nodes.emplace_back(std::move(unique_copy));
   return_node(ptr_copy);
 }
 
 void ast_copier::visit(binary_expression *ptr) {
-  auto unique_copy = std::make_unique<binary_expression>(*ptr);
-  auto ptr_copy = unique_copy.get();
+  auto ptr_copy = m_container.emplace_back<binary_expression>(*ptr);
 
   ast_node_visit(*this, ptr->left());
   ptr_copy->left() = get_return();
   ast_node_visit(*this, ptr->right());
   ptr_copy->right() = get_return();
 
-  m_container.m_nodes.emplace_back(std::move(unique_copy));
   return_node(ptr_copy);
 }
 
 void ast_copier::visit(print_statement *ptr) {
-  auto unique_copy = std::make_unique<print_statement>(*ptr);
-  auto ptr_copy = unique_copy.get();
+  auto ptr_copy = m_container.emplace_back<print_statement>(*ptr);
 
   ast_node_visit(*this, ptr->expr());
   ptr_copy->expr() = get_return();
 
-  m_container.m_nodes.emplace_back(std::move(unique_copy));
   return_node(ptr_copy);
 }
 
 void ast_copier::visit(read_expression *ptr) {
-  auto unique_copy = std::make_unique<read_expression>(*ptr);
-  auto ptr_copy = unique_copy.get();
-  m_container.m_nodes.emplace_back(std::move(unique_copy));
+  auto ptr_copy = m_container.emplace_back<read_expression>(*ptr);
   return_node(ptr_copy);
 }
 
 void ast_copier::visit(constant_expression *ptr) {
-  auto unique_copy = std::make_unique<constant_expression>(*ptr);
-  auto ptr_copy = unique_copy.get();
-  m_container.m_nodes.emplace_back(std::move(unique_copy));
+  auto ptr_copy = m_container.emplace_back<constant_expression>(*ptr);
   return_node(ptr_copy);
 }
 
 void ast_copier::visit(if_statement *ptr) {
-  auto unique_copy = std::make_unique<if_statement>(*ptr);
-  auto ptr_copy = unique_copy.get();
+  auto ptr_copy = m_container.emplace_back<if_statement>(*ptr);
 
   ast_node_visit(*this, ptr->cond());
   ptr_copy->cond() = get_return();
@@ -82,58 +73,45 @@ void ast_copier::visit(if_statement *ptr) {
     ptr_copy->else_block() = get_return();
   }
 
-  m_container.m_nodes.emplace_back(std::move(unique_copy));
   return_node(ptr_copy);
 }
 
 void ast_copier::visit(statement_block *ptr) {
-  auto unique_copy = std::make_unique<statement_block>(*ptr);
-  auto ptr_copy = unique_copy.get();
+  auto ptr_copy = m_container.emplace_back<statement_block>(*ptr);
 
   for (auto &v : ptr_copy->statements()) {
     ast_node_visit(*this, v);
     v = get_return();
   }
 
-  m_container.m_nodes.emplace_back(std::move(unique_copy));
   return_node(ptr_copy);
 }
 
 void ast_copier::visit(unary_expression *ptr) {
-  auto unique_copy = std::make_unique<unary_expression>(*ptr);
-  auto ptr_copy = unique_copy.get();
-
+  auto ptr_copy = m_container.emplace_back<unary_expression>(*ptr);
   ast_node_visit(*this, ptr->child());
   ptr_copy->child() = get_return();
-
-  m_container.m_nodes.emplace_back(std::move(unique_copy));
   return_node(ptr_copy);
 }
 
 void ast_copier::visit(variable_expression *ptr) {
-  auto unique_copy = std::make_unique<variable_expression>(*ptr);
-  auto ptr_copy = unique_copy.get();
-  m_container.m_nodes.emplace_back(std::move(unique_copy));
+  auto ptr_copy = m_container.emplace_back<variable_expression>(*ptr);
   return_node(ptr_copy);
 }
 
 void ast_copier::visit(while_statement *ptr) {
-  auto unique_copy = std::make_unique<while_statement>(*ptr);
-  auto ptr_copy = unique_copy.get();
+  auto ptr_copy = m_container.emplace_back<while_statement>(*ptr);
 
   ast_node_visit(*this, ptr->cond());
   ptr_copy->cond() = get_return();
   ast_node_visit(*this, ptr->block());
   ptr_copy->block() = get_return();
 
-  m_container.m_nodes.emplace_back(std::move(unique_copy));
   return_node(ptr_copy);
 }
 
 void ast_copier::visit(error_node *ptr) {
-  auto unique_copy = std::make_unique<error_node>(*ptr);
-  auto ptr_copy = unique_copy.get();
-  m_container.m_nodes.emplace_back(std::move(unique_copy));
+  auto ptr_copy = m_container.emplace_back<error_node>(*ptr);
   return_node(ptr_copy);
 }
 
