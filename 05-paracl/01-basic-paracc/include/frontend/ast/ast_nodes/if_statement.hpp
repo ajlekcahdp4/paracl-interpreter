@@ -16,7 +16,7 @@
 
 namespace paracl::frontend::ast {
 
-class if_statement : public i_ast_node {
+class if_statement final : public i_ast_node {
   symtab m_control_block_symtab;
   symtab m_true_symtab;
   symtab m_false_symtab;

@@ -16,7 +16,7 @@
 
 namespace paracl::frontend {
 
-struct error_kind {
+struct error_kind final {
   std::string error_message;
   location    loc;
 };

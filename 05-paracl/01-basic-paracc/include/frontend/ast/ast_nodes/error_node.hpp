@@ -17,7 +17,7 @@
 
 namespace paracl::frontend::ast {
 
-class error_node : public i_ast_node {
+class error_node final : public i_ast_node {
 private:
   std::string m_error_message;
 

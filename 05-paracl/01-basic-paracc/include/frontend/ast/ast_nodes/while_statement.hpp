@@ -16,7 +16,7 @@
 
 namespace paracl::frontend::ast {
 
-class while_statement : public i_ast_node {
+class while_statement final : public i_ast_node {
 private:
   symtab      m_symtab;
   i_ast_node *m_condition;

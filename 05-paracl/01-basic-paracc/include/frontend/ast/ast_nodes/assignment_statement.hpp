@@ -15,7 +15,7 @@
 
 namespace paracl::frontend::ast {
 
-class assignment_statement : public i_ast_node {
+class assignment_statement final : public i_ast_node {
 private:
   variable_expression *m_left;
   i_ast_node          *m_right;

@@ -25,7 +25,7 @@
 namespace paracl::frontend {
 class frontend_driver;
 
-class scanner : public yyFlexLexer {
+class scanner final : public yyFlexLexer {
 private:
   frontend_driver &m_driver;
   position         m_pos;

@@ -52,7 +52,7 @@ static inline constexpr std::string_view binary_operation_to_string(binary_opera
   throw std::runtime_error{"Broken binary_operation enum"};
 }
 
-class binary_expression : public i_ast_node {
+class binary_expression final : public i_ast_node {
   binary_operation m_operation_type;
   i_ast_node      *m_left, *m_right;
 

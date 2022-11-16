@@ -17,7 +17,7 @@ namespace paracl::frontend::ast {
 
 class ast_container;
 
-class ast_copier : public i_ast_visitor {
+class ast_copier final : public i_ast_visitor {
 private:
   ast_container &m_container;
   i_ast_node    *m_ret_node;

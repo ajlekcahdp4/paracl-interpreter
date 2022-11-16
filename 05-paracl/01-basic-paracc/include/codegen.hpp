@@ -22,7 +22,7 @@
 
 namespace paracl::codegen {
 
-class codegen_symtab_stack {
+class codegen_symtab_stack final {
 private:
   std::vector<std::unordered_map<std::string, uint32_t>> m_stack;
 
@@ -52,7 +52,7 @@ public:
   }
 };
 
-class codegen_visitor : public paracl::frontend::ast::i_ast_visitor {
+class codegen_visitor final : public paracl::frontend::ast::i_ast_visitor {
   using builder_type =
       paracl::bytecode_vm::builder::bytecode_builder<decltype(paracl::bytecode_vm::instruction_set::paracl_isa)>;
 

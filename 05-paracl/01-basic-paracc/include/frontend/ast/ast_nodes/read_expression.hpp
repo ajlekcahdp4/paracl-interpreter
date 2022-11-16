@@ -14,7 +14,7 @@
 
 namespace paracl::frontend::ast {
 
-class read_expression : public i_ast_node {
+class read_expression final : public i_ast_node {
 public:
   read_expression(location l) : i_ast_node{l} {}
 

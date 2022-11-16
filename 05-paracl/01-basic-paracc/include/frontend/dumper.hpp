@@ -15,7 +15,7 @@
 
 namespace paracl::frontend::ast {
 
-class ast_dump_visitor : public i_ast_visitor {
+class ast_dump_visitor final : public i_ast_visitor {
 private:
   std::ostream &m_os;
 

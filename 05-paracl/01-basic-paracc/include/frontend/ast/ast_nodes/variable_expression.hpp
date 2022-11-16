@@ -16,7 +16,7 @@
 
 namespace paracl::frontend::ast {
 
-class variable_expression : public i_ast_node {
+class variable_expression final : public i_ast_node {
   std::string m_name;
 
 public:

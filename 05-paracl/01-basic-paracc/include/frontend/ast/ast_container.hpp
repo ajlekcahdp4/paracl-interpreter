@@ -21,7 +21,7 @@ namespace paracl::frontend::ast {
 
 using i_ast_node_uptr = std::unique_ptr<i_ast_node>;
 
-class ast_container {
+class ast_container final {
 private:
   std::vector<i_ast_node_uptr> m_nodes;
   i_ast_node                  *m_root = nullptr;

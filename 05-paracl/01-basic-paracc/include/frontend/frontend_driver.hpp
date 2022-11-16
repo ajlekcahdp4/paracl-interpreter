@@ -19,7 +19,7 @@
 
 namespace paracl::frontend {
 
-class frontend_driver {
+class frontend_driver final {
 private:
   scanner m_scanner;
   parser  m_parser;

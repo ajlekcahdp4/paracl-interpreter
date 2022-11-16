@@ -16,7 +16,7 @@
 
 namespace paracl::frontend::ast {
 
-class statement_block : public i_ast_node {
+class statement_block final : public i_ast_node {
 private:
   symtab                    m_symtab;
   std::vector<i_ast_node *> m_statements;

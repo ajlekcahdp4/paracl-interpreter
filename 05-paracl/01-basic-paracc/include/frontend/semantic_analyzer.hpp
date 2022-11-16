@@ -15,7 +15,7 @@
 
 namespace paracl::frontend {
 
-class semantic_analyzer_visitor : public ast::i_ast_visitor {
+class semantic_analyzer_visitor final : public ast::i_ast_visitor {
 private:
   symtab_stack m_scopes;
 

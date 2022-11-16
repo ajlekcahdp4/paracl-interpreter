@@ -14,7 +14,7 @@
 
 namespace paracl::frontend::ast {
 
-class constant_expression : public i_ast_node {
+class constant_expression final : public i_ast_node {
   int m_val;
 
 public:
