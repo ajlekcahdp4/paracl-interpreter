@@ -28,7 +28,7 @@ private:
 
   friend class ast_copier;
 
-  template <typename T, typename... Ts> T *emplace_back(Ts... args) {
+  template <typename T, typename... Ts> T *emplace_back(Ts &&...args) {
     m_nodes.emplace_back(std::make_unique<T>(std::forward<Ts>(args)...));
     return static_cast<T *>(m_nodes.back().get());
   }
