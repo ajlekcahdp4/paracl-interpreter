@@ -73,6 +73,6 @@ struct padded_hex {
 
 static constexpr auto padded_hex_printer = padded_hex{};
 
-template <typename T> static inline auto pointer_to_uintptr(T *pointer) { return std::bit_cast<uintptr_t>(pointer); }
+template <typename T> auto pointer_to_uintptr(T *pointer) { return std::bit_cast<uintptr_t>(pointer); }
 
 } // namespace paracl::utils::serialization

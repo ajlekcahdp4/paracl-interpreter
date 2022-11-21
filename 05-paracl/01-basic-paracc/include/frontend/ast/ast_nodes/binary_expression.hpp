@@ -30,7 +30,7 @@ enum class binary_operation {
   E_BIN_OP_OR,
 };
 
-static inline constexpr std::string_view binary_operation_to_string(binary_operation op) {
+constexpr std::string_view binary_operation_to_string(binary_operation op) {
   using enum binary_operation;
 
   switch (op) {

@@ -20,7 +20,7 @@ enum class unary_operation {
   E_UN_OP_NOT,
 };
 
-static inline constexpr std::string_view unary_operation_to_string(unary_operation op) {
+constexpr std::string_view unary_operation_to_string(unary_operation op) {
   using enum unary_operation;
 
   switch (op) {
