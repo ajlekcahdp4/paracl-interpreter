@@ -93,7 +93,7 @@ target_link_libraries(pclvm popl bytecode_vm)
 
 # Find bison and flex and set CMP0098 policy to new to use binary dir 
 find_package(FLEX REQUIRED)
-find_package(BISON REQUIRED)
+find_package(BISON 3.5 REQUIRED)
 
 bison_target(parser src/frontend/parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.y.cc DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/bison_paracl_parser.hpp)
 flex_target(scanner src/frontend/scanner.l ${CMAKE_CURRENT_BINARY_DIR}/scanner.l.cc)
@@ -115,5 +115,5 @@ add_executable(pclc src/pclc.cc)
 target_link_libraries(pclc PUBLIC popl paracl_compiler bytecode_vm)
 
 if(BASH_PROGRAM)
-  add_test(NAME test.paracl COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/test/test.sh "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/test)
+  add_test(NAME test.paracl COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/test)
 endif()
