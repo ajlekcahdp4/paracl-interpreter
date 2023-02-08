@@ -31,22 +31,21 @@ enum class binary_operation {
 };
 
 constexpr std::string_view binary_operation_to_string(binary_operation op) {
-  using enum binary_operation;
-
+  using bin_op = binary_operation;
   switch (op) {
-  case E_BIN_OP_ADD: return "+";
-  case E_BIN_OP_SUB: return "-";
-  case E_BIN_OP_MUL: return "*";
-  case E_BIN_OP_DIV: return "/";
-  case E_BIN_OP_MOD: return "%";
-  case E_BIN_OP_EQ: return "==";
-  case E_BIN_OP_NE: return "!=";
-  case E_BIN_OP_GT: return ">";
-  case E_BIN_OP_LS: return "<";
-  case E_BIN_OP_GE: return ">=";
-  case E_BIN_OP_LE: return "<=";
-  case E_BIN_OP_AND: return "&&";
-  case E_BIN_OP_OR: return "||";
+  case bin_op::E_BIN_OP_ADD: return "+";
+  case bin_op::E_BIN_OP_SUB: return "-";
+  case bin_op::E_BIN_OP_MUL: return "*";
+  case bin_op::E_BIN_OP_DIV: return "/";
+  case bin_op::E_BIN_OP_MOD: return "%";
+  case bin_op::E_BIN_OP_EQ: return "==";
+  case bin_op::E_BIN_OP_NE: return "!=";
+  case bin_op::E_BIN_OP_GT: return ">";
+  case bin_op::E_BIN_OP_LS: return "<";
+  case bin_op::E_BIN_OP_GE: return ">=";
+  case bin_op::E_BIN_OP_LE: return "<=";
+  case bin_op::E_BIN_OP_AND: return "&&";
+  case bin_op::E_BIN_OP_OR: return "||";
   }
 
   throw std::runtime_error{"Broken binary_operation enum"};

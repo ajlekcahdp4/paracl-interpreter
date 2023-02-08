@@ -21,12 +21,12 @@ enum class unary_operation {
 };
 
 constexpr std::string_view unary_operation_to_string(unary_operation op) {
-  using enum unary_operation;
+  using unary_op = unary_operation;
 
   switch (op) {
-  case E_UN_OP_NEG: return "-";
-  case E_UN_OP_POS: return "+";
-  case E_UN_OP_NOT: return "!";
+  case unary_op::E_UN_OP_NEG: return "-";
+  case unary_op::E_UN_OP_POS: return "+";
+  case unary_op::E_UN_OP_NOT: return "!";
   }
 
   throw std::runtime_error{"Broken unary_operation enum"};
