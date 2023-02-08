@@ -184,10 +184,7 @@ static const auto paracl_isa = decl_vm::instruction_set_description(
 namespace paracl::bytecode_vm {
 
 static inline auto create_paracl_vm() {
-  using namespace paracl::bytecode_vm::decl_vm;
-  using namespace paracl::bytecode_vm::instruction_set;
-
-  return virtual_machine<decltype(paracl_isa)>{paracl_isa};
+  return decl_vm::virtual_machine<decltype(instruction_set::paracl_isa)>{instruction_set::paracl_isa};
 }
 
 } // namespace paracl::bytecode_vm

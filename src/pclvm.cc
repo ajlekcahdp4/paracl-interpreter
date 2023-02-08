@@ -13,7 +13,6 @@
 #include "popl.hpp"
 
 int main(int argc, char *argv[]) {
-  using namespace paracl::bytecode_vm;
   std::string input_file_name;
 
   popl::OptionParser op("Allowed options");
@@ -44,13 +43,13 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  auto ch = decl_vm::read_chunk(input_file);
+  auto ch = paracl::bytecode_vm::decl_vm::read_chunk(input_file);
   if (!ch) {
     std::cerr << "Encountered an unrecoverable error, existing...\n";
     return 1;
   }
 
-  auto vm = create_paracl_vm();
+  auto vm = paracl::bytecode_vm::create_paracl_vm();
   vm.set_program_code(std::move(ch.value()));
 
   try {
