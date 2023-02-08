@@ -27,7 +27,10 @@
 #include <cstdlib>
 #include <stdexcept>
 
-#include "frontend/ast.hpp"
+#include "frontend/ast/ast_container.hpp"
+#include "frontend/ast/ast_copier.hpp"
+#include "frontend/ast/ast_nodes.hpp"
+#include "frontend/ast/visitor.hpp"
 
 namespace paracl::frontend {
   class scanner;

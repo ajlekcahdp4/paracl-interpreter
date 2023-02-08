@@ -4,11 +4,16 @@
 #include <ostream>
 #include <string>
 
-#include "bytecode_vm.hpp"
+#include "bytecode_vm/bytecode_builder.hpp"
+#include "bytecode_vm/decl_vm.hpp"
+#include "bytecode_vm/disassembly.hpp"
+#include "bytecode_vm/opcodes.hpp"
+#include "bytecode_vm/virtual_machine.hpp"
+
 #include "codegen.hpp"
-#include "frontend.hpp"
 #include "frontend/ast/ast_copier.hpp"
 #include "frontend/dumper.hpp"
+#include "frontend/frontend_driver.hpp"
 #include "frontend/semantic_analyzer.hpp"
 
 #include "popl.hpp"
