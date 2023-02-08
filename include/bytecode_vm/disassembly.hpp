@@ -30,7 +30,7 @@ public:
     os << ".constant_pool\n";
 
     for (constant_pool_type::size_type i = 0; i < pool.size(); ++i) {
-      utils::serialization::padded_hex_printer(os, i) << " = { " << std::dec << pool[i] << " }\n";
+      utils::padded_hex_printer(os, i) << " = { " << std::dec << pool[i] << " }\n";
     }
 
     return os;
@@ -68,7 +68,7 @@ public:
     auto        start = binary.begin();
 
     for (auto first = binary.begin(), last = binary.end(); first != last;) {
-      utils::serialization::padded_hex_printer(os, std::distance(start, first)) << " ";
+      utils::padded_hex_printer(os, std::distance(start, first)) << " ";
       operator()(os, first, last);
       os << "\n";
     }

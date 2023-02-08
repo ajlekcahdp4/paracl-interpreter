@@ -21,7 +21,7 @@
 
 #include "utils/algotihm.hpp"
 
-namespace paracl::utils::serialization {
+namespace paracl::utils {
 
 template <typename T, std::input_iterator iter>
 std::pair<std::optional<T>, iter> read_little_endian(iter first,
@@ -39,7 +39,7 @@ std::pair<std::optional<T>, iter> read_little_endian(iter first,
   }
 
   auto size = sizeof(T);
-  first = algorithm::copy_while(first, last, input_iter, [&size](auto) { return size && size--; });
+  first = copy_while(first, last, input_iter, [&size](auto) { return size && size--; });
 
   if (size != 0) return std::make_pair(std::nullopt, first);
   return std::make_pair(std::bit_cast<T>(raw_bytes), first);
@@ -75,4 +75,4 @@ static constexpr auto padded_hex_printer = padded_hex{};
 
 template <typename T> auto pointer_to_uintptr(T *pointer) { return std::bit_cast<uintptr_t>(pointer); }
 
-} // namespace paracl::utils::serialization
+} // namespace paracl::utils

@@ -13,7 +13,7 @@
 #include <concepts>
 #include <iterator>
 
-namespace paracl::utils::algorithm {
+namespace paracl::utils {
 
 template <std::input_iterator input_it, std::output_iterator<typename input_it::value_type> output_it, typename t_pred>
 input_it copy_while(input_it first, input_it last, output_it o_first, t_pred pred) {
@@ -25,4 +25,4 @@ input_it copy_while(input_it first, input_it last, output_it o_first, t_pred pre
   return first;
 }
 
-} // namespace paracl::utils::algorithm
+} // namespace paracl::utils

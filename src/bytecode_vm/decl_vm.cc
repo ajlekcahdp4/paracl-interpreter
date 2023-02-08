@@ -40,14 +40,13 @@ std::optional<chunk> read_chunk(std::istream &is) {
   std::advance(first, magic_bytes_length);
   auto last = raw_bytes.end();
 
-  auto [count_constants, after_const_count_it] = utils::serialization::read_little_endian<uint32_t>(first, last);
+  auto [count_constants, after_const_count_it] = utils::read_little_endian<uint32_t>(first, last);
   if (!count_constants) {
     std::cerr << "Invalid header\n";
     return std::nullopt;
   }
 
-  auto [length_binary, after_binary_length_it] =
-      utils::serialization::read_little_endian<uint32_t>(after_const_count_it, last);
+  auto [length_binary, after_binary_length_it] = utils::read_little_endian<uint32_t>(after_const_count_it, last);
   if (!length_binary) {
     std::cerr << "Invalid header\n";
     return std::nullopt;
@@ -62,7 +61,7 @@ std::optional<chunk> read_chunk(std::istream &is) {
   first = after_binary_length_it;
   constant_pool_type pool;
   for (uint32_t i = 0; i < count_constants.value(); ++i) {
-    auto [constant, iter] = utils::serialization::read_little_endian<int>(first, last);
+    auto [constant, iter] = utils::read_little_endian<int>(first, last);
     first = iter;
     pool.push_back(constant.value());
   }
@@ -80,18 +79,18 @@ void write_chunk(std::ostream &os, const chunk &ch) {
   std::array<uint8_t, sizeof(uint32_t)> size_buffer;
 
   // Write number of constants
-  utils::serialization::write_little_endian(ch.constant_pool().size(), size_buffer.begin());
+  utils::write_little_endian(ch.constant_pool().size(), size_buffer.begin());
   os.write(reinterpret_cast<const char *>(size_buffer.data()), size_buffer.size());
 
   // Write length of binary code (in bytes)
-  utils::serialization::write_little_endian(ch.binary_code().size(), size_buffer.begin());
+  utils::write_little_endian(ch.binary_code().size(), size_buffer.begin());
   os.write(reinterpret_cast<const char *>(size_buffer.data()), size_buffer.size());
 
   // Write constants
   std::vector<uint8_t> raw_constants;
   raw_constants.reserve(ch.constant_pool().size() * sizeof(int));
   for (const auto &v : ch.constant_pool()) {
-    utils::serialization::write_little_endian(v, std::back_inserter(raw_constants));
+    utils::write_little_endian(v, std::back_inserter(raw_constants));
   }
 
   os.write(reinterpret_cast<const char *>(raw_constants.data()), raw_constants.size());

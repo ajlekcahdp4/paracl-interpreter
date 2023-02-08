@@ -34,8 +34,7 @@ template <typename t_desc> struct encoded_instruction {
   attribute_types m_attr;
 
   template <std::size_t I> void encode_attributes(auto iter) const {
-    paracl::utils::serialization::write_little_endian<std::tuple_element_t<I, attribute_types>>(std::get<I>(m_attr),
-                                                                                                iter);
+    paracl::utils::write_little_endian<std::tuple_element_t<I, attribute_types>>(std::get<I>(m_attr), iter);
   }
 
   template <std::size_t... I> void encode_attributes(auto iter, std::index_sequence<I...>) const {

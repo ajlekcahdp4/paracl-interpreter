@@ -15,17 +15,15 @@
 #include <sstream>
 #include <string>
 
-using namespace paracl::utils::serialization;
-
 namespace paracl::frontend::ast {
 
 static void print_declare_node(std::ostream &os, i_ast_node *ptr, std::string_view label) {
-  os << "\tnode_0x" << std::hex << pointer_to_uintptr(ptr) << " [label = \"" << label << "\" ];\n";
+  os << "\tnode_0x" << std::hex << utils::pointer_to_uintptr(ptr) << " [label = \"" << label << "\" ];\n";
 }
 
 static void print_bind_node(std::ostream &os, i_ast_node *parent, i_ast_node *child, std::string_view label = "") {
-  os << "\tnode_0x" << std::hex << pointer_to_uintptr(parent) << " -> node_0x" << pointer_to_uintptr(child)
-     << " [label = \"" << label << "\" ];\n";
+  os << "\tnode_0x" << std::hex << utils::pointer_to_uintptr(parent) << " -> node_0x"
+     << utils::pointer_to_uintptr(child) << " [label = \"" << label << "\" ];\n";
 }
 
 void ast_dump_visitor::visit(variable_expression *ptr) {

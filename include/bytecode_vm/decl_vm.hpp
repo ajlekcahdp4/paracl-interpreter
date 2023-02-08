@@ -48,9 +48,7 @@ public:
   chunk(binary_it bin_begin, binary_it bin_end, constant_it const_begin, constant_it const_end)
       : m_binary_code{bin_begin, bin_end}, m_constant_pool{const_begin, const_end} {}
 
-  template <typename T> void push_value(T val) {
-    utils::serialization::write_little_endian(val, std::back_inserter(m_binary_code));
-  };
+  template <typename T> void push_value(T val) { utils::write_little_endian(val, std::back_inserter(m_binary_code)); };
 
   void push_back(uint8_t code) { m_binary_code.push_back(code); }
   void push_byte(uint8_t code) { m_binary_code.push_back(code); }
@@ -88,7 +86,7 @@ template <opcode_underlying_type ident, typename... Ts> struct instruction_desc 
   constexpr auto operator>>(auto action) const { return instruction{*this, action}; }
 
   template <size_t... I> static void pretty_print(auto &os, const attribute_types &tuple, std::index_sequence<I...>) {
-    (..., (os << (I == 0 ? "" : ", "), utils::serialization::padded_hex{}(os, std::get<I>(tuple))));
+    (..., (os << (I == 0 ? "" : ", "), utils::padded_hex{}(os, std::get<I>(tuple))));
   }
 
   template <typename t_stream> t_stream &pretty_print(t_stream &os, const attribute_types &attr) const {
@@ -126,8 +124,7 @@ template <typename t_desc, typename t_action> struct instruction {
 
   template <std::size_t I>
   static std::tuple_element_t<I, attribute_tuple_type> decode_attribute(auto &first, auto last) {
-    auto [val, iter] =
-        paracl::utils::serialization::read_little_endian<std::tuple_element_t<I, attribute_tuple_type>>(first, last);
+    auto [val, iter] = paracl::utils::read_little_endian<std::tuple_element_t<I, attribute_tuple_type>>(first, last);
     if (!val) {
       throw std::runtime_error{"Decoding error"};
     }
