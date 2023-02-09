@@ -37,8 +37,6 @@ namespace paracl::frontend {
   class frontend_driver;
 }
 
-using namespace paracl::frontend;
-
 }
 
 %code top

@@ -14,8 +14,6 @@
 
 #include "bison_paracl_parser.hpp"
 #include "frontend/scanner.hpp"
-
-using namespace paracl::frontend;
 %}
 
 %option noyywrap nounput noinput nodefault 
