@@ -26,9 +26,6 @@ public:
   while_statement(i_ast_node *cond, i_ast_node *block, location l)
       : visitable_ast_node{l}, m_condition{cond}, m_block{block} {}
 
-  while_statement(const while_statement &) = default;
-  while_statement &operator=(const while_statement &) = default;
-
   i_ast_node *&cond() { return m_condition; }
   i_ast_node *&block() { return m_block; }
 

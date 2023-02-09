@@ -12,6 +12,8 @@
 
 #include "i_ast_node.hpp"
 
+#include <cassert>
+
 namespace paracl::frontend::ast {
 
 enum class unary_operation {
@@ -29,7 +31,7 @@ constexpr std::string_view unary_operation_to_string(unary_operation op) {
   case unary_op::E_UN_OP_NOT: return "!";
   }
 
-  throw std::runtime_error{"Broken unary_operation enum"};
+  assert(0); // We really shouldn't get here. If we do, then someone has broken the enum class intentionally.
 }
 
 class unary_expression final : public visitable_ast_node<unary_expression> {

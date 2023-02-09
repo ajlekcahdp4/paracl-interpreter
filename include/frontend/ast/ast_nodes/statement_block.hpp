@@ -24,9 +24,6 @@ private:
 public:
   statement_block(std::vector<i_ast_node *> vec, location l) : visitable_ast_node{l}, m_statements{vec} {}
 
-  statement_block(const statement_block &) = default;
-  statement_block &operator=(const statement_block &) = default;
-
   void append_statement(i_ast_node *statement) { m_statements.push_back(statement); }
 
   auto &statements() { return m_statements; }

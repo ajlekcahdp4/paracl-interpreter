@@ -17,9 +17,6 @@ namespace paracl::frontend::ast {
 class read_expression final : public visitable_ast_node<read_expression> {
 public:
   read_expression(location l) : visitable_ast_node{l} {}
-
-  read_expression(const read_expression &) = default;
-  read_expression &operator=(const read_expression &) = default;
 };
 
 } // namespace paracl::frontend::ast

@@ -32,9 +32,6 @@ public:
   if_statement(i_ast_node *cond, i_ast_node *true_block, i_ast_node *else_block, location l)
       : visitable_ast_node{l}, m_condition{cond}, m_true_block{true_block}, m_else_block{else_block} {}
 
-  if_statement(const if_statement &) = default;
-  if_statement &operator=(const if_statement &) = default;
-
   i_ast_node *&cond() { return m_condition; }
   i_ast_node *&true_block() { return m_true_block; }
   i_ast_node *&else_block() { return m_else_block; }

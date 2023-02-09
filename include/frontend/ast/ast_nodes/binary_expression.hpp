@@ -12,6 +12,8 @@
 
 #include "i_ast_node.hpp"
 
+#include <cassert>
+
 namespace paracl::frontend::ast {
 
 enum class binary_operation {
@@ -48,7 +50,7 @@ constexpr std::string_view binary_operation_to_string(binary_operation op) {
   case bin_op::E_BIN_OP_OR: return "||";
   }
 
-  throw std::runtime_error{"Broken binary_operation enum"};
+  assert(0); // We really shouldn't get here. If we do, then someone has broken the enum class intentionally.
 }
 
 class binary_expression final : public visitable_ast_node<binary_expression> {
@@ -58,9 +60,6 @@ class binary_expression final : public visitable_ast_node<binary_expression> {
 public:
   binary_expression(binary_operation op_type, i_ast_node *left, i_ast_node *right, location l)
       : visitable_ast_node{l}, m_operation_type{op_type}, m_left{left}, m_right{right} {}
-
-  binary_expression(const binary_expression &) = default;
-  binary_expression &operator=(const binary_expression &) = default;
 
   binary_operation op_type() const { return m_operation_type; }
   i_ast_node     *&left() { return m_left; }

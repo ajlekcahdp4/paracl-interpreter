@@ -20,9 +20,6 @@ class constant_expression final : public visitable_ast_node<constant_expression>
 public:
   constant_expression(int p_val, location l) : visitable_ast_node{l}, m_val{p_val} {}
 
-  constant_expression(const constant_expression &) = default;
-  constant_expression &operator=(const constant_expression &) = default;
-
   int &value() { return m_val; }
 };
 

@@ -24,9 +24,6 @@ private:
 public:
   error_node(const std::string &msg, location l) : visitable_ast_node{l}, m_error_message{msg} {};
 
-  error_node(const error_node &) = default;
-  error_node &operator=(const error_node &) = default;
-
   std::string error_msg() { return m_error_message; }
 };
 
