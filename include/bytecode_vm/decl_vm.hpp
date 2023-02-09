@@ -28,6 +28,11 @@
 
 namespace paracl::bytecode_vm::decl_vm {
 
+class vm_error : public std::runtime_error {
+public:
+  vm_error(std::string err_msg) : std::runtime_error{err_msg} {}
+};
+
 using constant_pool_type = std::vector<int>;
 using binary_code_buffer_type = std::vector<uint8_t>;
 
@@ -80,7 +85,7 @@ template <opcode_underlying_type ident, typename... Ts> struct instruction_desc 
   static constexpr auto get_size() { return binary_size; }
 
   constexpr instruction_desc(const char *debug_name) : name{debug_name} {
-    if (!debug_name || name[0] == '\0') throw std::runtime_error{"Empty debug names aren't allowed"};
+    if (!debug_name || name[0] == '\0') throw vm_error{"Empty debug names aren't allowed"};
   }
 
   constexpr auto operator>>(auto action) const { return instruction{*this, action}; }
@@ -126,7 +131,7 @@ template <typename t_desc, typename t_action> struct instruction {
   static std::tuple_element_t<I, attribute_tuple_type> decode_attribute(auto &first, auto last) {
     auto [val, iter] = paracl::utils::read_little_endian<std::tuple_element_t<I, attribute_tuple_type>>(first, last);
     if (!val) {
-      throw std::runtime_error{"Decoding error"};
+      throw vm_error{"Decoding error"};
     }
     first = iter;
     return val.value();
@@ -157,14 +162,13 @@ template <typename... t_instructions> struct instruction_set_description {
 };
 
 template <typename t_desc> class virtual_machine {
-public:
   t_desc instruction_set;
 
   struct context {
     friend class virtual_machine<t_desc>;
 
   private:
-    std::vector<execution_value_type>  m_execution_stack;
+    std::vector<execution_value_type>       m_execution_stack;
     binary_code_buffer_type::const_iterator m_ip, m_ip_end;
 
     chunk m_program_code;
@@ -173,21 +177,24 @@ public:
   public:
     context() = default;
 
+    // Construct a execution context from a copy of code
     context(const chunk &ch) : m_program_code{ch} {
       m_ip = m_program_code.binary_code().begin();
       m_ip_end = m_program_code.binary_code().end();
     }
 
+    // Move code to avoid copying
     context(chunk &&ch) : m_program_code{std::move(ch)} {
       m_ip = m_program_code.binary_code().begin();
       m_ip_end = m_program_code.binary_code().end();
     }
 
-    auto ip() { return m_ip; }
+    auto ip() const { return m_ip; }
 
-    const auto &code() const { return m_program_code.binary_code(); }
-    const auto &pool() const { return m_program_code.constant_pool(); }
-    auto       &at_stack(uint32_t index) { return m_execution_stack.at(index); }
+    const auto &code() const & { return m_program_code.binary_code(); }
+    const auto &pool() const & { return m_program_code.constant_pool(); }
+
+    auto &at_stack(uint32_t index) & { return m_execution_stack.at(index); }
 
     void set_ip(uint32_t new_ip) {
       m_ip = code().begin();
@@ -195,7 +202,7 @@ public:
     }
 
     auto pop() {
-      if (m_execution_stack.size() == 0) throw std::runtime_error{"Bad stack pop"};
+      if (m_execution_stack.size() == 0) throw vm_error{"Bad stack pop"};
       auto top = m_execution_stack.back();
       m_execution_stack.pop_back();
       return top;
@@ -210,37 +217,40 @@ public:
   context m_execution_context;
 
 public:
-  auto &ctx() { return m_execution_context; }
-
   virtual_machine(t_desc desc) : instruction_set{desc}, m_execution_context{} {}
 
-  void set_program_code(chunk &&ch) { ctx() = context{std::move(ch)}; }
-  void set_program_code(const chunk &ch) { ctx() = context{ch}; }
+  void set_program_code(chunk &&ch) { m_execution_context = context{std::move(ch)}; }
+  void set_program_code(const chunk &ch) { m_execution_context = context{ch}; }
 
   void execute_instruction() {
-    if (ctx().is_halted()) throw std::runtime_error{"Can't execute, VM is halted"};
-    auto current_instruction = instruction_set.instruction_lookup_table[*(ctx().m_ip++)];
+    auto &ctx = m_execution_context;
+
+    if (ctx.is_halted()) throw vm_error{"Can't execute, VM is halted"};
+    auto current_instruction = instruction_set.instruction_lookup_table[*(m_execution_context.m_ip++)];
 
     // clang-format off
     std::visit(paracl::utils::visitors{
       [&](std::monostate) {
-        ctx().halt();
-        throw std::runtime_error{"Unknown opcode"};},
+        m_execution_context.halt();
+        throw vm_error{"Unknown opcode"};},
       [&](const auto *instr) {
-        auto attr = instr->decode(ctx().m_ip, ctx().m_ip_end).attributes;
-        instr->action(ctx(), attr); }}, current_instruction);
+        auto attr = instr->decode(ctx.m_ip, ctx.m_ip_end).attributes;
+        instr->action(ctx, attr); }}, current_instruction);
     // clang-format on
   }
 
   void execute(bool validate_stack = false) {
-    while (!ctx().is_halted()) {
+    while (!m_execution_context.is_halted()) {
       execute_instruction();
     }
 
-    if (validate_stack && ctx().m_execution_stack.size() != 0) {
-      std::cerr << "Warning: execution finished abnormally: stack size = " << ctx().m_execution_stack.size() << "\n";
+    auto &ctx = m_execution_context;
+    if (validate_stack && ctx.m_execution_stack.size() != 0) {
+      std::cerr << "Warning: execution finished abnormally: stack size = " << ctx.m_execution_stack.size() << "\n";
     }
   }
+
+  bool is_halted() const { return m_execution_context.is_halted(); }
 };
 
 } // namespace paracl::bytecode_vm::decl_vm
