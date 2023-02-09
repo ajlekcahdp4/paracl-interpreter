@@ -44,9 +44,8 @@ public:
 
 } // namespace paracl::frontend::ast
 
-#include "frontend/ast/ast_nodes.hpp"
+#include "ast_nodes/i_ast_node.hpp"
 
 namespace paracl::frontend::ast {
 static inline void ast_node_visit(i_ast_visitor &visitor, i_ast_node *ast_node) { ast_node->accept(visitor); }
-
 } // namespace paracl::frontend::ast

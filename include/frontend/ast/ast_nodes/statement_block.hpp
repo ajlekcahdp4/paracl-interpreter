@@ -16,13 +16,13 @@
 
 namespace paracl::frontend::ast {
 
-class statement_block final : public i_ast_node {
+class statement_block final : public visitable_ast_node<statement_block> {
 private:
   symtab                    m_symtab;
   std::vector<i_ast_node *> m_statements;
 
 public:
-  statement_block(std::vector<i_ast_node *> vec, location l) : i_ast_node{l}, m_statements{vec} {}
+  statement_block(std::vector<i_ast_node *> vec, location l) : visitable_ast_node{l}, m_statements{vec} {}
 
   statement_block(const statement_block &) = default;
   statement_block &operator=(const statement_block &) = default;
@@ -30,7 +30,6 @@ public:
   void append_statement(i_ast_node *statement) { m_statements.push_back(statement); }
 
   auto &statements() { return m_statements; }
-  void  accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
   symtab *symbol_table() { return &m_symtab; }
 };

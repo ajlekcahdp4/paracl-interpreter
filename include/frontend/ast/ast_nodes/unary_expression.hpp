@@ -32,19 +32,17 @@ constexpr std::string_view unary_operation_to_string(unary_operation op) {
   throw std::runtime_error{"Broken unary_operation enum"};
 }
 
-class unary_expression final : public i_ast_node {
+class unary_expression final : public visitable_ast_node<unary_expression> {
 private:
   unary_operation m_operation_type;
   i_ast_node     *m_expr;
 
 public:
   unary_expression(unary_operation op_type, i_ast_node *p_expr, location l)
-      : i_ast_node{l}, m_operation_type{op_type}, m_expr{p_expr} {}
+      : visitable_ast_node{l}, m_operation_type{op_type}, m_expr{p_expr} {}
 
   unary_expression(const unary_expression &) = default;
   unary_expression &operator=(const unary_expression &) = default;
-
-  void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
 
   unary_operation op_type() const { return m_operation_type; }
   i_ast_node    *&child() { return m_expr; }

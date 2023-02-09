@@ -87,27 +87,27 @@ read_expression *make_read_expression(location l) {
 error_node *make_error_node(std::string msg, location l) {
   return emplace_back<error_node>(msg, l);
 }
-// clang-format on
+  // clang-format on
 
-statement_block *make_statement_block(std::vector<i_ast_node *> &&vec, location l) {
-  return emplace_back<statement_block>(std::move(vec), l);
-}
+  statement_block *make_statement_block(std::vector<i_ast_node *> &&vec, location l) {
+    return emplace_back<statement_block>(std::move(vec), l);
+  }
 
-statement_block *make_statement_block(const std::vector<i_ast_node *> &vec, location l) {
-  return make_statement_block(std::vector<i_ast_node *>{vec}, l);
-}
+  statement_block *make_statement_block(const std::vector<i_ast_node *> &vec, location l) {
+    return make_statement_block(std::vector<i_ast_node *>{vec}, l);
+  }
 
   unary_expression *make_unary_expression(unary_operation op, i_ast_node *expr, location l) {
     return emplace_back<unary_expression>(op, expr, l);
   }
 
-variable_expression *make_variable_expression(std::string &name, location l) {
-  return emplace_back<variable_expression>(name, l);
-}
+  variable_expression *make_variable_expression(std::string &name, location l) {
+    return emplace_back<variable_expression>(name, l);
+  }
 
-while_statement *make_while_statement(i_ast_node *cond, i_ast_node *block, location l) {
-  return emplace_back<while_statement>(cond, block, l);
-}
+  while_statement *make_while_statement(i_ast_node *cond, i_ast_node *block, location l) {
+    return emplace_back<while_statement>(cond, block, l);
+  }
 };
 
 } // namespace paracl::frontend::ast
