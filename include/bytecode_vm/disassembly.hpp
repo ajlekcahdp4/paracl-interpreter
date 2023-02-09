@@ -26,11 +26,11 @@ namespace paracl::bytecode_vm::decl_vm::disassembly {
 
 class constant_pool_disassembler {
 public:
-  template <typename t_stream> t_stream &operator()(t_stream &os, const constant_pool_type &pool) const {
+  template <typename t_stream> t_stream &operator()(t_stream &os, auto start, auto finish) const {
     os << ".constant_pool\n";
 
-    for (constant_pool_type::size_type i = 0; i < pool.size(); ++i) {
-      utils::padded_hex_printer(os, i) << " = { " << std::dec << pool[i] << " }\n";
+    for (constant_pool_type::size_type i = 0; start != finish; ++start, ++i) {
+      utils::padded_hex_printer(os, i) << " = { " << std::dec << *start << " }\n";
     }
 
     return os;
@@ -64,10 +64,9 @@ public:
   template <typename t_stream> t_stream &operator()(t_stream &os, const chunk &chk) const {
     os << ".code\n";
 
-    const auto &binary = chk.binary_code();
-    auto        start = binary.begin();
+    auto start = chk.binary_begin();
 
-    for (auto first = binary.begin(), last = binary.end(); first != last;) {
+    for (auto first = chk.binary_begin(), last = chk.binary_end(); first != last;) {
       utils::padded_hex_printer(os, std::distance(start, first)) << " ";
       operator()(os, first, last);
       os << "\n";
@@ -84,7 +83,7 @@ public:
   chunk_complete_disassembler(t_instr_set isa) : binary_disas{isa} {}
 
   template <typename t_stream> t_stream &operator()(t_stream &os, const chunk &chk) const {
-    constant_pool_disassembler{}(os, chk.constant_pool());
+    constant_pool_disassembler{}(os, chk.constants_begin(), chk.constants_end());
     os << "\n";
     binary_disas(os, chk);
     return os;

@@ -79,22 +79,23 @@ void write_chunk(std::ostream &os, const chunk &ch) {
   std::array<uint8_t, sizeof(uint32_t)> size_buffer;
 
   // Write number of constants
-  utils::write_little_endian(ch.constant_pool().size(), size_buffer.begin());
+  utils::write_little_endian(ch.constants_size(), size_buffer.begin());
   os.write(reinterpret_cast<const char *>(size_buffer.data()), size_buffer.size());
 
   // Write length of binary code (in bytes)
-  utils::write_little_endian(ch.binary_code().size(), size_buffer.begin());
+  utils::write_little_endian(ch.binary_size(), size_buffer.begin());
   os.write(reinterpret_cast<const char *>(size_buffer.data()), size_buffer.size());
 
   // Write constants
   std::vector<uint8_t> raw_constants;
-  raw_constants.reserve(ch.constant_pool().size() * sizeof(int));
-  for (const auto &v : ch.constant_pool()) {
-    utils::write_little_endian(v, std::back_inserter(raw_constants));
+  raw_constants.reserve(ch.constants_size() * sizeof(int));
+
+  for (auto start = ch.constants_begin(), finish = ch.constants_end(); start != finish; ++start) {
+    utils::write_little_endian(*start, std::back_inserter(raw_constants));
   }
 
   os.write(reinterpret_cast<const char *>(raw_constants.data()), raw_constants.size());
-  os.write(reinterpret_cast<const char *>(ch.binary_code().data()), ch.binary_code().size());
+  os.write(reinterpret_cast<const char *>(ch.binary_data()), ch.binary_size());
 }
 
-} // namespace paracl::bytecode_vm
+} // namespace paracl::bytecode_vm::decl_vm

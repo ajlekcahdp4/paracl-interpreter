@@ -46,7 +46,7 @@ public:
 
   chunk() = default;
 
-  chunk(std::vector<uint8_t> &&p_bin, constant_pool_type &&p_const)
+  chunk(std::vector<value_type> p_bin, constant_pool_type p_const)
       : m_binary_code{std::move(p_bin)}, m_constant_pool{std::move(p_const)} {}
 
   template <std::input_iterator binary_it, std::input_iterator constant_it>
@@ -55,16 +55,21 @@ public:
 
   template <typename T> void push_value(T val) { utils::write_little_endian(val, std::back_inserter(m_binary_code)); };
 
-  void push_back(uint8_t code) { m_binary_code.push_back(code); }
-  void push_byte(uint8_t code) { m_binary_code.push_back(code); }
-  void push_signed_byte(int8_t val) { m_binary_code.push_back(std::bit_cast<uint8_t>(val)); }
+  void push_back(value_type code) { m_binary_code.push_back(code); }
+  void push_back_signed(int8_t val) { push_back(std::bit_cast<value_type>(val)); }
 
-  void set_constant_pool(std::vector<int> &&constants) { m_constant_pool = std::move(constants); }
+  void set_constant_pool(constant_pool_type constants) { m_constant_pool = std::move(constants); }
 
-  auto       &binary_code() { return m_binary_code; }
-  auto       &constant_pool() { return m_constant_pool; }
-  const auto &binary_code() const { return m_binary_code; }
-  const auto &constant_pool() const { return m_constant_pool; }
+  auto binary_begin() const { return m_binary_code.cbegin(); }
+  auto binary_end() const { return m_binary_code.cend(); }
+  auto binary_size() const { return m_binary_code.size(); }
+  auto binary_data() const { return m_binary_code.data(); }
+
+  auto constants_begin() const { return m_constant_pool.cbegin(); }
+  auto constants_end() const { return m_constant_pool.cend(); }
+  auto constants_size() const { return m_constant_pool.size(); }
+
+  auto constant_at(std::size_t id) const { return m_constant_pool.at(id); }
 };
 
 std::optional<chunk> read_chunk(std::istream &);
@@ -72,7 +77,7 @@ void                 write_chunk(std::ostream &, const chunk &);
 
 template <typename, typename> struct instruction;
 
-using opcode_underlying_type = uint8_t;
+using opcode_underlying_type = chunk::value_type;
 template <opcode_underlying_type ident, typename... Ts> struct instruction_desc {
   static constexpr auto opcode = ident;
   static constexpr auto binary_size = sizeof(opcode_underlying_type) + (sizeof(Ts) + ... + 0);
@@ -177,27 +182,16 @@ template <typename t_desc> class virtual_machine {
   public:
     context() = default;
 
-    // Construct a execution context from a copy of code
-    context(const chunk &ch) : m_program_code{ch} {
-      m_ip = m_program_code.binary_code().begin();
-      m_ip_end = m_program_code.binary_code().end();
+    context(chunk ch) : m_program_code{ch} {
+      m_ip = m_program_code.binary_begin();
+      m_ip_end = m_program_code.binary_end();
     }
 
-    // Move code to avoid copying
-    context(chunk &&ch) : m_program_code{std::move(ch)} {
-      m_ip = m_program_code.binary_code().begin();
-      m_ip_end = m_program_code.binary_code().end();
-    }
-
-    auto ip() const { return m_ip; }
-
-    const auto &code() const & { return m_program_code.binary_code(); }
-    const auto &pool() const & { return m_program_code.constant_pool(); }
-
+    auto  ip() const { return m_ip; }
     auto &at_stack(uint32_t index) & { return m_execution_stack.at(index); }
 
     void set_ip(uint32_t new_ip) {
-      m_ip = code().begin();
+      m_ip = m_program_code.binary_begin();
       std::advance(m_ip, new_ip);
     }
 
@@ -212,6 +206,8 @@ template <typename t_desc> class virtual_machine {
 
     void halt() { m_halted = true; }
     bool is_halted() const { return m_halted; }
+
+    auto constant(uint32_t id) const { return m_program_code.constant_at(id); }
   };
 
   context m_execution_context;
@@ -219,8 +215,7 @@ template <typename t_desc> class virtual_machine {
 public:
   virtual_machine(t_desc desc) : instruction_set{desc}, m_execution_context{} {}
 
-  void set_program_code(chunk &&ch) { m_execution_context = context{std::move(ch)}; }
-  void set_program_code(const chunk &ch) { m_execution_context = context{ch}; }
+  void set_program_code(chunk ch) { m_execution_context = context{std::move(ch)}; }
 
   void execute_instruction() {
     auto &ctx = m_execution_context;
