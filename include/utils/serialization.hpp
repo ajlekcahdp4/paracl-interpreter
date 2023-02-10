@@ -19,13 +19,14 @@
 #include <optional>
 #include <stdint.h>
 
-#include "utils/algotihm.hpp"
+#include "utils/algorithm.hpp"
 
 namespace paracl::utils {
 
 template <typename T, std::input_iterator iter>
-std::pair<std::optional<T>, iter> read_little_endian(iter first,
-                                                     iter last) requires std::integral<T> || std::floating_point<T> {
+std::pair<std::optional<T>, iter> read_little_endian(iter first, iter last)
+requires std::integral<T> || std::floating_point<T>
+{
   std::array<char, sizeof(T)> raw_bytes;
 
   auto input_iter = typename decltype(raw_bytes)::iterator{};
@@ -46,7 +47,9 @@ std::pair<std::optional<T>, iter> read_little_endian(iter first,
 }
 
 template <typename T, std::output_iterator<uint8_t> iter>
-void write_little_endian(T val, iter oput) requires std::integral<T> || std::floating_point<T> {
+void write_little_endian(T val, iter oput)
+requires std::integral<T> || std::floating_point<T>
+{
   std::array<char, sizeof(T)> raw_bytes = std::bit_cast<decltype(raw_bytes)>(val);
 
   auto input_iter = typename decltype(raw_bytes)::iterator{};

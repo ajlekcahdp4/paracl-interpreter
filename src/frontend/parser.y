@@ -109,24 +109,11 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %token <std::string> IDENTIFIER "identifier"
 
 /* Rules that model the AST */
-%type <ast::i_ast_node *> primary_expression    
-%type <ast::i_ast_node *> multiplicative_expression
-%type <ast::i_ast_node *> unary_expression
-%type <ast::i_ast_node *> additive_expression
-%type <ast::i_ast_node *> comparison_expression
-%type <ast::i_ast_node *> equality_expression
-%type <ast::i_ast_node *> logical_expression
-%type <ast::i_ast_node *> expression
+%type <ast::i_ast_node *> primary_expression multiplicative_expression unary_expression
+additive_expression comparison_expression equality_expression logical_expression expression assignment_expression_statement
 
-%type <ast::i_ast_node *> assignment_expression_statement
-
-%type <ast::i_ast_node *> print_statement
-%type <ast::i_ast_node *> assignment_statement
-%type <ast::i_ast_node *> statement_block
-%type <ast::i_ast_node *> statement
+%type <ast::i_ast_node *> print_statement assignment_statement statement_block statement if_statement while_statement
 %type <std::vector<ast::i_ast_node *>> statements
-%type <ast::i_ast_node *> if_statement
-%type <ast::i_ast_node *> while_statement
 
 %precedence THEN
 %precedence ELSE

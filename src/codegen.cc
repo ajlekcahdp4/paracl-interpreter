@@ -9,6 +9,7 @@
  */
 
 #include "codegen.hpp"
+#include "frontend/ast/ast_nodes.hpp"
 
 #include <cassert>
 #include <iostream>

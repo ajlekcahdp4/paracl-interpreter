@@ -9,7 +9,7 @@
  */
 
 #include "frontend/semantic_analyzer.hpp"
-#include "utils.hpp"
+#include "frontend/ast/ast_nodes.hpp"
 
 #include <iostream>
 #include <sstream>

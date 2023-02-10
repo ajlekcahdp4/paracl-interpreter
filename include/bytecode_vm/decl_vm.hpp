@@ -23,7 +23,8 @@
 #include <variant>
 #include <vector>
 
-#include "utils.hpp"
+#include "utils/algorithm.hpp"
+#include "utils/misc.hpp"
 #include "utils/serialization.hpp"
 
 namespace paracl::bytecode_vm::decl_vm {

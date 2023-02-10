@@ -17,16 +17,18 @@
 #include <optional>
 #include <variant>
 
-#include "utils/algotihm.hpp"
-#include "utils/serialization.hpp"
-
 namespace paracl::utils {
 
-template <class... Ts> struct visitors : Ts... { using Ts::operator()...; };
+template <class... Ts> struct visitors : Ts... {
+  using Ts::operator()...;
+};
+
 template <class... Ts> visitors(Ts...) -> visitors<Ts...>;
 
 template <typename t_tuple> struct variant_from_tuple;
-template <typename... Ts> struct variant_from_tuple<std::tuple<Ts...>> { using type = std::variant<Ts...>; };
+template <typename... Ts> struct variant_from_tuple<std::tuple<Ts...>> {
+  using type = std::variant<Ts...>;
+};
 
 template <typename t_tuple> using variant_from_tuple_t = typename variant_from_tuple<t_tuple>::type;
 

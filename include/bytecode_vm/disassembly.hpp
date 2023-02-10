@@ -20,7 +20,7 @@
 #include <stdexcept>
 
 #include "bytecode_vm/decl_vm.hpp"
-#include "utils.hpp"
+#include "utils/serialization.hpp"
 
 namespace paracl::bytecode_vm::decl_vm::disassembly {
 

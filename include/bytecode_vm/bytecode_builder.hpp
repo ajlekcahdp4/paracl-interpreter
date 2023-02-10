@@ -23,7 +23,8 @@
 #include <vector>
 
 #include "decl_vm.hpp"
-#include "utils.hpp"
+
+#include "utils/misc.hpp"
 #include "utils/serialization.hpp"
 
 namespace paracl::bytecode_vm::builder {
@@ -68,7 +69,7 @@ public:
 
 private:
   std::vector<instruction_variant_type> m_code;
-  uint32_t m_cur_loc = 0;
+  uint32_t                              m_cur_loc = 0;
 
 public:
   bytecode_builder() = default;

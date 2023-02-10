@@ -9,7 +9,7 @@
  */
 
 #include "frontend/dumper.hpp"
-#include "utils.hpp"
+#include "utils/serialization.hpp"
 
 #include <cassert>
 #include <iostream>

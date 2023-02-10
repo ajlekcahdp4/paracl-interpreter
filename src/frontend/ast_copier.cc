@@ -9,6 +9,7 @@
  */
 
 #include "frontend/ast/ast_copier.hpp"
+#include "frontend/ast/ast_nodes.hpp"
 #include "frontend/ast/visitor.hpp"
 
 #include <cassert>

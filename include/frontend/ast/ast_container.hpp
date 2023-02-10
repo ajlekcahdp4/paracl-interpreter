@@ -11,7 +11,6 @@
 #pragma once
 
 #include "ast_copier.hpp"
-#include "ast_nodes.hpp"
 
 #include <cassert>
 #include <memory>

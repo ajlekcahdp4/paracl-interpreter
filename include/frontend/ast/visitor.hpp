@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include <cassert>
 
 namespace paracl::frontend::ast {
