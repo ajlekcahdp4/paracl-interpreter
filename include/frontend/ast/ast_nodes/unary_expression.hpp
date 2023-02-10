@@ -12,6 +12,8 @@
 
 #include "i_ast_node.hpp"
 
+#include <cassert>
+
 namespace paracl::frontend::ast {
 
 enum class unary_operation {
@@ -21,33 +23,29 @@ enum class unary_operation {
 };
 
 constexpr std::string_view unary_operation_to_string(unary_operation op) {
-  using enum unary_operation;
+  using unary_op = unary_operation;
 
   switch (op) {
-  case E_UN_OP_NEG: return "-";
-  case E_UN_OP_POS: return "+";
-  case E_UN_OP_NOT: return "!";
+  case unary_op::E_UN_OP_NEG: return "-";
+  case unary_op::E_UN_OP_POS: return "+";
+  case unary_op::E_UN_OP_NOT: return "!";
   }
 
-  throw std::runtime_error{"Broken unary_operation enum"};
+  assert(0); // We really shouldn't get here. If we do, then someone has broken the enum class intentionally.
+  throw std::invalid_argument{"Broken enum"};
 }
 
-class unary_expression final : public i_ast_node {
+class unary_expression final : public visitable_ast_node<unary_expression> {
 private:
   unary_operation m_operation_type;
   i_ast_node     *m_expr;
 
 public:
   unary_expression(unary_operation op_type, i_ast_node *p_expr, location l)
-      : i_ast_node{l}, m_operation_type{op_type}, m_expr{p_expr} {}
-
-  unary_expression(const unary_expression &) = default;
-  unary_expression &operator=(const unary_expression &) = default;
-
-  void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
+      : visitable_ast_node{l}, m_operation_type{op_type}, m_expr{p_expr} {}
 
   unary_operation op_type() const { return m_operation_type; }
-  i_ast_node    *&child() { return m_expr; }
+  i_ast_node     *expr() const { return m_expr; }
 };
 
 } // namespace paracl::frontend::ast

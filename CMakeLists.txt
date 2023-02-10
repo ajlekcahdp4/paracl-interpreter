@@ -63,8 +63,8 @@ endif()
 
 option(SANITIZE OFF)
 if (SANITIZE)
-  add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
-  add_link_options(-fsanitize=address -fno-omit-frame-pointer)
+  add_compile_options(-fsanitize=undefined -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=undefined -fno-omit-frame-pointer)
 endif()
 
 set(BYTECODE_VM_SOURCES
@@ -100,10 +100,8 @@ flex_target(scanner src/frontend/scanner.l ${CMAKE_CURRENT_BINARY_DIR}/scanner.l
 add_flex_bison_dependency(scanner parser)
 
 set(PARACL_COMPILER_SOURCES
-  src/frontend/ast_container.cc
   src/frontend/dumper.cc
   src/frontend/semantic_analyzer.cc
-  src/frontend/ast_container.cc
   src/frontend/ast_copier.cc
   src/codegen.cc
 )

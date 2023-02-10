@@ -17,17 +17,12 @@
 
 namespace paracl::frontend::ast {
 
-class error_node final : public i_ast_node {
+class error_node final : public visitable_ast_node<error_node> {
 private:
   std::string m_error_message;
 
 public:
-  error_node(const std::string &msg, location l) : i_ast_node{l}, m_error_message{msg} {};
-
-  error_node(const error_node &) = default;
-  error_node &operator=(const error_node &) = default;
-
-  void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
+  error_node(const std::string &msg, location l) : visitable_ast_node{l}, m_error_message{msg} {};
 
   std::string error_msg() { return m_error_message; }
 };

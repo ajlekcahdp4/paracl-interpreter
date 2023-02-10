@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <cassert>
+
 namespace paracl::frontend::ast {
 
 class i_ast_node;
@@ -25,8 +27,7 @@ class variable_expression;
 class while_statement;
 class error_node;
 
-class i_ast_visitor {
-public:
+struct i_ast_visitor {
   virtual void visit(assignment_statement *) = 0;
   virtual void visit(binary_expression *) = 0;
   virtual void visit(constant_expression *) = 0;
@@ -44,9 +45,11 @@ public:
 
 } // namespace paracl::frontend::ast
 
-#include "frontend/ast/ast_nodes.hpp"
+#include "ast_nodes/i_ast_node.hpp"
 
 namespace paracl::frontend::ast {
-static inline void ast_node_visit(i_ast_visitor &visitor, i_ast_node *ast_node) { ast_node->accept(visitor); }
-
+inline void ast_node_visit(i_ast_visitor &visitor, i_ast_node *ast_node) {
+  assert(ast_node);
+  ast_node->accept(visitor);
+}
 } // namespace paracl::frontend::ast

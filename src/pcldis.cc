@@ -4,14 +4,15 @@
 #include <string>
 #include <filesystem>
 
-#include "bytecode_vm.hpp"
+#include "bytecode_vm/bytecode_builder.hpp"
+#include "bytecode_vm/decl_vm.hpp"
 #include "bytecode_vm/disassembly.hpp"
+#include "bytecode_vm/opcodes.hpp"
 #include "bytecode_vm/virtual_machine.hpp"
 
 #include "popl.hpp"
 
 int main(int argc, char *argv[]) {
-  using namespace paracl::bytecode_vm;
   std::string input_file_name;
 
   popl::OptionParser op("Allowed options");
@@ -42,14 +43,15 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  auto ch = decl_vm::read_chunk(input_file);
+  auto ch = paracl::bytecode_vm::decl_vm::read_chunk(input_file);
   if (!ch) {
     std::cerr << "Encountered an unrecoverable error, existing...\n";
     return 1;
   }
 
-  decl_vm::disassembly::chunk_complete_disassembler disas{instruction_set::paracl_isa};
-  
+  paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler disas{
+      paracl::bytecode_vm::instruction_set::paracl_isa};
+
   try {
     disas(std::cout, ch.value());
   } catch (std::exception &e) {

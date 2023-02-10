@@ -4,19 +4,21 @@
 #include <ostream>
 #include <string>
 
-#include "bytecode_vm.hpp"
+#include "bytecode_vm/bytecode_builder.hpp"
+#include "bytecode_vm/decl_vm.hpp"
+#include "bytecode_vm/disassembly.hpp"
+#include "bytecode_vm/opcodes.hpp"
+#include "bytecode_vm/virtual_machine.hpp"
+
 #include "codegen.hpp"
-#include "frontend.hpp"
 #include "frontend/ast/ast_copier.hpp"
 #include "frontend/dumper.hpp"
+#include "frontend/frontend_driver.hpp"
 #include "frontend/semantic_analyzer.hpp"
 
 #include "popl.hpp"
 
 int main(int argc, char *argv[]) {
-  using namespace paracl::bytecode_vm;
-  using namespace instruction_set;
-  using namespace decl_vm::disassembly;
 
   std::string input_file_name;
   bool        dump_binary = false;
@@ -67,14 +69,15 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  if (!ast_analyze(parse_tree.get_root_ptr())) {
+  if (!paracl::frontend::ast_analyze(parse_tree.get_root_ptr())) {
     return 1;
   }
 
   auto ch = paracl::codegen::generate_code(parse_tree.get_root_ptr());
 
   if (dump_binary) {
-    chunk_complete_disassembler disas{paracl_isa};
+    paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler disas{
+        paracl::bytecode_vm::instruction_set::paracl_isa};
     disas(std::cout, ch);
     return 0;
   }
@@ -96,7 +99,7 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  auto vm = create_paracl_vm();
+  auto vm = paracl::bytecode_vm::create_paracl_vm();
   vm.set_program_code(std::move(ch));
 
   try {

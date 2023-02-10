@@ -24,7 +24,7 @@ namespace paracl::bytecode_vm::instruction_set {
 
 static constexpr decl_vm::instruction_desc<E_PUSH_CONST_UNARY, uint32_t> push_const_desc = "push_const";
 static constexpr auto                                                    push_const_instr = push_const_desc >>
-                                         [](auto &&ctx, auto &&attr) { ctx.push(ctx.pool().at(std::get<0>(attr))); };
+                                         [](auto &&ctx, auto &&attr) { ctx.push(ctx.constant(std::get<0>(attr))); };
 
 static constexpr decl_vm::instruction_desc<E_RETURN_NULLARY> return_desc = "ret";
 static constexpr auto return_instr = return_desc >> [](auto &&ctx, auto &&) { ctx.halt(); };
@@ -183,11 +183,8 @@ static const auto paracl_isa = decl_vm::instruction_set_description(
 
 namespace paracl::bytecode_vm {
 
-static inline auto create_paracl_vm() {
-  using namespace paracl::bytecode_vm::decl_vm;
-  using namespace paracl::bytecode_vm::instruction_set;
-
-  return virtual_machine<decltype(paracl_isa)>{paracl_isa};
+inline auto create_paracl_vm() {
+  return decl_vm::virtual_machine<decltype(instruction_set::paracl_isa)>{instruction_set::paracl_isa};
 }
 
 } // namespace paracl::bytecode_vm

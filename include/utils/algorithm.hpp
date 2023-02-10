@@ -10,24 +10,19 @@
 
 #pragma once
 
-#include <algorithm>
-#include <array>
 #include <concepts>
 #include <iterator>
-#include <optional>
-#include <variant>
-
-#include "utils/algotihm.hpp"
-#include "utils/serialization.hpp"
 
 namespace paracl::utils {
 
-template <class... Ts> struct visitors : Ts... { using Ts::operator()...; };
-template <class... Ts> visitors(Ts...) -> visitors<Ts...>;
-
-template <typename t_tuple> struct variant_from_tuple;
-template <typename... Ts> struct variant_from_tuple<std::tuple<Ts...>> { using type = std::variant<Ts...>; };
-
-template <typename t_tuple> using variant_from_tuple_t = typename variant_from_tuple<t_tuple>::type;
+template <std::input_iterator input_it, std::output_iterator<typename input_it::value_type> output_it, typename t_pred>
+input_it copy_while(input_it first, input_it last, output_it o_first, t_pred pred) {
+  for (; first != last; ++first) {
+    if (!pred(*first)) break;
+    *o_first = *first;
+    ++o_first;
+  }
+  return first;
+}
 
 } // namespace paracl::utils

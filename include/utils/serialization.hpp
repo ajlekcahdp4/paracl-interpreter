@@ -19,13 +19,14 @@
 #include <optional>
 #include <stdint.h>
 
-#include "utils/algotihm.hpp"
+#include "utils/algorithm.hpp"
 
-namespace paracl::utils::serialization {
+namespace paracl::utils {
 
 template <typename T, std::input_iterator iter>
-std::pair<std::optional<T>, iter> read_little_endian(iter first,
-                                                     iter last) requires std::integral<T> || std::floating_point<T> {
+std::pair<std::optional<T>, iter> read_little_endian(iter first, iter last)
+requires std::integral<T> || std::floating_point<T>
+{
   std::array<char, sizeof(T)> raw_bytes;
 
   auto input_iter = typename decltype(raw_bytes)::iterator{};
@@ -39,14 +40,16 @@ std::pair<std::optional<T>, iter> read_little_endian(iter first,
   }
 
   auto size = sizeof(T);
-  first = algorithm::copy_while(first, last, input_iter, [&size](auto) { return size && size--; });
+  first = copy_while(first, last, input_iter, [&size](auto) { return size && size--; });
 
   if (size != 0) return std::make_pair(std::nullopt, first);
   return std::make_pair(std::bit_cast<T>(raw_bytes), first);
 }
 
 template <typename T, std::output_iterator<uint8_t> iter>
-void write_little_endian(T val, iter oput) requires std::integral<T> || std::floating_point<T> {
+void write_little_endian(T val, iter oput)
+requires std::integral<T> || std::floating_point<T>
+{
   std::array<char, sizeof(T)> raw_bytes = std::bit_cast<decltype(raw_bytes)>(val);
 
   auto input_iter = typename decltype(raw_bytes)::iterator{};
@@ -75,4 +78,4 @@ static constexpr auto padded_hex_printer = padded_hex{};
 
 template <typename T> auto pointer_to_uintptr(T *pointer) { return std::bit_cast<uintptr_t>(pointer); }
 
-} // namespace paracl::utils::serialization
+} // namespace paracl::utils

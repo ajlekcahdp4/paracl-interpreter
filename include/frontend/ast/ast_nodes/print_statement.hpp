@@ -14,19 +14,13 @@
 
 namespace paracl::frontend::ast {
 
-class print_statement final : public i_ast_node {
-private:
+class print_statement final : public visitable_ast_node<print_statement> {
   i_ast_node *m_expr;
 
 public:
-  print_statement(i_ast_node *p_expr, location l) : i_ast_node{l}, m_expr{p_expr} {}
+  print_statement(i_ast_node *p_expr, location l) : visitable_ast_node{l}, m_expr{p_expr} {}
 
-  print_statement(const print_statement &) = default;
-  print_statement &operator=(const print_statement &) = default;
-
-  void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
-
-  i_ast_node *&expr() { return m_expr; }
+  i_ast_node *expr() const { return m_expr; }
 };
 
 } // namespace paracl::frontend::ast

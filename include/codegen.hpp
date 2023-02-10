@@ -16,9 +16,14 @@
 #include <string>
 #include <unordered_map>
 
-#include "bytecode_vm.hpp"
+#include "bytecode_vm/bytecode_builder.hpp"
+#include "bytecode_vm/decl_vm.hpp"
+#include "bytecode_vm/disassembly.hpp"
+#include "bytecode_vm/opcodes.hpp"
 #include "bytecode_vm/virtual_machine.hpp"
-#include "frontend/ast.hpp"
+
+#include "frontend/ast/ast_container.hpp"
+#include "frontend/ast/visitor.hpp"
 
 namespace paracl::codegen {
 

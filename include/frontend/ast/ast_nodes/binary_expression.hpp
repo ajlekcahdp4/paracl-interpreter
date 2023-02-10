@@ -12,6 +12,9 @@
 
 #include "i_ast_node.hpp"
 
+#include <cassert>
+#include <stdexcept>
+
 namespace paracl::frontend::ast {
 
 enum class binary_operation {
@@ -31,43 +34,42 @@ enum class binary_operation {
 };
 
 constexpr std::string_view binary_operation_to_string(binary_operation op) {
-  using enum binary_operation;
-
+  using bin_op = binary_operation;
   switch (op) {
-  case E_BIN_OP_ADD: return "+";
-  case E_BIN_OP_SUB: return "-";
-  case E_BIN_OP_MUL: return "*";
-  case E_BIN_OP_DIV: return "/";
-  case E_BIN_OP_MOD: return "%";
-  case E_BIN_OP_EQ: return "==";
-  case E_BIN_OP_NE: return "!=";
-  case E_BIN_OP_GT: return ">";
-  case E_BIN_OP_LS: return "<";
-  case E_BIN_OP_GE: return ">=";
-  case E_BIN_OP_LE: return "<=";
-  case E_BIN_OP_AND: return "&&";
-  case E_BIN_OP_OR: return "||";
+  case bin_op::E_BIN_OP_ADD: return "+";
+  case bin_op::E_BIN_OP_SUB: return "-";
+  case bin_op::E_BIN_OP_MUL: return "*";
+  case bin_op::E_BIN_OP_DIV: return "/";
+  case bin_op::E_BIN_OP_MOD: return "%";
+  case bin_op::E_BIN_OP_EQ: return "==";
+  case bin_op::E_BIN_OP_NE: return "!=";
+  case bin_op::E_BIN_OP_GT: return ">";
+  case bin_op::E_BIN_OP_LS: return "<";
+  case bin_op::E_BIN_OP_GE: return ">=";
+  case bin_op::E_BIN_OP_LE: return "<=";
+  case bin_op::E_BIN_OP_AND: return "&&";
+  case bin_op::E_BIN_OP_OR: return "||";
   }
 
-  throw std::runtime_error{"Broken binary_operation enum"};
+  assert(0); // We really shouldn't get here. If we do, then someone has broken the enum class intentionally.
+  throw std::invalid_argument{"Broken enum"};
 }
 
-class binary_expression final : public i_ast_node {
+class binary_expression final : public visitable_ast_node<binary_expression> {
   binary_operation m_operation_type;
   i_ast_node      *m_left, *m_right;
 
 public:
   binary_expression(binary_operation op_type, i_ast_node *left, i_ast_node *right, location l)
-      : i_ast_node{l}, m_operation_type{op_type}, m_left{left}, m_right{right} {}
+      : visitable_ast_node{l}, m_operation_type{op_type}, m_left{left}, m_right{right} {
+    assert(m_left);
+    assert(m_right);
+  }
 
-  binary_expression(const binary_expression &) = default;
-  binary_expression &operator=(const binary_expression &) = default;
-
-  void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
+  i_ast_node *left() const { return m_left; }
+  i_ast_node *right() const { return m_right; }
 
   binary_operation op_type() const { return m_operation_type; }
-  i_ast_node     *&left() { return m_left; }
-  i_ast_node     *&right() { return m_right; }
 };
 
 } // namespace paracl::frontend::ast

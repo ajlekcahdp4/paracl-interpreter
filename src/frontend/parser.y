@@ -23,18 +23,20 @@
 %code requires {
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <cstdlib>
 #include <stdexcept>
 
-#include "frontend/ast.hpp"
+#include "frontend/ast/ast_container.hpp"
+#include "frontend/ast/ast_copier.hpp"
+#include "frontend/ast/ast_nodes.hpp"
+#include "frontend/ast/visitor.hpp"
 
 namespace paracl::frontend {
   class scanner;
   class frontend_driver;
 }
-
-using namespace paracl::frontend;
 
 }
 
@@ -107,24 +109,12 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %token <std::string> IDENTIFIER "identifier"
 
 /* Rules that model the AST */
-%type <ast::i_ast_node *> primary_expression    
-%type <ast::i_ast_node *> multiplicative_expression
-%type <ast::i_ast_node *> unary_expression
-%type <ast::i_ast_node *> additive_expression
-%type <ast::i_ast_node *> comparison_expression
-%type <ast::i_ast_node *> equality_expression
-%type <ast::i_ast_node *> logical_expression
-%type <ast::i_ast_node *> expression
+%type <ast::i_ast_node *> primary_expression multiplicative_expression unary_expression
+additive_expression comparison_expression equality_expression logical_expression expression
 
-%type <ast::i_ast_node *> assignment_expression_statement
-
-%type <ast::i_ast_node *> print_statement
-%type <ast::i_ast_node *> assignment_statement
-%type <ast::i_ast_node *> statement_block
-%type <ast::i_ast_node *> statement
-%type <std::vector<ast::i_ast_node *>> statements
-%type <ast::i_ast_node *> if_statement
-%type <ast::i_ast_node *> while_statement
+%type <ast::i_ast_node *> print_statement assignment_statement statement_block statement if_statement while_statement
+%type <ast::statement_block> statements
+%type <ast::assignment_statement *> chainable_assignment
 
 %precedence THEN
 %precedence ELSE
@@ -133,63 +123,64 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 
 %%
 
-program:  statements    { auto ptr = driver.m_ast.make_statement_block(std::move($1), @$); driver.m_ast.set_root_ptr(ptr); }
+program:  statements    { auto ptr = driver.make_ast_node<ast::statement_block>(std::move($1)); driver.m_ast.set_root_ptr(ptr); }
 
-primary_expression: INTEGER_CONSTANT            { $$ = driver.m_ast.make_constant_expression($1, @$); }
-                    | IDENTIFIER                { $$ = driver.m_ast.make_variable_expression($1, @$); }
-                    | QMARK                     { $$ = driver.m_ast.make_read_expression(@$); }
+primary_expression: INTEGER_CONSTANT            { $$ = driver.make_ast_node<ast::constant_expression>($1, @$); }
+                    | IDENTIFIER                { $$ = driver.make_ast_node<ast::variable_expression>($1, @$); }
+                    | QMARK                     { $$ = driver.make_ast_node<ast::read_expression>(@$); }
                     | LPAREN expression RPAREN  { $$ = $2; }
-                    | LPAREN error RPAREN       { auto error = driver.take_error(); $$ = driver.m_ast.make_error_node(error.error_message, error.loc); yyerrok; }
+                    | LPAREN error RPAREN       { auto error = driver.take_error(); $$ = driver.make_ast_node<ast::error_node>(error.error_message, error.loc); yyerrok; }
 
-unary_expression: PLUS unary_expression           { $$ = driver.m_ast.make_unary_expression(ast::unary_operation::E_UN_OP_POS, $2, @$); }
-                  | MINUS unary_expression        { $$ = driver.m_ast.make_unary_expression(ast::unary_operation::E_UN_OP_NEG, $2, @$); }
-                  | BANG unary_expression         { $$ = driver.m_ast.make_unary_expression(ast::unary_operation::E_UN_OP_NOT, $2, @$); }
+unary_expression: PLUS unary_expression           { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_POS, $2, @$); }
+                  | MINUS unary_expression        { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_NEG, $2, @$); }
+                  | BANG unary_expression         { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_NOT, $2, @$); }
                   | primary_expression            { $$ = $1; }
 
-multiplicative_expression:  multiplicative_expression MULTIPLY unary_expression   { $$ = driver.m_ast.make_binary_expression(ast::binary_operation::E_BIN_OP_MUL, $1, $3, @$); }
-                            | multiplicative_expression DIVIDE unary_expression   { $$ = driver.m_ast.make_binary_expression(ast::binary_operation::E_BIN_OP_DIV, $1, $3, @$); }
-                            | multiplicative_expression MODULUS unary_expression  { $$ = driver.m_ast.make_binary_expression(ast::binary_operation::E_BIN_OP_MOD, $1, $3, @$); }
+multiplicative_expression:  multiplicative_expression MULTIPLY unary_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_MUL, $1, $3, @$); }
+                            | multiplicative_expression DIVIDE unary_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_DIV, $1, $3, @$); }
+                            | multiplicative_expression MODULUS unary_expression  { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_MOD, $1, $3, @$); }
                             | unary_expression                                    { $$ = $1; }
 
-additive_expression:  additive_expression PLUS multiplicative_expression      { $$ = driver.m_ast.make_binary_expression(ast::binary_operation::E_BIN_OP_ADD, $1, $3, @$); }
-                      | additive_expression MINUS multiplicative_expression   { $$ = driver.m_ast.make_binary_expression(ast::binary_operation::E_BIN_OP_SUB, $1, $3, @$); }
+additive_expression:  additive_expression PLUS multiplicative_expression      { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_ADD, $1, $3, @$); }
+                      | additive_expression MINUS multiplicative_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_SUB, $1, $3, @$); }
                       | multiplicative_expression                             { $$ = $1; }
 
-comparison_expression:  comparison_expression COMP_GT additive_expression     { $$ = driver.m_ast.make_binary_expression(ast::binary_operation::E_BIN_OP_GT, $1, $3, @$); }
-                        | comparison_expression COMP_LS additive_expression   { $$ = driver.m_ast.make_binary_expression(ast::binary_operation::E_BIN_OP_LS, $1, $3, @$); }
-                        | comparison_expression COMP_GE additive_expression   { $$ = driver.m_ast.make_binary_expression(ast::binary_operation::E_BIN_OP_GE, $1, $3, @$); }
-                        | comparison_expression COMP_LE additive_expression   { $$ = driver.m_ast.make_binary_expression(ast::binary_operation::E_BIN_OP_LE, $1, $3, @$); }
+comparison_expression:  comparison_expression COMP_GT additive_expression     { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_GT, $1, $3, @$); }
+                        | comparison_expression COMP_LS additive_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_LS, $1, $3, @$); }
+                        | comparison_expression COMP_GE additive_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_GE, $1, $3, @$); }
+                        | comparison_expression COMP_LE additive_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_LE, $1, $3, @$); }
                         | additive_expression                                 { $$ = $1; }
 
 
-equality_expression:  equality_expression COMP_EQ comparison_expression   { $$ = driver.m_ast.make_binary_expression(ast::binary_operation::E_BIN_OP_EQ, $1, $3, @$); }
-                      | equality_expression COMP_NE comparison_expression { $$ = driver.m_ast.make_binary_expression(ast::binary_operation::E_BIN_OP_NE, $1, $3, @$); }
+equality_expression:  equality_expression COMP_EQ comparison_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_EQ, $1, $3, @$); }
+                      | equality_expression COMP_NE comparison_expression { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_NE, $1, $3, @$); }
                       | comparison_expression                             { $$ = $1; }
 
-logical_expression: logical_expression LOGICAL_AND equality_expression    { $$ = driver.m_ast.make_binary_expression(ast::binary_operation::E_BIN_OP_AND, $1, $3, @$); }
-                    | logical_expression LOGICAL_OR equality_expression   { $$ = driver.m_ast.make_binary_expression(ast::binary_operation::E_BIN_OP_OR, $1, $3, @$); }
+logical_expression: logical_expression LOGICAL_AND equality_expression    { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_AND, $1, $3, @$); }
+                    | logical_expression LOGICAL_OR equality_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_OR, $1, $3, @$); }
                     | equality_expression                                 { $$ = $1; }
 
 expression: logical_expression                  { $$ = $1; }
-            | assignment_expression_statement   { $$ = $1; }
+            | chainable_assignment              { $$ = $1; }             
 
-assignment_expression_statement: IDENTIFIER ASSIGN expression             { $$ = driver.m_ast.make_assignment_statement(driver.m_ast.make_variable_expression($1, @1), $3, @$); }
+chainable_assignment: IDENTIFIER ASSIGN chainable_assignment      { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
+                      | IDENTIFIER ASSIGN logical_expression      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, $3, @$); }
 
-assignment_statement: assignment_expression_statement SEMICOL             { $$ = $1; }
+assignment_statement: chainable_assignment SEMICOL                { $$ = $1; }
 
-print_statement: PRINT expression SEMICOL { $$ = driver.m_ast.make_print_statement($2, @$); }
+print_statement: PRINT expression SEMICOL { $$ = driver.make_ast_node<ast::print_statement>($2, @$); }
 
-statements: statements statement        { $$ = std::move($1); $$.push_back($2); }
-            | statements error SEMICOL  { $$ = std::move($1); auto error = driver.take_error(); $$.push_back(driver.m_ast.make_error_node(error.error_message, error.loc)); yyerrok; }
-            | statements error EOF      { $$ = std::move($1); auto error = driver.take_error(); $$.push_back(driver.m_ast.make_error_node(error.error_message, error.loc)); yyerrok; }
+statements: statements statement        { $$ = std::move($1); $$.append_statement($2); }
+            | statements error SEMICOL  { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
+            | statements error EOF      { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
             | %empty                    { }
 
-statement_block: LBRACE statements RBRACE   { $$ = driver.m_ast.make_statement_block(std::move($2), @$); }
+statement_block: LBRACE statements RBRACE   { $$ = driver.make_ast_node<ast::statement_block>(std::move($2)); }
 
-while_statement: WHILE LPAREN expression RPAREN statement { $$ = driver.m_ast.make_while_statement($3, $5, @$); }
+while_statement: WHILE LPAREN expression RPAREN statement { $$ = driver.make_ast_node<ast::while_statement>($3, $5, @$); }
 
-if_statement: IF LPAREN expression RPAREN statement %prec THEN        { $$ = driver.m_ast.make_if_statement($3, $5, @$); }
-              | IF LPAREN expression RPAREN statement ELSE statement  { $$ = driver.m_ast.make_if_statement($3, $5, $7, @$); }
+if_statement: IF LPAREN expression RPAREN statement %prec THEN        { $$ = driver.make_ast_node<ast::if_statement>($3, $5, @$); }
+              | IF LPAREN expression RPAREN statement ELSE statement  { $$ = driver.make_ast_node<ast::if_statement>($3, $5, $7, @$); }
 
 statement:  assignment_statement  { $$ = $1; }
             | print_statement     { $$ = $1; }
@@ -214,7 +205,7 @@ void paracl::frontend::parser::error(const location &loc, const std::string &mes
   /* When using custom error handling this only gets called when unexpected errors occur, like running out of memory or when an exception gets thrown. 
   Don't know what to do about parser::syntax_error exception for now */
 
-  if (message == "memory exhausted") {
+  if (std::string_view{message} == "memory exhausted") {
     throw std::runtime_error{"Bison memory exhausted"};
   }
 

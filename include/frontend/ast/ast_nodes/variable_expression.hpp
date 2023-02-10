@@ -16,17 +16,11 @@
 
 namespace paracl::frontend::ast {
 
-class variable_expression final : public i_ast_node {
+class variable_expression final : public visitable_ast_node<variable_expression> {
   std::string m_name;
 
 public:
-  variable_expression(std::string p_name, location l) : i_ast_node{l}, m_name{p_name} {}
-
-  variable_expression(const variable_expression &) = default;
-  variable_expression &operator=(const variable_expression &) = default;
-
-  void accept(i_ast_visitor &visitor) override { visitor.visit(this); }
-
+  variable_expression(std::string p_name, location l) : visitable_ast_node{l}, m_name{p_name} {}
   std::string_view name() const & { return m_name; }
 };
 

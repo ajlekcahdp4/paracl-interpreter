@@ -11,9 +11,10 @@
 #pragma once
 
 #include "ast_copier.hpp"
-#include "ast_nodes.hpp"
 
+#include <cassert>
 #include <memory>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -29,41 +30,45 @@ private:
   friend class ast_copier;
 
   template <typename T, typename... Ts> T *emplace_back(Ts &&...args) {
-    m_nodes.emplace_back(std::make_unique<T>(std::forward<Ts>(args)...));
-    return static_cast<T *>(m_nodes.back().get());
+    auto uptr = std::make_unique<T>(std::forward<Ts>(args)...);
+    auto ptr = uptr.get();
+    m_nodes.push_back(std::move(uptr));
+    return ptr;
   }
 
 public:
   ast_container() = default;
 
-  ast_container(const ast_container &other);
-  ast_container &operator=(const ast_container &other);
+  ast_container(const ast_container &other) {
+    ast_container temp;
+    auto          root_ptr = ast_copy(other.get_root_ptr(), temp);
+    temp.set_root_ptr(root_ptr);
+    *this = std::move(temp);
+  }
+
+  ast_container &operator=(const ast_container &other) {
+    if (this == &other) return *this;
+    ast_container temp = {other};
+    *this = std::move(temp);
+    return *this;
+  }
+
   ast_container(ast_container &&other) = default;
   ast_container &operator=(ast_container &&other) = default;
   ~ast_container() = default;
 
-  void        set_root_ptr(i_ast_node *ptr) { m_root = ptr; }
+  void set_root_ptr(i_ast_node *ptr) {
+    assert(ptr);
+    m_root = ptr;
+  }
   i_ast_node *get_root_ptr() const { return m_root; }
 
-  assignment_statement *make_assignment_statement(variable_expression *, i_ast_node *, location);
-  binary_expression    *make_binary_expression(binary_operation, i_ast_node *, i_ast_node *, location);
-  constant_expression  *make_constant_expression(int, location);
-  error_node           *make_error_node(std::string, location);
-
-  if_statement *make_if_statement(i_ast_node *, i_ast_node *, location);
-  if_statement *make_if_statement(i_ast_node *, i_ast_node *, i_ast_node *, location);
-
-  print_statement *make_print_statement(i_ast_node *, location);
-  read_expression *make_read_expression(location);
-
-  statement_block *make_statement_block(std::vector<i_ast_node *> &&, location);
-  statement_block *make_statement_block(const std::vector<i_ast_node *> &, location);
-
-  unary_expression    *make_unary_expression(unary_operation, i_ast_node *, location);
-  variable_expression *make_variable_expression(std::string &, location);
-  while_statement     *make_while_statement(i_ast_node *, i_ast_node *, location);
+  template <typename t_node_type, typename... t_args>
+  t_node_type *make_node(t_args... args)
+  requires std::is_base_of_v<i_ast_node, t_node_type>
+  {
+    return emplace_back<t_node_type>(std::forward<t_args>(args)...);
+  }
 };
 
 } // namespace paracl::frontend::ast
-
-#include "ast_copier.hpp"

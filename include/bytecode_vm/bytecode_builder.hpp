@@ -23,7 +23,8 @@
 #include <vector>
 
 #include "decl_vm.hpp"
-#include "utils.hpp"
+
+#include "utils/misc.hpp"
 #include "utils/serialization.hpp"
 
 namespace paracl::bytecode_vm::builder {
@@ -34,12 +35,11 @@ template <typename t_desc> struct encoded_instruction {
   attribute_types m_attr;
 
   template <std::size_t I> void encode_attributes(auto iter) const {
-    paracl::utils::serialization::write_little_endian<std::tuple_element_t<I, attribute_types>>(std::get<I>(m_attr),
-                                                                                                iter);
+    paracl::utils::write_little_endian<std::tuple_element_t<I, attribute_types>>(std::get<I>(m_attr), iter);
   }
 
   template <std::size_t... I> void encode_attributes(auto iter, std::index_sequence<I...>) const {
-    (..., encode_attributes<I>(iter));
+    (encode_attributes<I>(iter), ...);
   }
 
 public:
@@ -69,7 +69,7 @@ public:
 
 private:
   std::vector<instruction_variant_type> m_code;
-  uint32_t m_cur_loc = 0;
+  uint32_t                              m_cur_loc = 0;
 
 public:
   bytecode_builder() = default;
