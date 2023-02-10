@@ -52,6 +52,8 @@ void codegen_visitor::visit(ast::print_statement *ptr) {
 
 void codegen_visitor::visit(ast::assignment_statement *ptr) {
   assert(ptr);
+
+  const bool emit_push = !is_currently_statement();
   ast_node_visit(*this, ptr->right());
 
   const auto last_it = std::prev(ptr->rend());
@@ -64,7 +66,7 @@ void codegen_visitor::visit(ast::assignment_statement *ptr) {
   // Last iteration:
   const auto left_index = m_symtab_stack.lookup_location(std::string{last_it->name()});
   m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::mov_local_desc, left_index});
-  if (!is_currently_statement()) {
+  if (emit_push) {
     m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_local_desc, left_index});
   }
 }
