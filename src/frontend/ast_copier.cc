@@ -15,11 +15,13 @@
 #include "frontend/ast/ast_nodes/variable_expression.hpp"
 #include "frontend/ast/visitor.hpp"
 
+#include <cassert>
 #include <memory>
 
 namespace paracl::frontend::ast {
 
 void ast_copier::visit(assignment_statement *ptr) {
+  assert(ptr);
   auto ptr_copy = m_container.emplace_back<assignment_statement>(*ptr);
 
   ast_node_visit(*this, ptr->m_left);
@@ -31,6 +33,7 @@ void ast_copier::visit(assignment_statement *ptr) {
 }
 
 void ast_copier::visit(binary_expression *ptr) {
+  assert(ptr);
   auto ptr_copy = m_container.emplace_back<binary_expression>(*ptr);
 
   ast_node_visit(*this, ptr->m_left);
@@ -42,6 +45,7 @@ void ast_copier::visit(binary_expression *ptr) {
 }
 
 void ast_copier::visit(print_statement *ptr) {
+  assert(ptr);
   auto ptr_copy = m_container.emplace_back<print_statement>(*ptr);
 
   ast_node_visit(*this, ptr->m_expr);
@@ -51,16 +55,19 @@ void ast_copier::visit(print_statement *ptr) {
 }
 
 void ast_copier::visit(read_expression *ptr) {
+  assert(ptr);
   auto ptr_copy = m_container.emplace_back<read_expression>(*ptr);
   return_node(ptr_copy);
 }
 
 void ast_copier::visit(constant_expression *ptr) {
+  assert(ptr);
   auto ptr_copy = m_container.emplace_back<constant_expression>(*ptr);
   return_node(ptr_copy);
 }
 
 void ast_copier::visit(if_statement *ptr) {
+  assert(ptr);
   auto ptr_copy = m_container.emplace_back<if_statement>(*ptr);
 
   ast_node_visit(*this, ptr->m_condition);
@@ -77,6 +84,7 @@ void ast_copier::visit(if_statement *ptr) {
 }
 
 void ast_copier::visit(statement_block *ptr) {
+  assert(ptr);
   auto ptr_copy = m_container.emplace_back<statement_block>(*ptr);
 
   for (auto &v : *ptr_copy) {
@@ -88,6 +96,7 @@ void ast_copier::visit(statement_block *ptr) {
 }
 
 void ast_copier::visit(unary_expression *ptr) {
+  assert(ptr);
   auto ptr_copy = m_container.emplace_back<unary_expression>(*ptr);
   ast_node_visit(*this, ptr->m_expr);
   ptr_copy->m_expr = get_return();
@@ -95,11 +104,13 @@ void ast_copier::visit(unary_expression *ptr) {
 }
 
 void ast_copier::visit(variable_expression *ptr) {
+  assert(ptr);
   auto ptr_copy = m_container.emplace_back<variable_expression>(*ptr);
   return_node(ptr_copy);
 }
 
 void ast_copier::visit(while_statement *ptr) {
+  assert(ptr);
   auto ptr_copy = m_container.emplace_back<while_statement>(*ptr);
 
   ast_node_visit(*this, ptr->m_condition);
@@ -111,11 +122,13 @@ void ast_copier::visit(while_statement *ptr) {
 }
 
 void ast_copier::visit(error_node *ptr) {
+  assert(ptr);
   auto ptr_copy = m_container.emplace_back<error_node>(*ptr);
   return_node(ptr_copy);
 }
 
 i_ast_node *ast_copy(i_ast_node *node, ast_container &container) {
+  assert(node);
   if (!node) return nullptr;
   ast_copier copier = {container};
   ast_node_visit(copier, node);

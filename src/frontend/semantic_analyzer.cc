@@ -30,6 +30,7 @@ void semantic_analyzer_visitor::report_error(std::string msg, location loc) {
 }
 
 void semantic_analyzer_visitor::visit(ast::assignment_statement *ptr) {
+  assert(ptr);
   set_state(semantic_analysis_state::E_LVALUE);
   ast_node_visit(*this, ptr->m_left);
   set_state(semantic_analysis_state::E_RVALUE);
@@ -38,6 +39,7 @@ void semantic_analyzer_visitor::visit(ast::assignment_statement *ptr) {
 }
 
 void semantic_analyzer_visitor::visit(ast::binary_expression *ptr) {
+  assert(ptr);
   set_state(semantic_analysis_state::E_RVALUE);
   ast_node_visit(*this, ptr->m_right);
   ast_node_visit(*this, ptr->m_left);
@@ -45,14 +47,19 @@ void semantic_analyzer_visitor::visit(ast::binary_expression *ptr) {
 }
 
 void semantic_analyzer_visitor::visit(ast::print_statement *ptr) {
+  assert(ptr);
   set_state(semantic_analysis_state::E_RVALUE);
   ast_node_visit(*this, ptr->m_expr);
   reset_state();
 }
 
-void semantic_analyzer_visitor::visit(ast::error_node *ptr) { report_error(ptr->error_msg(), ptr->loc()); }
+void semantic_analyzer_visitor::visit(ast::error_node *ptr) {
+  assert(ptr);
+  report_error(ptr->error_msg(), ptr->loc());
+}
 
 void semantic_analyzer_visitor::visit(ast::statement_block *ptr) {
+  assert(ptr);
   m_scopes.begin_scope(ptr->symbol_table());
 
   for (auto &statement : *ptr) {
@@ -63,6 +70,7 @@ void semantic_analyzer_visitor::visit(ast::statement_block *ptr) {
 }
 
 void semantic_analyzer_visitor::visit(ast::if_statement *ptr) {
+  assert(ptr);
   m_scopes.begin_scope(ptr->control_block_symtab());
   ast_node_visit(*this, ptr->m_condition);
 
@@ -80,6 +88,7 @@ void semantic_analyzer_visitor::visit(ast::if_statement *ptr) {
 }
 
 void semantic_analyzer_visitor::visit(ast::while_statement *ptr) {
+  assert(ptr);
   m_scopes.begin_scope(ptr->symbol_table());
 
   ast_node_visit(*this, ptr->m_condition);
@@ -88,9 +97,13 @@ void semantic_analyzer_visitor::visit(ast::while_statement *ptr) {
   m_scopes.end_scope();
 }
 
-void semantic_analyzer_visitor::visit(ast::unary_expression *ptr) { ast_node_visit(*this, ptr->m_expr); }
+void semantic_analyzer_visitor::visit(ast::unary_expression *ptr) {
+  assert(ptr);
+  ast_node_visit(*this, ptr->m_expr);
+}
 
 void semantic_analyzer_visitor::visit(ast::variable_expression *ptr) {
+  assert(ptr);
   if (!m_scopes.declared(ptr->name())) {
     if (current_state == semantic_analysis_state::E_LVALUE) {
       m_scopes.declare(ptr->name());
@@ -102,6 +115,7 @@ void semantic_analyzer_visitor::visit(ast::variable_expression *ptr) {
 }
 
 bool ast_analyze(ast::i_ast_node *node) {
+  assert(node);
   semantic_analyzer_visitor analyzer;
   ast_node_visit(analyzer, node);
   return analyzer.valid();

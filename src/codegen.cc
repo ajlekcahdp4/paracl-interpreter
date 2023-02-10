@@ -10,6 +10,7 @@
 
 #include "codegen.hpp"
 
+#include <cassert>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -21,11 +22,10 @@ namespace vm_builder = bytecode_vm::builder;
 namespace ast = frontend::ast;
 
 void codegen_visitor::visit(ast::constant_expression *ptr) {
+  assert(ptr);
   uint32_t index = lookup_or_insert_constant(ptr->value());
   m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_const_desc, index});
 } // namespace frontend::ast::voidcodegen_visitor::visit(constant_expression*ptr)
-
-// clang-format off
 
 void codegen_visitor::visit(ast::read_expression *) {
   m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_read_desc});
@@ -36,19 +36,20 @@ void codegen_visitor::visit(ast::error_node *) {
 }
 
 void codegen_visitor::visit(ast::variable_expression *ptr) {
+  assert(ptr);
   auto index = m_symtab_stack.lookup_location(std::string{ptr->name()});
   m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_local_desc, index});
 }
 
-// clang-format on
-
 void codegen_visitor::visit(ast::print_statement *ptr) {
+  assert(ptr);
   reset_currently_statement();
   ast_node_visit(*this, ptr->m_expr);
   m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::print_desc});
 }
 
 void codegen_visitor::visit(ast::assignment_statement *ptr) {
+  assert(ptr);
   bool emit_push = !is_currently_statement();
 
   reset_currently_statement();
@@ -61,6 +62,7 @@ void codegen_visitor::visit(ast::assignment_statement *ptr) {
 }
 
 void codegen_visitor::visit(ast::binary_expression *ptr) {
+  assert(ptr);
   reset_currently_statement();
   ast_node_visit(*this, ptr->m_left);
 
@@ -113,6 +115,7 @@ void codegen_visitor::visit(ast::binary_expression *ptr) {
 }
 
 void codegen_visitor::visit(ast::statement_block *ptr) {
+  assert(ptr);
   m_symtab_stack.begin_scope();
 
   for (const auto &v : *ptr->symbol_table()) {
@@ -134,6 +137,7 @@ void codegen_visitor::visit(ast::statement_block *ptr) {
 }
 
 void codegen_visitor::visit_if_no_else(ast::if_statement *ptr) {
+  assert(ptr);
   reset_currently_statement();
   ast_node_visit(*this, ptr->m_condition);
 
@@ -150,6 +154,7 @@ void codegen_visitor::visit_if_no_else(ast::if_statement *ptr) {
 }
 
 void codegen_visitor::visit_if_with_else(ast::if_statement *ptr) {
+  assert(ptr);
   reset_currently_statement();
   ast_node_visit(*this, ptr->m_condition);
 
@@ -172,6 +177,7 @@ void codegen_visitor::visit_if_with_else(ast::if_statement *ptr) {
 }
 
 void codegen_visitor::visit(ast::if_statement *ptr) {
+  assert(ptr);
   m_symtab_stack.begin_scope();
 
   for (const auto &v : *ptr->control_block_symtab()) {
@@ -196,6 +202,7 @@ void codegen_visitor::visit(ast::if_statement *ptr) {
 }
 
 void codegen_visitor::visit(ast::while_statement *ptr) {
+  assert(ptr);
   m_symtab_stack.begin_scope();
 
   for (const auto &v : *ptr->symbol_table()) {
@@ -225,6 +232,7 @@ void codegen_visitor::visit(ast::while_statement *ptr) {
 }
 
 void codegen_visitor::visit(ast::unary_expression *ptr) {
+  assert(ptr);
   using unary_op = ast::unary_operation;
 
   reset_currently_statement();
@@ -289,6 +297,7 @@ paracl::bytecode_vm::decl_vm::chunk codegen_visitor::to_chunk() {
 }
 
 bytecode_vm::decl_vm::chunk generate_code(ast::i_ast_node *ptr) {
+  assert(ptr);
   codegen_visitor generator;
   ast_node_visit(generator, ptr);
   return generator.to_chunk();

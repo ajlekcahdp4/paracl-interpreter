@@ -9,6 +9,7 @@
  */
 
 #pragma once
+#include <cassert>
 
 namespace paracl::frontend::ast {
 
@@ -47,5 +48,8 @@ public:
 #include "ast_nodes/i_ast_node.hpp"
 
 namespace paracl::frontend::ast {
-static inline void ast_node_visit(i_ast_visitor &visitor, i_ast_node *ast_node) { ast_node->accept(visitor); }
+inline void ast_node_visit(i_ast_visitor &visitor, i_ast_node *ast_node) {
+  assert(ast_node);
+  ast_node->accept(visitor);
+}
 } // namespace paracl::frontend::ast
