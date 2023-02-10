@@ -14,10 +14,13 @@
 
 namespace paracl::frontend::ast {
 
-struct print_statement final : public visitable_ast_node<print_statement> {
+class print_statement final : public visitable_ast_node<print_statement> {
   i_ast_node *m_expr;
 
+public:
   print_statement(i_ast_node *p_expr, location l) : visitable_ast_node{l}, m_expr{p_expr} {}
+
+  i_ast_node *expr() const { return m_expr; }
 };
 
 } // namespace paracl::frontend::ast

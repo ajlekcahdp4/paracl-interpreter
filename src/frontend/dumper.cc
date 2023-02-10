@@ -58,11 +58,11 @@ void ast_dump_visitor::visit(binary_expression *ptr) {
   std::stringstream ss;
   ss << "<binary_expression> " << ast::binary_operation_to_string(ptr->op_type());
   print_declare_node(m_os, ptr, ss.str());
-  print_bind_node(m_os, ptr, ptr->m_left);
-  print_bind_node(m_os, ptr, ptr->m_right);
+  print_bind_node(m_os, ptr, ptr->left());
+  print_bind_node(m_os, ptr, ptr->right());
 
-  ast_node_visit(*this, ptr->m_left);
-  ast_node_visit(*this, ptr->m_right);
+  ast_node_visit(*this, ptr->left());
+  ast_node_visit(*this, ptr->right());
 }
 
 void ast_dump_visitor::visit(unary_expression *ptr) {
@@ -70,41 +70,41 @@ void ast_dump_visitor::visit(unary_expression *ptr) {
   std::stringstream ss;
   ss << "<binary_expression> " << ast::unary_operation_to_string(ptr->op_type());
   print_declare_node(m_os, ptr, ss.str());
-  print_bind_node(m_os, ptr, ptr->m_expr);
+  print_bind_node(m_os, ptr, ptr->expr());
 
-  ast_node_visit(*this, ptr->m_expr);
+  ast_node_visit(*this, ptr->expr());
 }
 
 void ast_dump_visitor::visit(assignment_statement *ptr) {
   assert(ptr);
   print_declare_node(m_os, ptr, "<assignment>");
-  print_bind_node(m_os, ptr, ptr->m_left);
-  print_bind_node(m_os, ptr, ptr->m_right);
+  print_bind_node(m_os, ptr, ptr->left());
+  print_bind_node(m_os, ptr, ptr->right());
 
-  ast_node_visit(*this, ptr->m_left);
-  ast_node_visit(*this, ptr->m_right);
+  ast_node_visit(*this, ptr->left());
+  ast_node_visit(*this, ptr->right());
 }
 
 void ast_dump_visitor::visit(if_statement *ptr) {
   assert(ptr);
   print_declare_node(m_os, ptr, "<if>");
-  print_bind_node(m_os, ptr, ptr->m_condition, "<condition>");
-  print_bind_node(m_os, ptr, ptr->m_true_block, "<then>");
+  print_bind_node(m_os, ptr, ptr->cond(), "<condition>");
+  print_bind_node(m_os, ptr, ptr->true_block(), "<then>");
 
-  ast_node_visit(*this, ptr->m_condition);
-  ast_node_visit(*this, ptr->m_true_block);
+  ast_node_visit(*this, ptr->cond());
+  ast_node_visit(*this, ptr->true_block());
 
-  if (ptr->m_else_block) {
-    print_bind_node(m_os, ptr, ptr->m_else_block, "<else>");
-    ast_node_visit(*this, ptr->m_else_block);
+  if (ptr->else_block()) {
+    print_bind_node(m_os, ptr, ptr->else_block(), "<else>");
+    ast_node_visit(*this, ptr->else_block());
   }
 }
 
 void ast_dump_visitor::visit(print_statement *ptr) {
   assert(ptr);
   print_declare_node(m_os, ptr, "<print_statement>");
-  print_bind_node(m_os, ptr, ptr->m_expr);
-  ast_node_visit(*this, ptr->m_expr);
+  print_bind_node(m_os, ptr, ptr->expr());
+  ast_node_visit(*this, ptr->expr());
 }
 
 void ast_dump_visitor::visit(statement_block *ptr) {
@@ -120,11 +120,11 @@ void ast_dump_visitor::visit(statement_block *ptr) {
 void ast_dump_visitor::visit(while_statement *ptr) {
   assert(ptr);
   print_declare_node(m_os, ptr, "<while>");
-  print_bind_node(m_os, ptr, ptr->m_condition, "<condition>");
-  print_bind_node(m_os, ptr, ptr->m_block, "<body>");
+  print_bind_node(m_os, ptr, ptr->cond(), "<condition>");
+  print_bind_node(m_os, ptr, ptr->block(), "<body>");
 
-  ast_node_visit(*this, ptr->m_condition);
-  ast_node_visit(*this, ptr->m_block);
+  ast_node_visit(*this, ptr->cond());
+  ast_node_visit(*this, ptr->block());
 }
 
 // clang-format off

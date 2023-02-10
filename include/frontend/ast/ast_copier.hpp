@@ -29,16 +29,21 @@ private:
     m_ret_node = ptr;
   }
 
+  template <typename T> T *copy_subtree(T *node) {
+    ast_node_visit(*this, node);
+    return get_return_as<T>();
+  }
+
 public:
   ast_copier(ast_container &container) : m_container{container} {}
 
-  void visit(assignment_statement *) override;
-  void visit(binary_expression *) override;
-  void visit(constant_expression *) override;
+  void visit(assignment_statement *ptr) override;
+  void visit(binary_expression *ptr) override;
+  void visit(constant_expression *ptr) override;
   void visit(if_statement *) override;
-  void visit(print_statement *) override;
-  void visit(read_expression *) override;
-  void visit(statement_block *) override;
+  void visit(print_statement *ptr) override;
+  void visit(read_expression *ptr) override;
+  void visit(statement_block *ptr) override;
   void visit(unary_expression *) override;
   void visit(variable_expression *) override;
   void visit(while_statement *) override;

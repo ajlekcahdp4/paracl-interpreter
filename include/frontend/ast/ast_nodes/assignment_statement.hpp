@@ -12,15 +12,24 @@
 
 #include "i_ast_node.hpp"
 #include "variable_expression.hpp"
+#include <cassert>
 
 namespace paracl::frontend::ast {
 
-struct assignment_statement final : public visitable_ast_node<assignment_statement> {
+class assignment_statement final : public visitable_ast_node<assignment_statement> {
+private:
   variable_expression *m_left;
   i_ast_node          *m_right;
 
+public:
   assignment_statement(variable_expression *left, i_ast_node *right, location l)
-      : visitable_ast_node{l}, m_left{left}, m_right{right} {}
+      : visitable_ast_node{l}, m_left{left}, m_right{right} {
+    assert(left);
+    assert(right);
+  }
+
+  variable_expression *left() const { return m_left; }
+  i_ast_node          *right() const { return m_right; }
 };
 
 } // namespace paracl::frontend::ast

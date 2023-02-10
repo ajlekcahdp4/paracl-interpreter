@@ -20,7 +20,7 @@ class constant_expression final : public visitable_ast_node<constant_expression>
 public:
   constant_expression(int p_val, location l) : visitable_ast_node{l}, m_val{p_val} {}
 
-  int value() const { return m_val; }
+  auto value() const { return m_val; }
 };
 
 } // namespace paracl::frontend::ast

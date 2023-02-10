@@ -37,14 +37,14 @@ constexpr std::string_view unary_operation_to_string(unary_operation op) {
 class unary_expression final : public visitable_ast_node<unary_expression> {
 private:
   unary_operation m_operation_type;
+  i_ast_node     *m_expr;
 
 public:
-  i_ast_node *m_expr;
-
   unary_expression(unary_operation op_type, i_ast_node *p_expr, location l)
       : visitable_ast_node{l}, m_operation_type{op_type}, m_expr{p_expr} {}
 
   unary_operation op_type() const { return m_operation_type; }
+  i_ast_node     *expr() const { return m_expr; }
 };
 
 } // namespace paracl::frontend::ast
