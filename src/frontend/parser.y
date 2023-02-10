@@ -23,6 +23,7 @@
 %code requires {
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <cstdlib>
 #include <stdexcept>
@@ -215,7 +216,7 @@ void paracl::frontend::parser::error(const location &loc, const std::string &mes
   /* When using custom error handling this only gets called when unexpected errors occur, like running out of memory or when an exception gets thrown. 
   Don't know what to do about parser::syntax_error exception for now */
 
-  if (message == "memory exhausted") {
+  if (std::string_view{message} == "memory exhausted") {
     throw std::runtime_error{"Bison memory exhausted"};
   }
 
