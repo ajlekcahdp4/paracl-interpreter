@@ -33,10 +33,10 @@ void ast_copier::visit(assignment_statement *ptr) {
 void ast_copier::visit(binary_expression *ptr) {
   auto ptr_copy = m_container.emplace_back<binary_expression>(*ptr);
 
-  ast_node_visit(*this, ptr->left());
-  ptr_copy->left() = get_return();
-  ast_node_visit(*this, ptr->right());
-  ptr_copy->right() = get_return();
+  ast_node_visit(*this, ptr->m_left);
+  ptr_copy->m_left = get_return();
+  ast_node_visit(*this, ptr->m_right);
+  ptr_copy->m_right = get_return();
 
   return_node(ptr_copy);
 }

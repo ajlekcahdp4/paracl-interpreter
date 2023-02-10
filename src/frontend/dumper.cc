@@ -50,11 +50,11 @@ void ast_dump_visitor::visit(binary_expression *ptr) {
   std::stringstream ss;
   ss << "<binary_expression> " << ast::binary_operation_to_string(ptr->op_type());
   print_declare_node(m_os, ptr, ss.str());
-  print_bind_node(m_os, ptr, ptr->left());
-  print_bind_node(m_os, ptr, ptr->right());
+  print_bind_node(m_os, ptr, ptr->m_left);
+  print_bind_node(m_os, ptr, ptr->m_right);
 
-  ast_node_visit(*this, ptr->left());
-  ast_node_visit(*this, ptr->right());
+  ast_node_visit(*this, ptr->m_left);
+  ast_node_visit(*this, ptr->m_right);
 }
 
 void ast_dump_visitor::visit(unary_expression *ptr) {

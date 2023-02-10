@@ -39,8 +39,8 @@ void semantic_analyzer_visitor::visit(ast::assignment_statement *ptr) {
 
 void semantic_analyzer_visitor::visit(ast::binary_expression *ptr) {
   set_state(semantic_analysis_state::E_RVALUE);
-  ast_node_visit(*this, ptr->right());
-  ast_node_visit(*this, ptr->left());
+  ast_node_visit(*this, ptr->m_right);
+  ast_node_visit(*this, ptr->m_left);
   reset_state();
 }
 
