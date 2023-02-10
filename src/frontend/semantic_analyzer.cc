@@ -31,8 +31,12 @@ void semantic_analyzer_visitor::report_error(std::string msg, location loc) {
 
 void semantic_analyzer_visitor::visit(ast::assignment_statement *ptr) {
   assert(ptr);
+
   set_state(semantic_analysis_state::E_LVALUE);
-  ast_node_visit(*this, ptr->left());
+  for (auto &v : *ptr) {
+    ast_node_visit(*this, &v);
+  }
+
   set_state(semantic_analysis_state::E_RVALUE);
   ast_node_visit(*this, ptr->right());
   reset_state();

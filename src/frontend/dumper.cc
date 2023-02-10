@@ -9,6 +9,8 @@
  */
 
 #include "frontend/dumper.hpp"
+#include "frontend/ast/ast_nodes/i_ast_node.hpp"
+#include "frontend/ast/visitor.hpp"
 #include "utils/serialization.hpp"
 
 #include <cassert>
@@ -18,12 +20,13 @@
 
 namespace paracl::frontend::ast {
 
-static void print_declare_node(std::ostream &os, i_ast_node *ptr, std::string_view label) {
+static void print_declare_node(std::ostream &os, const i_ast_node *ptr, std::string_view label) {
   assert(ptr);
   os << "\tnode_0x" << std::hex << utils::pointer_to_uintptr(ptr) << " [label = \"" << label << "\" ];\n";
 }
 
-static void print_bind_node(std::ostream &os, i_ast_node *parent, i_ast_node *child, std::string_view label = "") {
+static void print_bind_node(std::ostream &os, const i_ast_node *parent, const i_ast_node *child,
+                            std::string_view label = "") {
   assert(parent);
   assert(child);
   os << "\tnode_0x" << std::hex << utils::pointer_to_uintptr(parent) << " -> node_0x"
@@ -77,11 +80,20 @@ void ast_dump_visitor::visit(unary_expression *ptr) {
 
 void ast_dump_visitor::visit(assignment_statement *ptr) {
   assert(ptr);
-  print_declare_node(m_os, ptr, "<assignment>");
-  print_bind_node(m_os, ptr, ptr->left());
-  print_bind_node(m_os, ptr, ptr->right());
 
-  ast_node_visit(*this, ptr->left());
+  print_declare_node(m_os, ptr, "<assignment>");
+  const i_ast_node *prev = ptr;
+
+  for (auto start = ptr->begin(), finish = ptr->end(); start != finish; ++start) {
+    const auto curr_ptr = &(*start);
+
+    visit(curr_ptr);
+    print_bind_node(m_os, prev, curr_ptr);
+
+    prev = curr_ptr;
+  }
+
+  print_bind_node(m_os, ptr, ptr->right());
   ast_node_visit(*this, ptr->right());
 }
 

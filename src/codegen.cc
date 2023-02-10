@@ -52,15 +52,21 @@ void codegen_visitor::visit(ast::print_statement *ptr) {
 
 void codegen_visitor::visit(ast::assignment_statement *ptr) {
   assert(ptr);
-  bool emit_push = !is_currently_statement();
-
-  reset_currently_statement();
   ast_node_visit(*this, ptr->right());
-  auto left_index = m_symtab_stack.lookup_location(std::string{ptr->left()->name()});
 
-  m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::mov_local_desc, left_index});
-  if (emit_push)
+  const auto last_it = std::prev(ptr->rend());
+  for (auto start = ptr->rbegin(), finish = last_it; start != finish; ++start) {
+    const auto left_index = m_symtab_stack.lookup_location(std::string{start->name()});
+    m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::mov_local_desc, left_index});
     m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_local_desc, left_index});
+  }
+
+  // Last iteration:
+  const auto left_index = m_symtab_stack.lookup_location(std::string{last_it->name()});
+  m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::mov_local_desc, left_index});
+  if (!is_currently_statement()) {
+    m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_local_desc, left_index});
+  }
 }
 
 void codegen_visitor::visit(ast::binary_expression *ptr) {

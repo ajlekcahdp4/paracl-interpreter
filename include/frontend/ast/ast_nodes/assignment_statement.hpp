@@ -13,23 +13,38 @@
 #include "i_ast_node.hpp"
 #include "variable_expression.hpp"
 #include <cassert>
+#include <vector>
 
 namespace paracl::frontend::ast {
 
 class assignment_statement final : public visitable_ast_node<assignment_statement> {
 private:
-  variable_expression *m_left;
-  i_ast_node          *m_right;
+  std::vector<variable_expression> m_lefts;
+  i_ast_node                      *m_right;
 
 public:
-  assignment_statement(variable_expression *left, i_ast_node *right, location l)
-      : visitable_ast_node{l}, m_left{left}, m_right{right} {
-    assert(left);
+  assignment_statement(variable_expression left, i_ast_node *right, location l)
+      : visitable_ast_node{l}, m_right{right} {
     assert(right);
+    m_lefts.push_back(left);
   }
 
-  variable_expression *left() const { return m_left; }
-  i_ast_node          *right() const { return m_right; }
+  void append_variable(variable_expression var) {
+    m_lefts.push_back(var);
+    m_loc += var.loc();
+  }
+
+  auto size() const { return m_lefts.size(); }
+
+  auto begin() { return m_lefts.rbegin(); }
+  auto end() { return m_lefts.rend(); }
+  auto begin() const { return m_lefts.crbegin(); }
+  auto end() const { return m_lefts.crend(); }
+
+  auto rbegin() const { return m_lefts.cbegin(); }
+  auto rend() const { return m_lefts.cend(); }
+
+  i_ast_node *right() const { return m_right; }
 };
 
 } // namespace paracl::frontend::ast

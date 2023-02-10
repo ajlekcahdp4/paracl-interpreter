@@ -110,10 +110,11 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 
 /* Rules that model the AST */
 %type <ast::i_ast_node *> primary_expression multiplicative_expression unary_expression
-additive_expression comparison_expression equality_expression logical_expression expression assignment_expression_statement
+additive_expression comparison_expression equality_expression logical_expression expression
 
 %type <ast::i_ast_node *> print_statement assignment_statement statement_block statement if_statement while_statement
 %type <ast::statement_block> statements
+%type <ast::assignment_statement *> chainable_assignment
 
 %precedence THEN
 %precedence ELSE
@@ -160,11 +161,12 @@ logical_expression: logical_expression LOGICAL_AND equality_expression    { $$ =
                     | equality_expression                                 { $$ = $1; }
 
 expression: logical_expression                  { $$ = $1; }
-            | assignment_expression_statement   { $$ = $1; }
+            | chainable_assignment              { $$ = $1; }             
 
-assignment_expression_statement: IDENTIFIER ASSIGN expression             { $$ = driver.make_ast_node<ast::assignment_statement>(driver.make_ast_node<ast::variable_expression>($1, @1), $3, @$); }
+chainable_assignment: IDENTIFIER ASSIGN chainable_assignment      { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
+                      | IDENTIFIER ASSIGN logical_expression      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, $3, @$); }
 
-assignment_statement: assignment_expression_statement SEMICOL             { $$ = $1; }
+assignment_statement: chainable_assignment SEMICOL                { $$ = $1; }
 
 print_statement: PRINT expression SEMICOL { $$ = driver.make_ast_node<ast::print_statement>($2, @$); }
 

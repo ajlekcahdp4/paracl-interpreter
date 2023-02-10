@@ -19,8 +19,11 @@ namespace paracl::frontend::ast {
 
 void ast_copier::visit(assignment_statement *ptr) {
   assert(ptr);
-  return_node(m_container.emplace_back<assignment_statement>(copy_subtree(ptr->left()), copy_subtree(ptr->right()),
-                                                             ptr->loc()));
+  auto copy = m_container.emplace_back<assignment_statement>(*ptr->rbegin(), ptr->right(), ptr->loc());
+  for (auto start = std::next(ptr->rbegin()), finish = ptr->rend(); start != finish; ++start) {
+    copy->append_variable(*start);
+  }
+  return_node(copy);
 }
 
 void ast_copier::visit(binary_expression *ptr) {

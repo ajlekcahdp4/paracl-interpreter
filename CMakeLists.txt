@@ -63,8 +63,8 @@ endif()
 
 option(SANITIZE OFF)
 if (SANITIZE)
-  add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
-  add_link_options(-fsanitize=address -fno-omit-frame-pointer)
+  add_compile_options(-fsanitize=undefined -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=undefined -fno-omit-frame-pointer)
 endif()
 
 set(BYTECODE_VM_SOURCES
