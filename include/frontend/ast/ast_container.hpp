@@ -64,7 +64,7 @@ public:
   i_ast_node *get_root_ptr() const { return m_root; }
 
   template <typename t_node_type, typename... t_args>
-  t_node_type *make_node(t_args... args)
+  t_node_type *make_node(t_args &&...args)
   requires std::is_base_of_v<i_ast_node, t_node_type>
   {
     return emplace_back<t_node_type>(std::forward<t_args>(args)...);

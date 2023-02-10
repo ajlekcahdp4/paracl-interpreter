@@ -51,7 +51,7 @@ public:
     encode_attributes(iter, std::make_index_sequence<std::tuple_size_v<attribute_types>>{});
   }
 
-  template <typename... Ts> encoded_instruction(t_desc, Ts... p_args) : m_attr{std::forward<Ts>(p_args)...} {}
+  template <typename... Ts> encoded_instruction(t_desc, Ts &&...p_args) : m_attr{std::forward<Ts>(p_args)...} {}
 };
 
 template <typename t_tuple> struct encoded_tuple_from_desc_tuple;

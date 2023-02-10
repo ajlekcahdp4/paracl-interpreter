@@ -47,7 +47,7 @@ public:
   bool parse() { return m_parser.parse(); }
   void switch_input_stream(std::istream *is) { m_scanner.switch_streams(is, nullptr); }
 
-  template <typename t_node_type, typename... t_args> t_node_type *make_ast_node(t_args... args) {
+  template <typename t_node_type, typename... t_args> t_node_type *make_ast_node(t_args &&...args) {
     return m_ast.make_node<t_node_type>(std::forward<t_args>(args)...);
   }
 
