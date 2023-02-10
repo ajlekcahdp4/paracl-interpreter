@@ -39,7 +39,7 @@ template <typename t_desc> struct encoded_instruction {
   }
 
   template <std::size_t... I> void encode_attributes(auto iter, std::index_sequence<I...>) const {
-    (..., encode_attributes<I>(iter));
+    (encode_attributes<I>(iter), ...);
   }
 
 public:

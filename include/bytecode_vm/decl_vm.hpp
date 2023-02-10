@@ -97,7 +97,10 @@ template <opcode_underlying_type ident, typename... Ts> struct instruction_desc 
   constexpr auto operator>>(auto action) const { return instruction{*this, action}; }
 
   template <size_t... I> static void pretty_print(auto &os, const attribute_types &tuple, std::index_sequence<I...>) {
-    (..., (os << (I == 0 ? "" : ", "), utils::padded_hex{}(os, std::get<I>(tuple))));
+    auto print_list_element = [&os, &tuple](auto i) {
+      os << (i == 0 ? "" : ", "), utils::padded_hex_printer(os, std::get<i>(tuple));
+    };
+    (print_list_element(std::integral_constant<std::size_t, I>()), ...);
   }
 
   template <typename t_stream> t_stream &pretty_print(t_stream &os, const attribute_types &attr) const {
@@ -136,9 +139,7 @@ template <typename t_desc, typename t_action> struct instruction {
   template <std::size_t I>
   static std::tuple_element_t<I, attribute_tuple_type> decode_attribute(auto &first, auto last) {
     auto [val, iter] = paracl::utils::read_little_endian<std::tuple_element_t<I, attribute_tuple_type>>(first, last);
-    if (!val) {
-      throw vm_error{"Decoding error"};
-    }
+    if (!val) throw vm_error{"Decoding error"};
     first = iter;
     return val.value();
   }
@@ -154,13 +155,56 @@ template <typename t_desc, typename t_action> struct instruction {
   }
 };
 
+template <typename t_desc> class virtual_machine;
 using execution_value_type = int;
+
+template <typename t_desc> struct context {
+  friend class virtual_machine<t_desc>;
+
+private:
+  std::vector<execution_value_type>       m_execution_stack;
+  binary_code_buffer_type::const_iterator m_ip, m_ip_end;
+
+  chunk m_program_code;
+  bool  m_halted = false;
+
+public:
+  context() = default;
+
+  context(chunk ch) : m_program_code{ch} {
+    m_ip = m_program_code.binary_begin();
+    m_ip_end = m_program_code.binary_end();
+  }
+
+  auto  ip() const { return m_ip; }
+  auto &at_stack(uint32_t index) & { return m_execution_stack.at(index); }
+
+  void set_ip(uint32_t new_ip) {
+    m_ip = m_program_code.binary_begin();
+    std::advance(m_ip, new_ip);
+  }
+
+  auto pop() {
+    if (m_execution_stack.size() == 0) throw vm_error{"Bad stack pop"};
+    auto top = m_execution_stack.back();
+    m_execution_stack.pop_back();
+    return top;
+  }
+
+  void push(execution_value_type val) { m_execution_stack.push_back(val); }
+
+  void halt() { m_halted = true; }
+  bool is_halted() const { return m_halted; }
+
+  auto constant(uint32_t id) const { return m_program_code.constant_at(id); }
+};
 
 template <typename... t_instructions> struct instruction_set_description {
   using instruction_variant_type = std::variant<std::monostate, const t_instructions *...>;
   using instruction_tuple_type = std::tuple<t_instructions...>;
 
-  std::array<instruction_variant_type, std::numeric_limits<opcode_underlying_type>::max() + 1> instruction_lookup_table;
+  static constexpr auto max_table_size = std::numeric_limits<opcode_underlying_type>::max() + 1;
+  std::array<instruction_variant_type, max_table_size> instruction_lookup_table;
 
   instruction_set_description(const t_instructions &...instructions) : instruction_lookup_table{std::monostate{}} {
     ((instruction_lookup_table[instructions.get_opcode()] = std::addressof(instructions)), ...);
@@ -168,55 +212,13 @@ template <typename... t_instructions> struct instruction_set_description {
 };
 
 template <typename t_desc> class virtual_machine {
-  t_desc instruction_set;
-
-  struct context {
-    friend class virtual_machine<t_desc>;
-
-  private:
-    std::vector<execution_value_type>       m_execution_stack;
-    binary_code_buffer_type::const_iterator m_ip, m_ip_end;
-
-    chunk m_program_code;
-    bool  m_halted = false;
-
-  public:
-    context() = default;
-
-    context(chunk ch) : m_program_code{ch} {
-      m_ip = m_program_code.binary_begin();
-      m_ip_end = m_program_code.binary_end();
-    }
-
-    auto  ip() const { return m_ip; }
-    auto &at_stack(uint32_t index) & { return m_execution_stack.at(index); }
-
-    void set_ip(uint32_t new_ip) {
-      m_ip = m_program_code.binary_begin();
-      std::advance(m_ip, new_ip);
-    }
-
-    auto pop() {
-      if (m_execution_stack.size() == 0) throw vm_error{"Bad stack pop"};
-      auto top = m_execution_stack.back();
-      m_execution_stack.pop_back();
-      return top;
-    }
-
-    void push(execution_value_type val) { m_execution_stack.push_back(val); }
-
-    void halt() { m_halted = true; }
-    bool is_halted() const { return m_halted; }
-
-    auto constant(uint32_t id) const { return m_program_code.constant_at(id); }
-  };
-
-  context m_execution_context;
+  t_desc          instruction_set;
+  context<t_desc> m_execution_context;
 
 public:
   virtual_machine(t_desc desc) : instruction_set{desc}, m_execution_context{} {}
 
-  void set_program_code(chunk ch) { m_execution_context = context{std::move(ch)}; }
+  void set_program_code(chunk ch) { m_execution_context = std::move(ch); }
 
   void execute_instruction() {
     auto &ctx = m_execution_context;
