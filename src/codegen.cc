@@ -121,7 +121,7 @@ void codegen_visitor::visit(ast::statement_block *ptr) {
         vm_builder::encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
 
-  for (auto &statement : ptr->statements()) {
+  for (auto &statement : *ptr) {
     set_currently_statement();
     ast_node_visit(*this, statement);
   }

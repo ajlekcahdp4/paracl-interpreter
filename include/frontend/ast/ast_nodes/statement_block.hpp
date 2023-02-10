@@ -26,7 +26,13 @@ public:
 
   void append_statement(i_ast_node *statement) { m_statements.push_back(statement); }
 
-  auto &statements() { return m_statements; }
+  auto size() const { return m_statements.size(); }
+  auto begin() { return m_statements.begin(); }
+  auto begin() const { return m_statements.begin(); }
+  auto end() { return m_statements.end(); }
+  auto end() const { return m_statements.end(); }
+  auto cbegin() const { return m_statements.cbegin(); }
+  auto cend() const { return m_statements.cend(); }
 
   symtab *symbol_table() { return &m_symtab; }
 };

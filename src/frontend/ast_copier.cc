@@ -79,7 +79,7 @@ void ast_copier::visit(if_statement *ptr) {
 void ast_copier::visit(statement_block *ptr) {
   auto ptr_copy = m_container.emplace_back<statement_block>(*ptr);
 
-  for (auto &v : ptr_copy->statements()) {
+  for (auto &v : *ptr_copy) {
     ast_node_visit(*this, v);
     v = get_return();
   }

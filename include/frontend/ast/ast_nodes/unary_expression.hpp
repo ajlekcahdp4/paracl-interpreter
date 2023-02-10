@@ -43,9 +43,6 @@ public:
   unary_expression(unary_operation op_type, i_ast_node *p_expr, location l)
       : visitable_ast_node{l}, m_operation_type{op_type}, m_expr{p_expr} {}
 
-  unary_expression(const unary_expression &) = default;
-  unary_expression &operator=(const unary_expression &) = default;
-
   unary_operation op_type() const { return m_operation_type; }
   i_ast_node    *&child() { return m_expr; }
 };

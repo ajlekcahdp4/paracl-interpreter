@@ -55,7 +55,7 @@ void semantic_analyzer_visitor::visit(ast::error_node *ptr) { report_error(ptr->
 void semantic_analyzer_visitor::visit(ast::statement_block *ptr) {
   m_scopes.begin_scope(ptr->symbol_table());
 
-  for (auto &statement : ptr->statements()) {
+  for (auto &statement : *ptr) {
     ast_node_visit(*this, statement);
   }
 
