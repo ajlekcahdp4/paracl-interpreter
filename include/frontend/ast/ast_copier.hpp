@@ -13,6 +13,8 @@
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
 #include "visitor.hpp"
 
+#include <cassert>
+
 namespace paracl::frontend::ast {
 
 class ast_container;
@@ -22,7 +24,10 @@ private:
   ast_container &m_container;
   i_ast_node    *m_ret_node;
 
-  void return_node(i_ast_node *ptr) { m_ret_node = ptr; }
+  void return_node(i_ast_node *ptr) {
+    assert(ptr);
+    m_ret_node = ptr;
+  }
 
 public:
   ast_copier(ast_container &container) : m_container{container} {}

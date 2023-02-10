@@ -22,10 +22,10 @@ namespace paracl::frontend::ast {
 void ast_copier::visit(assignment_statement *ptr) {
   auto ptr_copy = m_container.emplace_back<assignment_statement>(*ptr);
 
-  ast_node_visit(*this, ptr->left());
-  ptr_copy->left() = get_return_as<variable_expression>();
-  ast_node_visit(*this, ptr->right());
-  ptr_copy->right() = get_return();
+  ast_node_visit(*this, ptr->m_left);
+  ptr_copy->m_left = get_return_as<variable_expression>();
+  ast_node_visit(*this, ptr->m_right);
+  ptr_copy->m_right = get_return();
 
   return_node(ptr_copy);
 }
@@ -33,10 +33,10 @@ void ast_copier::visit(assignment_statement *ptr) {
 void ast_copier::visit(binary_expression *ptr) {
   auto ptr_copy = m_container.emplace_back<binary_expression>(*ptr);
 
-  ast_node_visit(*this, ptr->left());
-  ptr_copy->left() = get_return();
-  ast_node_visit(*this, ptr->right());
-  ptr_copy->right() = get_return();
+  ast_node_visit(*this, ptr->m_left);
+  ptr_copy->m_left = get_return();
+  ast_node_visit(*this, ptr->m_right);
+  ptr_copy->m_right = get_return();
 
   return_node(ptr_copy);
 }
@@ -44,8 +44,8 @@ void ast_copier::visit(binary_expression *ptr) {
 void ast_copier::visit(print_statement *ptr) {
   auto ptr_copy = m_container.emplace_back<print_statement>(*ptr);
 
-  ast_node_visit(*this, ptr->expr());
-  ptr_copy->expr() = get_return();
+  ast_node_visit(*this, ptr->m_expr);
+  ptr_copy->m_expr = get_return();
 
   return_node(ptr_copy);
 }
@@ -63,14 +63,14 @@ void ast_copier::visit(constant_expression *ptr) {
 void ast_copier::visit(if_statement *ptr) {
   auto ptr_copy = m_container.emplace_back<if_statement>(*ptr);
 
-  ast_node_visit(*this, ptr->cond());
-  ptr_copy->cond() = get_return();
-  ast_node_visit(*this, ptr->true_block());
-  ptr_copy->true_block() = get_return();
+  ast_node_visit(*this, ptr->m_condition);
+  ptr_copy->m_condition = get_return();
+  ast_node_visit(*this, ptr->m_true_block);
+  ptr_copy->m_true_block = get_return();
 
-  if (ptr_copy->else_block()) {
-    ast_node_visit(*this, ptr->else_block());
-    ptr_copy->else_block() = get_return();
+  if (ptr_copy->m_else_block) {
+    ast_node_visit(*this, ptr->m_else_block);
+    ptr_copy->m_else_block = get_return();
   }
 
   return_node(ptr_copy);
@@ -89,8 +89,8 @@ void ast_copier::visit(statement_block *ptr) {
 
 void ast_copier::visit(unary_expression *ptr) {
   auto ptr_copy = m_container.emplace_back<unary_expression>(*ptr);
-  ast_node_visit(*this, ptr->child());
-  ptr_copy->child() = get_return();
+  ast_node_visit(*this, ptr->m_expr);
+  ptr_copy->m_expr = get_return();
   return_node(ptr_copy);
 }
 
@@ -102,10 +102,10 @@ void ast_copier::visit(variable_expression *ptr) {
 void ast_copier::visit(while_statement *ptr) {
   auto ptr_copy = m_container.emplace_back<while_statement>(*ptr);
 
-  ast_node_visit(*this, ptr->cond());
-  ptr_copy->cond() = get_return();
-  ast_node_visit(*this, ptr->block());
-  ptr_copy->block() = get_return();
+  ast_node_visit(*this, ptr->m_condition);
+  ptr_copy->m_condition = get_return();
+  ast_node_visit(*this, ptr->m_block);
+  ptr_copy->m_block = get_return();
 
   return_node(ptr_copy);
 }

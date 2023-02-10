@@ -15,17 +15,12 @@
 
 namespace paracl::frontend::ast {
 
-class assignment_statement final : public visitable_ast_node<assignment_statement> {
-private:
+struct assignment_statement final : public visitable_ast_node<assignment_statement> {
   variable_expression *m_left;
   i_ast_node          *m_right;
 
-public:
   assignment_statement(variable_expression *left, i_ast_node *right, location l)
       : visitable_ast_node{l}, m_left{left}, m_right{right} {}
-
-  variable_expression *&left() { return m_left; }
-  i_ast_node          *&right() { return m_right; }
 };
 
 } // namespace paracl::frontend::ast
