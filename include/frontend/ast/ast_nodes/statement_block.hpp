@@ -12,6 +12,8 @@
 
 #include "frontend/symtab.hpp"
 #include "i_ast_node.hpp"
+
+#include <cassert>
 #include <vector>
 
 namespace paracl::frontend::ast {
@@ -22,17 +24,25 @@ private:
   std::vector<i_ast_node *> m_statements;
 
 public:
+  statement_block() = default;
   statement_block(std::vector<i_ast_node *> vec, location l) : visitable_ast_node{l}, m_statements{vec} {}
 
-  void append_statement(i_ast_node *statement) { m_statements.push_back(statement); }
+  void append_statement(i_ast_node *statement) {
+    assert(statement);
+
+    const bool empty = m_statements.empty();
+    m_statements.push_back(statement);
+
+    if (empty) {
+      m_loc = statement->loc();
+    } else {
+      m_loc += statement->loc();
+    }
+  }
 
   auto size() const { return m_statements.size(); }
-  auto begin() { return m_statements.begin(); }
   auto begin() const { return m_statements.begin(); }
-  auto end() { return m_statements.end(); }
   auto end() const { return m_statements.end(); }
-  auto cbegin() const { return m_statements.cbegin(); }
-  auto cend() const { return m_statements.cend(); }
 
   symtab *symbol_table() { return &m_symtab; }
 };

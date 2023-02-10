@@ -17,7 +17,7 @@ namespace paracl::frontend::ast {
 class i_ast_visitor;
 
 class i_ast_node {
-private:
+protected:
   location m_loc;
 
 public:
@@ -35,7 +35,7 @@ public:
 
 namespace paracl::frontend::ast {
 template <typename t_derived> struct visitable_ast_node : public i_ast_node {
-  visitable_ast_node(location l) : i_ast_node{l} {}
+  visitable_ast_node(location l = location{}) : i_ast_node{l} {}
   virtual void accept(i_ast_visitor &visitor) override { visitor.visit(static_cast<t_derived *>(this)); }
 };
 

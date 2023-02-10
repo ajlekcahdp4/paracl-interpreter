@@ -58,14 +58,13 @@ void ast_copier::visit(if_statement *ptr) {
 
 void ast_copier::visit(statement_block *ptr) {
   assert(ptr);
-  auto ptr_copy = m_container.emplace_back<statement_block>(*ptr);
+  auto copy = m_container.emplace_back<statement_block>();
 
-  for (auto &v : *ptr_copy) {
-    ast_node_visit(*this, v);
-    v = get_return();
+  for (const auto &v : *ptr) {
+    copy->append_statement(copy_subtree(v));
   }
 
-  return_node(ptr_copy);
+  return_node(copy);
 }
 
 void ast_copier::visit(unary_expression *ptr) {

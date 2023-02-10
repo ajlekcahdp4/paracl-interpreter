@@ -113,7 +113,7 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 additive_expression comparison_expression equality_expression logical_expression expression assignment_expression_statement
 
 %type <ast::i_ast_node *> print_statement assignment_statement statement_block statement if_statement while_statement
-%type <std::vector<ast::i_ast_node *>> statements
+%type <ast::statement_block> statements
 
 %precedence THEN
 %precedence ELSE
@@ -122,7 +122,7 @@ additive_expression comparison_expression equality_expression logical_expression
 
 %%
 
-program:  statements    { auto ptr = driver.make_ast_node<ast::statement_block>(std::move($1), @$); driver.m_ast.set_root_ptr(ptr); }
+program:  statements    { auto ptr = driver.make_ast_node<ast::statement_block>(std::move($1)); driver.m_ast.set_root_ptr(ptr); }
 
 primary_expression: INTEGER_CONSTANT            { $$ = driver.make_ast_node<ast::constant_expression>($1, @$); }
                     | IDENTIFIER                { $$ = driver.make_ast_node<ast::variable_expression>($1, @$); }
@@ -168,12 +168,12 @@ assignment_statement: assignment_expression_statement SEMICOL             { $$ =
 
 print_statement: PRINT expression SEMICOL { $$ = driver.make_ast_node<ast::print_statement>($2, @$); }
 
-statements: statements statement        { $$ = std::move($1); $$.push_back($2); }
-            | statements error SEMICOL  { $$ = std::move($1); auto error = driver.take_error(); $$.push_back(driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
-            | statements error EOF      { $$ = std::move($1); auto error = driver.take_error(); $$.push_back(driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
+statements: statements statement        { $$ = std::move($1); $$.append_statement($2); }
+            | statements error SEMICOL  { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
+            | statements error EOF      { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
             | %empty                    { }
 
-statement_block: LBRACE statements RBRACE   { $$ = driver.make_ast_node<ast::statement_block>(std::move($2), @$); }
+statement_block: LBRACE statements RBRACE   { $$ = driver.make_ast_node<ast::statement_block>(std::move($2)); }
 
 while_statement: WHILE LPAREN expression RPAREN statement { $$ = driver.make_ast_node<ast::while_statement>($3, $5, @$); }
 
