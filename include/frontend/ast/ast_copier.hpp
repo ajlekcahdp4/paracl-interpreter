@@ -31,7 +31,7 @@ private:
 
   template <typename T> T *copy_subtree(T *node) {
     ast_node_visit(*this, node);
-    return get_return_as<T>();
+    return static_cast<T *>(m_ret_node);
   }
 
 public:
@@ -49,8 +49,7 @@ public:
   void visit(while_statement *) override;
   void visit(error_node *) override;
 
-  i_ast_node              *get_return() { return m_ret_node; }
-  template <typename T> T *get_return_as() { return static_cast<T *>(m_ret_node); }
+  i_ast_node *get_return() { return m_ret_node; }
 };
 
 i_ast_node *ast_copy(i_ast_node *node, ast_container &container);

@@ -27,8 +27,7 @@ class variable_expression;
 class while_statement;
 class error_node;
 
-class i_ast_visitor {
-public:
+struct i_ast_visitor {
   virtual void visit(assignment_statement *) = 0;
   virtual void visit(binary_expression *) = 0;
   virtual void visit(constant_expression *) = 0;

@@ -47,7 +47,7 @@ public:
 
   chunk() = default;
 
-  chunk(std::vector<value_type> p_bin, constant_pool_type p_const)
+  chunk(binary_code_buffer_type p_bin, constant_pool_type p_const)
       : m_binary_code{std::move(p_bin)}, m_constant_pool{std::move(p_const)} {}
 
   template <std::input_iterator binary_it, std::input_iterator constant_it>

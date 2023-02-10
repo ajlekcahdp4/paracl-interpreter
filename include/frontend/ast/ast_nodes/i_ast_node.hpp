@@ -14,7 +14,7 @@
 
 namespace paracl::frontend::ast {
 
-class i_ast_visitor;
+struct i_ast_visitor;
 
 class i_ast_node {
 protected:
