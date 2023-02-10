@@ -62,10 +62,10 @@ void codegen_visitor::visit(ast::assignment_statement *ptr) {
 
 void codegen_visitor::visit(ast::binary_expression *ptr) {
   reset_currently_statement();
-  ast_node_visit(*this, ptr->m_left);
+  ast_node_visit(*this, ptr->left());
 
   reset_currently_statement();
-  ast_node_visit(*this, ptr->m_right);
+  ast_node_visit(*this, ptr->right());
 
   using bin_op = ast::binary_operation;
 
