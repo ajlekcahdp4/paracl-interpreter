@@ -79,11 +79,11 @@ void write_chunk(std::ostream &os, const chunk &ch) {
   std::array<uint8_t, sizeof(uint32_t)> size_buffer;
 
   // Write number of constants
-  utils::write_little_endian(static_cast<uint32_t>(ch.constants_size()), size_buffer.begin());
+  utils::write_little_endian<uint32_t>(ch.constants_size(), size_buffer.begin());
   os.write(reinterpret_cast<const char *>(size_buffer.data()), size_buffer.size());
 
   // Write length of binary code (in bytes)
-  utils::write_little_endian(static_cast<uint32_t>(ch.binary_size()), size_buffer.begin());
+  utils::write_little_endian<uint32_t>(ch.binary_size(), size_buffer.begin());
   os.write(reinterpret_cast<const char *>(size_buffer.data()), size_buffer.size());
 
   // Write constants
