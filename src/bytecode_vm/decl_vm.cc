@@ -10,20 +10,12 @@
 
 namespace paracl::bytecode_vm::decl_vm {
 
-static constexpr unsigned                                magic_bytes_length = 6;
-static constexpr std::array<uint8_t, magic_bytes_length> header = {0xB, 0x0, 0x0, 0xB, 0xE, 0xC};
+constexpr unsigned                                magic_bytes_length = 6;
+constexpr std::array<uint8_t, magic_bytes_length> header = {0xB, 0x0, 0x0, 0xB, 0xE, 0xC};
 
 static std::vector<uint8_t> read_raw_data(std::istream &is) {
   if (!is) throw std::runtime_error("Invalid istream");
-
-  std::vector<uint8_t> raw_data;
-
-  is.seekg(0, is.end);
-  auto length = is.tellg();
-  is.seekg(0, is.beg);
-
-  raw_data.resize(length);
-  is.read(reinterpret_cast<char *>(raw_data.data()), length); // This is ugly.
+  std::vector<uint8_t> raw_data{std::istreambuf_iterator<char>(is), std::istreambuf_iterator<char>()};
 
   return raw_data;
 }

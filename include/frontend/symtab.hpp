@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -25,10 +26,7 @@ private:
 public:
   void declare(std::string_view name) { m_table.emplace(name); }
 
-  bool declared(std::string_view name) const {
-    auto it = m_table.find(std::string{name});
-    return (it != m_table.end());
-  }
+  bool declared(std::string_view name) const { return m_table.count(std::string{name}); }
 
   auto begin() const { return m_table.begin(); }
   auto end() const { return m_table.end(); }
@@ -45,10 +43,9 @@ public:
   void end_scope() { m_stack.pop_back(); }
 
   std::optional<unsigned> declared(std::string_view name) const {
-    for (int i = m_stack.size() - 1; i >= 0; --i) {
-      if (m_stack[i]->declared(name)) return i;
-    }
-    return std::nullopt;
+    auto found = std::find_if(m_stack.begin(), m_stack.end(), [&name](auto &stab) { return stab->declared(name); });
+    if (found == m_stack.end()) return std::nullopt;
+    return found - m_stack.begin();
   }
 
   void declare(std::string_view name) { m_stack.back()->declare(name); }
