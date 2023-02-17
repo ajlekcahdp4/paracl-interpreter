@@ -10,23 +10,8 @@
 
 namespace paracl::bytecode_vm::decl_vm {
 
-static constexpr unsigned                                magic_bytes_length = 6;
-static constexpr std::array<uint8_t, magic_bytes_length> header = {0xB, 0x0, 0x0, 0xB, 0xE, 0xC};
-
-static std::vector<uint8_t> read_raw_data(std::istream &is) {
-  if (!is) throw std::runtime_error("Invalid istream");
-
-  std::vector<uint8_t> raw_data;
-
-  is.seekg(0, is.end);
-  auto length = is.tellg();
-  is.seekg(0, is.beg);
-
-  raw_data.resize(length);
-  is.read(reinterpret_cast<char *>(raw_data.data()), length); // This is ugly.
-
-  return raw_data;
-}
+constexpr unsigned                                magic_bytes_length = 6;
+constexpr std::array<uint8_t, magic_bytes_length> header = {0xB, 0x0, 0x0, 0xB, 0xE, 0xC};
 
 std::optional<chunk> read_chunk(std::istream &is) {
   auto raw_bytes = read_raw_data(is);
@@ -79,11 +64,11 @@ void write_chunk(std::ostream &os, const chunk &ch) {
   std::array<uint8_t, sizeof(uint32_t)> size_buffer;
 
   // Write number of constants
-  utils::write_little_endian(static_cast<uint32_t>(ch.constants_size()), size_buffer.begin());
+  utils::write_little_endian<uint32_t>(ch.constants_size(), size_buffer.begin());
   os.write(reinterpret_cast<const char *>(size_buffer.data()), size_buffer.size());
 
   // Write length of binary code (in bytes)
-  utils::write_little_endian(static_cast<uint32_t>(ch.binary_size()), size_buffer.begin());
+  utils::write_little_endian<uint32_t>(ch.binary_size(), size_buffer.begin());
   os.write(reinterpret_cast<const char *>(size_buffer.data()), size_buffer.size());
 
   // Write constants

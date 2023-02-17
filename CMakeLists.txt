@@ -113,5 +113,6 @@ add_executable(pclc src/pclc.cc)
 target_link_libraries(pclc PUBLIC popl paracl_compiler bytecode_vm)
 
 if(BASH_PROGRAM)
-  add_test(NAME test.paracl COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/test)
+  add_test(NAME test.paracl.external COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/test/external)
+  add_test(NAME test.paracl.basic COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/test/basic)
 endif()
