@@ -10,13 +10,14 @@
 
 #pragma once
 
+#include "ezvis/ezvis.hpp"
 #include "location.hpp"
 
 namespace paracl::frontend::ast {
 
 struct i_ast_visitor;
 
-class i_ast_node {
+class i_ast_node : public ezvis::visitable_base<i_ast_node> {
 protected:
   location m_loc;
 

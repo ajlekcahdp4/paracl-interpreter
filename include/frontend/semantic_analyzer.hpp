@@ -11,6 +11,7 @@
 #pragma once
 
 #include "ast/visitor.hpp"
+#include "ezvis/ezvis.hpp"
 #include "symtab.hpp"
 
 namespace paracl::frontend {

@@ -60,6 +60,8 @@ class binary_expression final : public visitable_ast_node<binary_expression> {
   i_ast_node      *m_left, *m_right;
 
 public:
+  EZVIS_VISITABLE();
+
   binary_expression(binary_operation op_type, i_ast_node *left, i_ast_node *right, location l)
       : visitable_ast_node{l}, m_operation_type{op_type}, m_left{left}, m_right{right} {
     assert(m_left);

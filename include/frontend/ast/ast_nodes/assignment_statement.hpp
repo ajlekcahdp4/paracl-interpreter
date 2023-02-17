@@ -23,6 +23,8 @@ private:
   i_ast_node                      *m_right;
 
 public:
+  EZVIS_VISITABLE();
+
   assignment_statement(variable_expression left, i_ast_node *right, location l)
       : visitable_ast_node{l}, m_right{right} {
     assert(right);

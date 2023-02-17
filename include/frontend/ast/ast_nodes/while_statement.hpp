@@ -23,6 +23,8 @@ private:
   i_ast_node *m_block;
 
 public:
+  EZVIS_VISITABLE();
+
   while_statement(i_ast_node *cond, i_ast_node *block, location l)
       : visitable_ast_node{l}, m_condition{cond}, m_block{block} {}
 

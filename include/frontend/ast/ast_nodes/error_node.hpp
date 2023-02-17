@@ -22,6 +22,8 @@ private:
   std::string m_error_message;
 
 public:
+  EZVIS_VISITABLE();
+
   error_node(const std::string &msg, location l) : visitable_ast_node{l}, m_error_message{msg} {};
 
   std::string error_msg() { return m_error_message; }

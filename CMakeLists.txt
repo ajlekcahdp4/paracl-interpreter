@@ -53,6 +53,10 @@ endif()
 set(DCMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_program(BASH_PROGRAM bash)
 
+add_subdirectory(3rd-party/ctti EXCLUDE_FROM_ALL)
+add_library(ezvis INTERFACE)
+target_include_directories(ezvis INTERFACE include/ezvis)
+target_link_libraries(ezvis INTERFACE ctti)
 # Add flags for GNU sampling profiler gprof in Debug build and RelWithDebInfo
 
 option(PROFILE OFF)
@@ -108,6 +112,7 @@ set(PARACL_COMPILER_SOURCES
 
 add_library(paracl_compiler STATIC ${PARACL_COMPILER_SOURCES} ${BISON_parser_OUTPUTS} ${FLEX_scanner_OUTPUTS})
 target_include_directories(paracl_compiler PUBLIC include ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(paracl_compiler ezvis)
 
 add_executable(pclc src/pclc.cc)
 target_link_libraries(pclc PUBLIC popl paracl_compiler bytecode_vm)

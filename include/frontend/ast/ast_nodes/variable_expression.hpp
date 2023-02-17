@@ -20,6 +20,8 @@ class variable_expression final : public visitable_ast_node<variable_expression>
   std::string m_name;
 
 public:
+  EZVIS_VISITABLE();
+
   variable_expression(std::string p_name, location l) : visitable_ast_node{l}, m_name{p_name} {}
   std::string_view name() const & { return m_name; }
 };

@@ -24,6 +24,8 @@ private:
   std::vector<i_ast_node *> m_statements;
 
 public:
+  EZVIS_VISITABLE();
+
   statement_block() = default;
   statement_block(std::vector<i_ast_node *> vec, location l) : visitable_ast_node{l}, m_statements{vec} {}
 

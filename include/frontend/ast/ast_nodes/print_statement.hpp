@@ -18,6 +18,8 @@ class print_statement final : public visitable_ast_node<print_statement> {
   i_ast_node *m_expr;
 
 public:
+  EZVIS_VISITABLE();
+
   print_statement(i_ast_node *p_expr, location l) : visitable_ast_node{l}, m_expr{p_expr} {}
 
   i_ast_node *expr() const { return m_expr; }

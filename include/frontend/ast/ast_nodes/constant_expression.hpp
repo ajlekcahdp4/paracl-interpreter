@@ -18,6 +18,8 @@ class constant_expression final : public visitable_ast_node<constant_expression>
   int m_val;
 
 public:
+  EZVIS_VISITABLE();
+
   constant_expression(int p_val, location l) : visitable_ast_node{l}, m_val{p_val} {}
 
   auto value() const { return m_val; }

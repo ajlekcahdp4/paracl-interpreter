@@ -41,6 +41,8 @@ private:
   i_ast_node     *m_expr;
 
 public:
+  EZVIS_VISITABLE();
+
   unary_expression(unary_operation op_type, i_ast_node *p_expr, location l)
       : visitable_ast_node{l}, m_operation_type{op_type}, m_expr{p_expr} {}
 

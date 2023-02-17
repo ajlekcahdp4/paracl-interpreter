@@ -26,6 +26,8 @@ class if_statement final : public visitable_ast_node<if_statement> {
   i_ast_node *m_else_block = nullptr;
 
 public:
+  EZVIS_VISITABLE();
+
   if_statement(i_ast_node *cond, i_ast_node *true_block, location l)
       : visitable_ast_node{l}, m_condition{cond}, m_true_block{true_block} {}
 
