@@ -251,4 +251,8 @@ public:
   bool is_halted() const { return m_execution_context.is_halted(); }
 };
 
+inline std::vector<uint8_t> read_raw_data(std::istream &is) {
+  return std::vector<uint8_t>{std::istreambuf_iterator<char>{is}, std::istreambuf_iterator<char>{}};
+}
+
 } // namespace paracl::bytecode_vm::decl_vm

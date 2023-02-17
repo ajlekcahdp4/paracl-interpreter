@@ -25,7 +25,6 @@ private:
 
 public:
   void declare(std::string_view name) { m_table.emplace(name); }
-
   bool declared(std::string_view name) const { return m_table.count(std::string{name}); }
 
   auto begin() const { return m_table.begin(); }
@@ -39,13 +38,12 @@ private:
 
 public:
   void begin_scope(symtab *stab) { m_stack.push_back(stab); }
-
   void end_scope() { m_stack.pop_back(); }
 
   std::optional<unsigned> declared(std::string_view name) const {
     auto found = std::find_if(m_stack.begin(), m_stack.end(), [&name](auto &stab) { return stab->declared(name); });
     if (found == m_stack.end()) return std::nullopt;
-    return found - m_stack.begin();
+    return std::distance(m_stack.begin(), found);
   }
 
   void declare(std::string_view name) { m_stack.back()->declare(name); }
