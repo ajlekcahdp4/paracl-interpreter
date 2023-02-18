@@ -10,9 +10,9 @@
 
 #pragma once
 
+#include "ast_nodes/i_ast_node.hpp"
 #include "ezvis/ezvis.hpp"
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
-#include "visitor.hpp"
 
 #include <cassert>
 

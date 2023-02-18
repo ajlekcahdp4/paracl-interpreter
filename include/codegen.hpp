@@ -19,7 +19,7 @@
 #include "bytecode_vm/virtual_machine.hpp"
 
 #include "frontend/ast/ast_container.hpp"
-#include "frontend/ast/visitor.hpp"
+#include "frontend/ast/ast_nodes/i_ast_node.hpp"
 
 #include <algorithm>
 #include <cstdint>

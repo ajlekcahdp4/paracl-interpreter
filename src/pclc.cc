@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
   }
 
   if (ast_dump_option->is_set()) {
-    paracl::frontend::ast::ast_dump(parse_tree.get_root_ptr(), std::cout);
+    paracl::frontend::ast::ast_dump(*parse_tree.get_root_ptr(), std::cout);
     return 0;
   }
 

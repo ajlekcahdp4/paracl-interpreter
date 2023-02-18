@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ast/visitor.hpp"
+#include "ast/ast_nodes/i_ast_node.hpp"
 #include "ezvis/ezvis.hpp"
 #include "location.hpp"
 #include "symtab.hpp"

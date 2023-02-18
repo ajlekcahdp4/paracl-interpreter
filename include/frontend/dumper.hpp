@@ -10,11 +10,11 @@
 
 #pragma once
 
+#include "ast/ast_nodes/i_ast_node.hpp"
 #include "ezvis/ezvis.hpp"
-
-#include "ast/visitor.hpp"
 #include "utils/serialization.hpp"
 
+#include <cassert>
 #include <iostream>
 
 namespace paracl::frontend::ast {
@@ -56,12 +56,10 @@ public:
   EZVIS_VISIT_INVOKER(dump);
 };
 
-inline void ast_dump(i_ast_node *node, std::ostream &os) {
+inline void ast_dump(i_ast_node &node, std::ostream &os) {
   ast_dumper dumper{os};
-  assert(node);
-
   os << "digraph abstract_syntax_tree {\n";
-  dumper.apply(*node);
+  dumper.apply(node);
   os << "}\n";
 }
 
