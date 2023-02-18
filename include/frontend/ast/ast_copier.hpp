@@ -45,8 +45,7 @@ public:
 };
 
 inline i_ast_node *ast_copy(i_ast_node *node, ast_container &container) {
-  assert(node);
-  if (!node) return nullptr;
+  if (!node) return nullptr; // In case the ast is empty. nullptr is a valid paramter
   ast_copier copier = {container};
   return &copier.apply(*node);
 }
