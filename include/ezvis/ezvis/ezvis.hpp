@@ -136,6 +136,8 @@ public:
     return (static_cast<t_concrete_visitor &>(*this).*thunk)(base);
   }
 
+  return_type operator()(base_type &base) { return apply(base); }
+
   // clang-format off
 #define EZVIS_VISIT_INVOKER(name)                                                                                      \
   struct invoker_ezvis__ {                                                                                             \

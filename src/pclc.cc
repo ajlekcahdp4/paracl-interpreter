@@ -69,7 +69,8 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  if (!paracl::frontend::ast_analyze(parse_tree.get_root_ptr())) {
+  paracl::frontend::semantic_analyzer analyzer;
+  if (!analyzer.analyze(*parse_tree.get_root_ptr())) {
     return 1;
   }
 

@@ -18,6 +18,9 @@
 
 namespace paracl::frontend::ast {
 
+void ast_dumper::dump(error_node &ref) { print_declare_node(m_os, ref, "<error>"); }
+void ast_dumper::dump(read_expression &ref) { print_declare_node(m_os, ref, "<read> ?"); }
+
 void ast_dumper::dump(variable_expression &ref) {
   std::stringstream ss;
   ss << "<identifier> " << ref.name();
@@ -29,9 +32,6 @@ void ast_dumper::dump(constant_expression &ref) {
   ss << "<integer constant> " << std::dec << ref.value();
   print_declare_node(m_os, ref, ss.str());
 }
-
-void ast_dumper::dump(error_node &ref) { print_declare_node(m_os, ref, "<error>"); }
-void ast_dumper::dump(read_expression &ref) { print_declare_node(m_os, ref, "<read> ?"); }
 
 void ast_dumper::dump(binary_expression &ref) {
   std::stringstream ss;
