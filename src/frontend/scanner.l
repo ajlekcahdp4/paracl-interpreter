@@ -20,6 +20,7 @@
 %option c++
 %option prefix="paracl_"
 %option yyclass="scanner"
+%option nounistd
 
 number      (0|[1-9][0-9]*)
 identifier  [a-zA-Z_][a-zA-Z_0-9]*
@@ -63,7 +64,8 @@ cpp_style_comment ([/][/].*)
 {identifier}    { return parser::make_IDENTIFIER(yytext, location{pos(), pos() += yyleng}); }
 {number}        { return parser::make_INTEGER_CONSTANT(std::atoi(yytext), location{pos(), pos() += yyleng}); }
 
-[\n]+               { pos().lines(yyleng); }
+// CRLF for Windows compatability
+[\n|\r\n]+          { pos().lines(yyleng); }
 [ \t]+              { pos().columns(yyleng); }
 {cpp_style_comment} { }
 

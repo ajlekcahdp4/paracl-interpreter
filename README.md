@@ -49,6 +49,16 @@ cd build/
 make -j12
 ```
 
+### Windows
+
+To build this app on windows you have to install a port of Flex/Bison for Windows. One such port is [winflexbison](https://github.com/lexxmark/winflexbison).
+Then, when configuring the project you have to specify paths to the executable.
+
+```bat
+cmake -S ./ -B build/ -DFLEX_EXECUTABLE=path\to\flex.exe -DBISON_EXECUTABLE=path\to\bison.exe
+came --build build
+```
+
 ## 2. ParaCL Compiler (pclc)
 The _pclc_ binary is the brain of the whole interpreter. It compiles the source file into an executable for the ParaCL VM and executes it. It's possible to skip the execution and dump the disassembled binary or write it to file.
 There is a standalone VM executable _pclvm_ which is used to run the bytecode file.
