@@ -20,12 +20,12 @@ namespace paracl::frontend::ast {
 
 class ast_container;
 
-class ast_copier_new : public ezvis::visitor_base<i_ast_node, ast_copier_new, i_ast_node &> {
+class ast_copier : public ezvis::visitor_base<i_ast_node, ast_copier, i_ast_node &> {
   using to_visit = tuple_ast_nodes;
   ast_container &m_container;
 
 public:
-  ast_copier_new(ast_container &container) : m_container{container} {}
+  ast_copier(ast_container &container) : m_container{container} {}
 
   EZVIS_VISIT(to_visit);
 
@@ -44,7 +44,12 @@ public:
   EZVIS_VISIT_INVOKER(copy);
 };
 
-i_ast_node *ast_copy(i_ast_node *node, ast_container &container);
+inline i_ast_node *ast_copy(i_ast_node *node, ast_container &container) {
+  assert(node);
+  if (!node) return nullptr;
+  ast_copier copier = {container};
+  return &copier.apply(*node);
+}
 
 } // namespace paracl::frontend::ast
 

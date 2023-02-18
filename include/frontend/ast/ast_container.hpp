@@ -27,9 +27,6 @@ private:
   std::vector<i_ast_node_uptr> m_nodes;
   i_ast_node                  *m_root = nullptr;
 
-  friend class ast_copier;
-  friend class ast_copier_new;
-
   template <typename T, typename... Ts> T *emplace_back(Ts &&...args) {
     auto uptr = std::make_unique<T>(std::forward<Ts>(args)...);
     auto ptr = uptr.get();

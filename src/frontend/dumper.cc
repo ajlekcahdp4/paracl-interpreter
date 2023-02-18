@@ -9,9 +9,7 @@
  */
 
 #include "frontend/dumper.hpp"
-#include "frontend/ast/ast_nodes/i_ast_node.hpp"
-#include "frontend/ast/visitor.hpp"
-#include "utils/serialization.hpp"
+#include "frontend/ast/ast_nodes.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -20,139 +18,98 @@
 
 namespace paracl::frontend::ast {
 
-static void print_declare_node(std::ostream &os, const i_ast_node *ptr, std::string_view label) {
-  assert(ptr);
-  os << "\tnode_0x" << std::hex << utils::pointer_to_uintptr(ptr) << " [label = \"" << label << "\" ];\n";
-}
-
-static void print_bind_node(std::ostream &os, const i_ast_node *parent, const i_ast_node *child,
-                            std::string_view label = "") {
-  assert(parent);
-  assert(child);
-  os << "\tnode_0x" << std::hex << utils::pointer_to_uintptr(parent) << " -> node_0x"
-     << utils::pointer_to_uintptr(child) << " [label = \"" << label << "\" ];\n";
-}
-
-void ast_dump_visitor::visit(variable_expression *ptr) {
-  assert(ptr);
+void ast_dumper::dump(variable_expression &ref) {
   std::stringstream ss;
-  ss << "<identifier> " << ptr->name();
-  print_declare_node(m_os, ptr, ss.str());
+  ss << "<identifier> " << ref.name();
+  print_declare_node(m_os, ref, ss.str());
 }
 
-void ast_dump_visitor::visit(constant_expression *ptr) {
-  assert(ptr);
+void ast_dumper::dump(constant_expression &ref) {
   std::stringstream ss;
-  ss << "<integer constant> " << std::dec << ptr->value();
-  print_declare_node(m_os, ptr, ss.str());
+  ss << "<integer constant> " << std::dec << ref.value();
+  print_declare_node(m_os, ref, ss.str());
 }
 
-// clang-format off
+void ast_dumper::dump(error_node &ref) { print_declare_node(m_os, ref, "<error>"); }
+void ast_dumper::dump(read_expression &ref) { print_declare_node(m_os, ref, "<read> ?"); }
 
-void ast_dump_visitor::visit(read_expression *ptr) {
-  assert(ptr);
-  print_declare_node(m_os, ptr, "<read> ?");
-}
-
-// clang-format on
-
-void ast_dump_visitor::visit(binary_expression *ptr) {
-  assert(ptr);
+void ast_dumper::dump(binary_expression &ref) {
   std::stringstream ss;
-  ss << "<binary_expression> " << ast::binary_operation_to_string(ptr->op_type());
-  print_declare_node(m_os, ptr, ss.str());
-  print_bind_node(m_os, ptr, ptr->left());
-  print_bind_node(m_os, ptr, ptr->right());
+  ss << "<binary_expression> " << ast::binary_operation_to_string(ref.op_type());
+  print_declare_node(m_os, ref, ss.str());
 
-  ast_node_visit(*this, ptr->left());
-  ast_node_visit(*this, ptr->right());
+  print_bind_node(m_os, ref, *ref.left());
+  print_bind_node(m_os, ref, *ref.right());
+
+  apply(*ref.left());
+  apply(*ref.right());
 }
 
-void ast_dump_visitor::visit(unary_expression *ptr) {
-  assert(ptr);
+void ast_dumper::dump(unary_expression &ref) {
   std::stringstream ss;
-  ss << "<binary_expression> " << ast::unary_operation_to_string(ptr->op_type());
-  print_declare_node(m_os, ptr, ss.str());
-  print_bind_node(m_os, ptr, ptr->expr());
+  ss << "<binary_expression> " << ast::unary_operation_to_string(ref.op_type());
 
-  ast_node_visit(*this, ptr->expr());
+  print_declare_node(m_os, ref, ss.str());
+  print_bind_node(m_os, ref, *ref.expr());
+
+  apply(*ref.expr());
 }
 
-void ast_dump_visitor::visit(assignment_statement *ptr) {
-  assert(ptr);
+void ast_dumper::dump(assignment_statement &ref) {
+  print_declare_node(m_os, ref, "<assignment>");
+  const i_ast_node *prev = &ref;
 
-  print_declare_node(m_os, ptr, "<assignment>");
-  const i_ast_node *prev = ptr;
-
-  for (auto start = ptr->begin(), finish = ptr->end(); start != finish; ++start) {
+  for (auto start = ref.begin(), finish = ref.end(); start != finish; ++start) {
     const auto curr_ptr = &(*start);
 
-    visit(curr_ptr);
-    print_bind_node(m_os, prev, curr_ptr);
+    apply(*curr_ptr);
+    print_bind_node(m_os, *prev, *curr_ptr);
 
     prev = curr_ptr;
   }
 
-  print_bind_node(m_os, ptr, ptr->right());
-  ast_node_visit(*this, ptr->right());
+  print_bind_node(m_os, ref, *ref.right());
+  apply(*ref.right());
 }
 
-void ast_dump_visitor::visit(if_statement *ptr) {
-  assert(ptr);
-  print_declare_node(m_os, ptr, "<if>");
-  print_bind_node(m_os, ptr, ptr->cond(), "<condition>");
-  print_bind_node(m_os, ptr, ptr->true_block(), "<then>");
+void ast_dumper::dump(if_statement &ref) {
+  print_declare_node(m_os, ref, "<if>");
 
-  ast_node_visit(*this, ptr->cond());
-  ast_node_visit(*this, ptr->true_block());
+  print_bind_node(m_os, ref, *ref.cond(), "<condition>");
+  print_bind_node(m_os, ref, *ref.true_block(), "<then>");
 
-  if (ptr->else_block()) {
-    print_bind_node(m_os, ptr, ptr->else_block(), "<else>");
-    ast_node_visit(*this, ptr->else_block());
+  apply(*ref.cond());
+  apply(*ref.true_block());
+
+  if (ref.else_block()) {
+    print_bind_node(m_os, ref, *ref.else_block(), "<else>");
+    apply(*ref.else_block());
   }
 }
 
-void ast_dump_visitor::visit(print_statement *ptr) {
-  assert(ptr);
-  print_declare_node(m_os, ptr, "<print_statement>");
-  print_bind_node(m_os, ptr, ptr->expr());
-  ast_node_visit(*this, ptr->expr());
+void ast_dumper::dump(print_statement &ref) {
+  print_declare_node(m_os, ref, "<print_statement>");
+  print_bind_node(m_os, ref, *ref.expr());
+  apply(*ref.expr());
 }
 
-void ast_dump_visitor::visit(statement_block *ptr) {
-  assert(ptr);
-  print_declare_node(m_os, ptr, "<statement_block>");
+void ast_dumper::dump(statement_block &ref) {
+  print_declare_node(m_os, ref, "<statement_block>");
 
-  for (const auto &v : *ptr) {
-    print_bind_node(m_os, ptr, v);
-    ast_node_visit(*this, v);
+  for (const auto &v : ref) {
+    print_bind_node(m_os, ref, *v);
+    apply(*v);
   }
 }
 
-void ast_dump_visitor::visit(while_statement *ptr) {
-  assert(ptr);
-  print_declare_node(m_os, ptr, "<while>");
-  print_bind_node(m_os, ptr, ptr->cond(), "<condition>");
-  print_bind_node(m_os, ptr, ptr->block(), "<body>");
+void ast_dumper::dump(while_statement &ref) {
+  print_declare_node(m_os, ref, "<while>");
 
-  ast_node_visit(*this, ptr->cond());
-  ast_node_visit(*this, ptr->block());
-}
+  print_bind_node(m_os, ref, *ref.cond(), "<condition>");
+  print_bind_node(m_os, ref, *ref.block(), "<body>");
 
-// clang-format off
-
-void ast_dump_visitor::visit(error_node *ptr) {assert(ptr);
-  print_declare_node(m_os, ptr, "<error>");
-}
-
-// clang-format on
-
-void ast_dump(i_ast_node *node, std::ostream &os) {
-  assert(node);
-  ast_dump_visitor dumper{os};
-  os << "digraph AbstractSyntaxTree {\n";
-  ast_node_visit(dumper, node);
-  os << "}\n";
+  apply(*ref.cond());
+  apply(*ref.block());
 }
 
 } // namespace paracl::frontend::ast
