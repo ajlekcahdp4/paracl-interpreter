@@ -64,6 +64,11 @@ int main(int argc, char *argv[]) {
 
   auto parse_tree = drv.take_ast();
 
+  paracl::frontend::ast::ast_container  new_ast{};
+  paracl::frontend::ast::ast_copier_new copier{new_ast};
+
+  copier.apply(*parse_tree.get_root_ptr());
+
   if (ast_dump_option->is_set()) {
     paracl::frontend::ast::ast_dump(parse_tree.get_root_ptr(), std::cout);
     return 0;

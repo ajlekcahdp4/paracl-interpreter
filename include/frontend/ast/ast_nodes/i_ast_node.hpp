@@ -22,6 +22,8 @@ protected:
   location m_loc;
 
 public:
+  EZVIS_VISITABLE();
+
   i_ast_node() = default;
   i_ast_node(location l) : m_loc{l} {}
   virtual ~i_ast_node() {}

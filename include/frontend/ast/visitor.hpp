@@ -11,6 +11,7 @@
 #pragma once
 
 #include <cassert>
+#include <tuple>
 
 namespace paracl::frontend::ast {
 
@@ -26,6 +27,10 @@ class unary_expression;
 class variable_expression;
 class while_statement;
 class error_node;
+
+using tuple_ast_nodes =
+    std::tuple<assignment_statement, binary_expression, constant_expression, if_statement, print_statement,
+               read_expression, statement_block, unary_expression, variable_expression, while_statement, error_node>;
 
 struct i_ast_visitor {
   virtual void visit(assignment_statement *) = 0;
