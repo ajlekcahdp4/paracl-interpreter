@@ -38,11 +38,11 @@ void ast_dumper::dump(binary_expression &ref) {
   ss << "<binary_expression> " << ast::binary_operation_to_string(ref.op_type());
   print_declare_node(m_os, ref, ss.str());
 
-  print_bind_node(m_os, ref, *ref.left());
-  print_bind_node(m_os, ref, *ref.right());
+  print_bind_node(m_os, ref, ref.left());
+  print_bind_node(m_os, ref, ref.right());
 
-  apply(*ref.left());
-  apply(*ref.right());
+  apply(ref.left());
+  apply(ref.right());
 }
 
 void ast_dumper::dump(unary_expression &ref) {
@@ -50,9 +50,9 @@ void ast_dumper::dump(unary_expression &ref) {
   ss << "<binary_expression> " << ast::unary_operation_to_string(ref.op_type());
 
   print_declare_node(m_os, ref, ss.str());
-  print_bind_node(m_os, ref, *ref.expr());
+  print_bind_node(m_os, ref, ref.expr());
 
-  apply(*ref.expr());
+  apply(ref.expr());
 }
 
 void ast_dumper::dump(assignment_statement &ref) {
@@ -68,18 +68,18 @@ void ast_dumper::dump(assignment_statement &ref) {
     prev = curr_ptr;
   }
 
-  print_bind_node(m_os, ref, *ref.right());
-  apply(*ref.right());
+  print_bind_node(m_os, ref, ref.right());
+  apply(ref.right());
 }
 
 void ast_dumper::dump(if_statement &ref) {
   print_declare_node(m_os, ref, "<if>");
 
-  print_bind_node(m_os, ref, *ref.cond(), "<condition>");
-  print_bind_node(m_os, ref, *ref.true_block(), "<then>");
+  print_bind_node(m_os, ref, ref.cond(), "<condition>");
+  print_bind_node(m_os, ref, ref.true_block(), "<then>");
 
-  apply(*ref.cond());
-  apply(*ref.true_block());
+  apply(ref.cond());
+  apply(ref.true_block());
 
   if (ref.else_block()) {
     print_bind_node(m_os, ref, *ref.else_block(), "<else>");
@@ -89,8 +89,8 @@ void ast_dumper::dump(if_statement &ref) {
 
 void ast_dumper::dump(print_statement &ref) {
   print_declare_node(m_os, ref, "<print_statement>");
-  print_bind_node(m_os, ref, *ref.expr());
-  apply(*ref.expr());
+  print_bind_node(m_os, ref, ref.expr());
+  apply(ref.expr());
 }
 
 void ast_dumper::dump(statement_block &ref) {
@@ -105,11 +105,11 @@ void ast_dumper::dump(statement_block &ref) {
 void ast_dumper::dump(while_statement &ref) {
   print_declare_node(m_os, ref, "<while>");
 
-  print_bind_node(m_os, ref, *ref.cond(), "<condition>");
-  print_bind_node(m_os, ref, *ref.block(), "<body>");
+  print_bind_node(m_os, ref, ref.cond(), "<condition>");
+  print_bind_node(m_os, ref, ref.block(), "<body>");
 
-  apply(*ref.cond());
-  apply(*ref.block());
+  apply(ref.cond());
+  apply(ref.block());
 }
 
 } // namespace paracl::frontend::ast

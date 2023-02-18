@@ -16,13 +16,13 @@
 
 namespace paracl::frontend::ast {
 
-class variable_expression final : public visitable_ast_node<variable_expression> {
+class variable_expression final : public i_ast_node {
   std::string m_name;
 
 public:
   EZVIS_VISITABLE();
 
-  variable_expression(std::string p_name, location l) : visitable_ast_node{l}, m_name{p_name} {}
+  variable_expression(std::string p_name, location l) : i_ast_node{l}, m_name{p_name} {}
   std::string_view name() const & { return m_name; }
 };
 

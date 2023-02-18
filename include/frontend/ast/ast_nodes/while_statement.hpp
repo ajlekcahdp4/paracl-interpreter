@@ -16,7 +16,7 @@
 
 namespace paracl::frontend::ast {
 
-class while_statement final : public visitable_ast_node<while_statement> {
+class while_statement final : public i_ast_node {
 private:
   symtab      m_symtab;
   i_ast_node *m_condition;
@@ -25,11 +25,11 @@ private:
 public:
   EZVIS_VISITABLE();
 
-  while_statement(i_ast_node *cond, i_ast_node *block, location l)
-      : visitable_ast_node{l}, m_condition{cond}, m_block{block} {}
+  while_statement(i_ast_node &cond, i_ast_node &block, location l)
+      : i_ast_node{l}, m_condition{&cond}, m_block{&block} {}
 
-  i_ast_node *cond() const { return m_condition; }
-  i_ast_node *block() const { return m_block; }
+  i_ast_node &cond() const { return *m_condition; }
+  i_ast_node &block() const { return *m_block; }
 
   symtab *symbol_table() { return &m_symtab; }
 };

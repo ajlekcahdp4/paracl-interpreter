@@ -131,56 +131,56 @@ primary_expression: INTEGER_CONSTANT            { $$ = driver.make_ast_node<ast:
                     | LPAREN expression RPAREN  { $$ = $2; }
                     | LPAREN error RPAREN       { auto error = driver.take_error(); $$ = driver.make_ast_node<ast::error_node>(error.error_message, error.loc); yyerrok; }
 
-unary_expression: PLUS unary_expression           { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_POS, $2, @$); }
-                  | MINUS unary_expression        { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_NEG, $2, @$); }
-                  | BANG unary_expression         { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_NOT, $2, @$); }
+unary_expression: PLUS unary_expression           { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_POS, *$2, @$); }
+                  | MINUS unary_expression        { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_NEG, *$2, @$); }
+                  | BANG unary_expression         { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_NOT, *$2, @$); }
                   | primary_expression            { $$ = $1; }
 
-multiplicative_expression:  multiplicative_expression MULTIPLY unary_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_MUL, $1, $3, @$); }
-                            | multiplicative_expression DIVIDE unary_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_DIV, $1, $3, @$); }
-                            | multiplicative_expression MODULUS unary_expression  { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_MOD, $1, $3, @$); }
+multiplicative_expression:  multiplicative_expression MULTIPLY unary_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_MUL, *$1, *$3, @$); }
+                            | multiplicative_expression DIVIDE unary_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_DIV, *$1, *$3, @$); }
+                            | multiplicative_expression MODULUS unary_expression  { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_MOD, *$1, *$3, @$); }
                             | unary_expression                                    { $$ = $1; }
 
-additive_expression:  additive_expression PLUS multiplicative_expression      { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_ADD, $1, $3, @$); }
-                      | additive_expression MINUS multiplicative_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_SUB, $1, $3, @$); }
+additive_expression:  additive_expression PLUS multiplicative_expression      { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_ADD, *$1, *$3, @$); }
+                      | additive_expression MINUS multiplicative_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_SUB, *$1, *$3, @$); }
                       | multiplicative_expression                             { $$ = $1; }
 
-comparison_expression:  comparison_expression COMP_GT additive_expression     { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_GT, $1, $3, @$); }
-                        | comparison_expression COMP_LS additive_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_LS, $1, $3, @$); }
-                        | comparison_expression COMP_GE additive_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_GE, $1, $3, @$); }
-                        | comparison_expression COMP_LE additive_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_LE, $1, $3, @$); }
+comparison_expression:  comparison_expression COMP_GT additive_expression     { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_GT, *$1, *$3, @$); }
+                        | comparison_expression COMP_LS additive_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_LS, *$1, *$3, @$); }
+                        | comparison_expression COMP_GE additive_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_GE, *$1, *$3, @$); }
+                        | comparison_expression COMP_LE additive_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_LE, *$1, *$3, @$); }
                         | additive_expression                                 { $$ = $1; }
 
 
-equality_expression:  equality_expression COMP_EQ comparison_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_EQ, $1, $3, @$); }
-                      | equality_expression COMP_NE comparison_expression { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_NE, $1, $3, @$); }
+equality_expression:  equality_expression COMP_EQ comparison_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_EQ, *$1, *$3, @$); }
+                      | equality_expression COMP_NE comparison_expression { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_NE, *$1, *$3, @$); }
                       | comparison_expression                             { $$ = $1; }
 
-logical_expression: logical_expression LOGICAL_AND equality_expression    { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_AND, $1, $3, @$); }
-                    | logical_expression LOGICAL_OR equality_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_OR, $1, $3, @$); }
+logical_expression: logical_expression LOGICAL_AND equality_expression    { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_AND, *$1, *$3, @$); }
+                    | logical_expression LOGICAL_OR equality_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_OR, *$1, *$3, @$); }
                     | equality_expression                                 { $$ = $1; }
 
 expression: logical_expression                  { $$ = $1; }
             | chainable_assignment              { $$ = $1; }             
 
 chainable_assignment: IDENTIFIER ASSIGN chainable_assignment      { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
-                      | IDENTIFIER ASSIGN logical_expression      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, $3, @$); }
+                      | IDENTIFIER ASSIGN logical_expression      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
 
 assignment_statement: chainable_assignment SEMICOL                { $$ = $1; }
 
-print_statement: PRINT expression SEMICOL { $$ = driver.make_ast_node<ast::print_statement>($2, @$); }
+print_statement: PRINT expression SEMICOL { $$ = driver.make_ast_node<ast::print_statement>(*$2, @$); }
 
-statements: statements statement        { $$ = std::move($1); $$.append_statement($2); }
-            | statements error SEMICOL  { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
-            | statements error EOF      { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
+statements: statements statement        { $$ = std::move($1); $$.append_statement(*$2); }
+            | statements error SEMICOL  { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
+            | statements error EOF      { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
             | %empty                    { }
 
 statement_block: LBRACE statements RBRACE   { $$ = driver.make_ast_node<ast::statement_block>(std::move($2)); }
 
-while_statement: WHILE LPAREN expression RPAREN statement { $$ = driver.make_ast_node<ast::while_statement>($3, $5, @$); }
+while_statement: WHILE LPAREN expression RPAREN statement { $$ = driver.make_ast_node<ast::while_statement>(*$3, *$5, @$); }
 
-if_statement: IF LPAREN expression RPAREN statement %prec THEN        { $$ = driver.make_ast_node<ast::if_statement>($3, $5, @$); }
-              | IF LPAREN expression RPAREN statement ELSE statement  { $$ = driver.make_ast_node<ast::if_statement>($3, $5, $7, @$); }
+if_statement: IF LPAREN expression RPAREN statement %prec THEN        { $$ = driver.make_ast_node<ast::if_statement>(*$3, *$5, @$); }
+              | IF LPAREN expression RPAREN statement ELSE statement  { $$ = driver.make_ast_node<ast::if_statement>(*$3, *$5, *$7, @$); }
 
 statement:  assignment_statement  { $$ = $1; }
             | print_statement     { $$ = $1; }

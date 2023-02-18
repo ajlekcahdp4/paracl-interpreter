@@ -17,7 +17,7 @@
 
 namespace paracl::frontend {
 
-void semantic_analyzer::analyze_node(ast::unary_expression &ref) { apply(*ref.expr()); }
+void semantic_analyzer::analyze_node(ast::unary_expression &ref) { apply(ref.expr()); }
 void semantic_analyzer::analyze_node(ast::error_node &ref) { report_error(ref.error_msg(), ref.loc()); }
 
 void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
@@ -27,22 +27,22 @@ void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
   }
 
   set_state(semantic_analysis_state::E_RVALUE);
-  apply(*ref.right());
+  apply(ref.right());
   reset_state();
 }
 
 void semantic_analyzer::analyze_node(ast::binary_expression &ref) {
   set_state(semantic_analysis_state::E_RVALUE);
 
-  apply(*ref.right());
-  apply(*ref.left());
+  apply(ref.right());
+  apply(ref.left());
 
   reset_state();
 }
 
 void semantic_analyzer::analyze_node(ast::print_statement &ref) {
   set_state(semantic_analysis_state::E_RVALUE);
-  apply(*ref.expr());
+  apply(ref.expr());
   reset_state();
 }
 
@@ -59,10 +59,10 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
 
 void semantic_analyzer::analyze_node(ast::if_statement &ref) {
   m_scopes.begin_scope(ref.control_block_symtab());
-  apply(*ref.cond());
+  apply(ref.cond());
 
   m_scopes.begin_scope(ref.true_symtab());
-  apply(*ref.true_block());
+  apply(ref.true_block());
   m_scopes.end_scope();
 
   if (ref.else_block() != nullptr) {
@@ -77,8 +77,8 @@ void semantic_analyzer::analyze_node(ast::if_statement &ref) {
 void semantic_analyzer::analyze_node(ast::while_statement &ref) {
   m_scopes.begin_scope(ref.symbol_table());
 
-  apply(*ref.cond());
-  apply(*ref.block());
+  apply(ref.cond());
+  apply(ref.block());
 
   m_scopes.end_scope();
 }

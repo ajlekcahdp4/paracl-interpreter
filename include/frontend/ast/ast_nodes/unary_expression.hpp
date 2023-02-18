@@ -11,6 +11,7 @@
 #pragma once
 
 #include "i_ast_node.hpp"
+#include "location.hpp"
 
 #include <cassert>
 
@@ -35,7 +36,7 @@ constexpr std::string_view unary_operation_to_string(unary_operation op) {
   throw std::invalid_argument{"Broken enum"};
 }
 
-class unary_expression final : public visitable_ast_node<unary_expression> {
+class unary_expression final : public i_ast_node {
 private:
   unary_operation m_operation_type;
   i_ast_node     *m_expr;
@@ -43,11 +44,11 @@ private:
 public:
   EZVIS_VISITABLE();
 
-  unary_expression(unary_operation op_type, i_ast_node *p_expr, location l)
-      : visitable_ast_node{l}, m_operation_type{op_type}, m_expr{p_expr} {}
+  unary_expression(unary_operation op_type, i_ast_node &p_expr, location l)
+      : i_ast_node{l}, m_operation_type{op_type}, m_expr{&p_expr} {}
 
   unary_operation op_type() const { return m_operation_type; }
-  i_ast_node     *expr() const { return m_expr; }
+  i_ast_node     &expr() const { return *m_expr; }
 };
 
 } // namespace paracl::frontend::ast

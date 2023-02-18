@@ -12,6 +12,7 @@
 
 #include "ast/visitor.hpp"
 #include "ezvis/ezvis.hpp"
+#include "location.hpp"
 #include "symtab.hpp"
 
 #include <iostream>

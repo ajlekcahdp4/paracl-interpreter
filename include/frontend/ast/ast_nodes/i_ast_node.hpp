@@ -15,31 +15,17 @@
 
 namespace paracl::frontend::ast {
 
-struct i_ast_visitor;
-
 class i_ast_node : public ezvis::visitable_base<i_ast_node> {
 protected:
   location m_loc;
 
 public:
   EZVIS_VISITABLE();
+  location loc() { return m_loc; }
 
   i_ast_node() = default;
   i_ast_node(location l) : m_loc{l} {}
   virtual ~i_ast_node() {}
-
-  virtual void accept(i_ast_visitor &) = 0;
-  location     loc() { return m_loc; }
-};
-
-} // namespace paracl::frontend::ast
-
-#include "frontend/ast/visitor.hpp"
-
-namespace paracl::frontend::ast {
-template <typename t_derived> struct visitable_ast_node : public i_ast_node {
-  visitable_ast_node(location l = location{}) : i_ast_node{l} {}
-  virtual void accept(i_ast_visitor &visitor) override { visitor.visit(static_cast<t_derived *>(this)); }
 };
 
 } // namespace paracl::frontend::ast

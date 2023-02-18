@@ -14,15 +14,13 @@
 
 namespace paracl::frontend::ast {
 
-class constant_expression final : public visitable_ast_node<constant_expression> {
+class constant_expression final : public i_ast_node {
   int m_val;
 
 public:
   EZVIS_VISITABLE();
-
-  constant_expression(int p_val, location l) : visitable_ast_node{l}, m_val{p_val} {}
-
-  auto value() const { return m_val; }
+  constant_expression(int p_val, location l) : i_ast_node{l}, m_val{p_val} {}
+  int value() const { return m_val; }
 };
 
 } // namespace paracl::frontend::ast

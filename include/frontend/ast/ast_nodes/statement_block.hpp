@@ -18,7 +18,7 @@
 
 namespace paracl::frontend::ast {
 
-class statement_block final : public visitable_ast_node<statement_block> {
+class statement_block final : public i_ast_node {
 private:
   symtab                    m_symtab;
   std::vector<i_ast_node *> m_statements;
@@ -27,18 +27,16 @@ public:
   EZVIS_VISITABLE();
 
   statement_block() = default;
-  statement_block(std::vector<i_ast_node *> vec, location l) : visitable_ast_node{l}, m_statements{vec} {}
+  statement_block(std::vector<i_ast_node *> vec, location l) : i_ast_node{l}, m_statements{vec} {}
 
-  void append_statement(i_ast_node *statement) {
-    assert(statement);
-
+  void append_statement(i_ast_node &statement) {
     const bool empty = m_statements.empty();
-    m_statements.push_back(statement);
+    m_statements.push_back(&statement);
 
     if (empty) {
-      m_loc = statement->loc();
+      m_loc = statement.loc();
     } else {
-      m_loc += statement->loc();
+      m_loc += statement.loc();
     }
   }
 
