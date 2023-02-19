@@ -16,7 +16,7 @@
 
 namespace paracl::frontend::ast {
 
-class if_statement final : public visitable_ast_node<if_statement> {
+class if_statement final : public i_ast_node {
   symtab m_control_block_symtab;
   symtab m_true_symtab;
   symtab m_false_symtab;
@@ -26,14 +26,16 @@ class if_statement final : public visitable_ast_node<if_statement> {
   i_ast_node *m_else_block = nullptr;
 
 public:
-  if_statement(i_ast_node *cond, i_ast_node *true_block, location l)
-      : visitable_ast_node{l}, m_condition{cond}, m_true_block{true_block} {}
+  EZVIS_VISITABLE();
 
-  if_statement(i_ast_node *cond, i_ast_node *true_block, i_ast_node *else_block, location l)
-      : visitable_ast_node{l}, m_condition{cond}, m_true_block{true_block}, m_else_block{else_block} {}
+  if_statement(i_ast_node &cond, i_ast_node &true_block, location l)
+      : i_ast_node{l}, m_condition{&cond}, m_true_block{&true_block} {}
 
-  i_ast_node *cond() const { return m_condition; }
-  i_ast_node *true_block() const { return m_true_block; }
+  if_statement(i_ast_node &cond, i_ast_node &true_block, i_ast_node &else_block, location l)
+      : i_ast_node{l}, m_condition{&cond}, m_true_block{&true_block}, m_else_block{&else_block} {}
+
+  i_ast_node &cond() const { return *m_condition; }
+  i_ast_node &true_block() const { return *m_true_block; }
   i_ast_node *else_block() const { return m_else_block; }
 
   symtab *true_symtab() { return &m_true_symtab; }

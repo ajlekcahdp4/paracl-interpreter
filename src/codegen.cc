@@ -22,42 +22,36 @@ namespace vm_instruction_set = bytecode_vm::instruction_set;
 namespace vm_builder = bytecode_vm::builder;
 namespace ast = frontend::ast;
 
-void codegen_visitor::visit(ast::constant_expression *ptr) {
-  assert(ptr);
-  uint32_t index = lookup_or_insert_constant(ptr->value());
+void codegen_visitor::generate(ast::constant_expression &ref) {
+  uint32_t index = lookup_or_insert_constant(ref.value());
   m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_const_desc, index});
-} // namespace frontend::ast::voidcodegen_visitor::visit(constant_expression*ptr)
+}
 
-void codegen_visitor::visit(ast::read_expression *ptr) {
-  assert(ptr);
+void codegen_visitor::generate(ast::read_expression &ref) {
   m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_read_desc});
 }
 
-void codegen_visitor::visit(ast::error_node *) {
+void codegen_visitor::generate(ast::error_node &) {
   throw std::logic_error{"Calling codegeneration on an ill-formed program"};
 }
 
-void codegen_visitor::visit(ast::variable_expression *ptr) {
-  assert(ptr);
-  auto index = m_symtab_stack.lookup_location(std::string{ptr->name()});
+void codegen_visitor::generate(ast::variable_expression &ref) {
+  auto index = m_symtab_stack.lookup_location(std::string{ref.name()});
   m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_local_desc, index});
 }
 
-void codegen_visitor::visit(ast::print_statement *ptr) {
-  assert(ptr);
+void codegen_visitor::generate(ast::print_statement &ref) {
   reset_currently_statement();
-  ast_node_visit(*this, ptr->expr());
+  apply(ref.expr());
   m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::print_desc});
 }
 
-void codegen_visitor::visit(ast::assignment_statement *ptr) {
-  assert(ptr);
-
+void codegen_visitor::generate(ast::assignment_statement &ref) {
   const bool emit_push = !is_currently_statement();
-  ast_node_visit(*this, ptr->right());
+  apply(ref.right());
 
-  const auto last_it = std::prev(ptr->rend());
-  for (auto start = ptr->rbegin(), finish = last_it; start != finish; ++start) {
+  const auto last_it = std::prev(ref.rend());
+  for (auto start = ref.rbegin(), finish = last_it; start != finish; ++start) {
     const auto left_index = m_symtab_stack.lookup_location(std::string{start->name()});
     m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::mov_local_desc, left_index});
     m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_local_desc, left_index});
@@ -71,17 +65,17 @@ void codegen_visitor::visit(ast::assignment_statement *ptr) {
   }
 }
 
-void codegen_visitor::visit(ast::binary_expression *ptr) {
-  assert(ptr);
-  reset_currently_statement();
-  ast_node_visit(*this, ptr->left());
+void codegen_visitor::generate(ast::binary_expression &ref) {
 
   reset_currently_statement();
-  ast_node_visit(*this, ptr->right());
+  apply(ref.left());
+
+  reset_currently_statement();
+  apply(ref.right());
 
   using bin_op = ast::binary_operation;
 
-  switch (ptr->op_type()) {
+  switch (ref.op_type()) {
   case bin_op::E_BIN_OP_ADD:
     m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::add_desc});
     break;
@@ -124,38 +118,37 @@ void codegen_visitor::visit(ast::binary_expression *ptr) {
   }
 }
 
-void codegen_visitor::visit(ast::statement_block *ptr) {
-  assert(ptr);
+void codegen_visitor::generate(ast::statement_block &ref) {
+
   m_symtab_stack.begin_scope();
 
-  for (const auto &v : *ptr->symbol_table()) {
+  for (const auto &v : *ref.symbol_table()) {
     m_symtab_stack.push_variable(v);
     m_builder.emit_operation(
         vm_builder::encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
 
-  for (auto &statement : *ptr) {
+  for (auto &statement : ref) {
     set_currently_statement();
-    ast_node_visit(*this, statement);
+    apply(*statement);
   }
 
-  for (uint32_t i = 0; i < ptr->symbol_table()->size(); ++i) {
+  for (uint32_t i = 0; i < ref.symbol_table()->size(); ++i) {
     m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::pop_desc});
   }
 
   m_symtab_stack.end_scope();
 }
 
-void codegen_visitor::visit_if_no_else(ast::if_statement *ptr) {
-  assert(ptr);
+void codegen_visitor::visit_if_no_else(ast::if_statement &ref) {
   reset_currently_statement();
-  ast_node_visit(*this, ptr->cond());
+  apply(ref.cond());
 
   auto index_jmp_to_false_block =
       m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
 
   set_currently_statement();
-  ast_node_visit(*this, ptr->true_block());
+  apply(ref.true_block());
 
   auto  jump_to_index = m_builder.current_loc();
   auto &to_relocate = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_false_block);
@@ -163,16 +156,16 @@ void codegen_visitor::visit_if_no_else(ast::if_statement *ptr) {
   std::get<0>(to_relocate.m_attr) = jump_to_index;
 }
 
-void codegen_visitor::visit_if_with_else(ast::if_statement *ptr) {
-  assert(ptr);
+void codegen_visitor::visit_if_with_else(ast::if_statement &ref) {
+
   reset_currently_statement();
-  ast_node_visit(*this, ptr->cond());
+  apply(ref.cond());
 
   auto index_jmp_to_false_block =
       m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
 
   set_currently_statement();
-  ast_node_visit(*this, ptr->true_block());
+  apply(ref.true_block());
   auto index_jmp_to_after_true_block =
       m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::jmp_desc, 0});
 
@@ -180,40 +173,38 @@ void codegen_visitor::visit_if_with_else(ast::if_statement *ptr) {
   std::get<0>(to_relocate_else_jump.m_attr) = m_builder.current_loc();
 
   set_currently_statement();
-  ast_node_visit(*this, ptr->else_block());
+  apply(*ref.else_block());
 
   auto &to_relocate_after_true_block = m_builder.get_as(vm_instruction_set::jmp_desc, index_jmp_to_after_true_block);
   std::get<0>(to_relocate_after_true_block.m_attr) = m_builder.current_loc();
 }
 
-void codegen_visitor::visit(ast::if_statement *ptr) {
-  assert(ptr);
+void codegen_visitor::generate(ast::if_statement &ref) {
   m_symtab_stack.begin_scope();
 
-  for (const auto &v : *ptr->control_block_symtab()) {
+  for (const auto &v : *ref.control_block_symtab()) {
     m_symtab_stack.push_variable(v);
     m_builder.emit_operation(
         vm_builder::encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
 
-  if (!ptr->else_block()) {
-    visit_if_no_else(ptr);
+  if (!ref.else_block()) {
+    visit_if_no_else(ref);
   } else {
-    visit_if_with_else(ptr);
+    visit_if_with_else(ref);
   }
 
-  for (uint32_t i = 0; i < ptr->control_block_symtab()->size(); ++i) {
+  for (uint32_t i = 0; i < ref.control_block_symtab()->size(); ++i) {
     m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::pop_desc});
   }
 
   m_symtab_stack.end_scope();
 }
 
-void codegen_visitor::visit(ast::while_statement *ptr) {
-  assert(ptr);
+void codegen_visitor::generate(ast::while_statement &ref) {
   m_symtab_stack.begin_scope();
 
-  for (const auto &v : *ptr->symbol_table()) {
+  for (const auto &v : *ref.symbol_table()) {
     m_symtab_stack.push_variable(v);
     m_builder.emit_operation(
         vm_builder::encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
@@ -221,45 +212,44 @@ void codegen_visitor::visit(ast::while_statement *ptr) {
 
   auto while_location_start = m_builder.current_loc();
   reset_currently_statement();
-  ast_node_visit(*this, ptr->cond());
+  apply(ref.cond());
 
   auto index_jmp_to_after_loop =
       m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
   set_currently_statement();
-  ast_node_visit(*this, ptr->block());
+  apply(ref.block());
   m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::jmp_desc, while_location_start});
 
   auto &to_relocate_after_loop_jump = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_after_loop);
   std::get<0>(to_relocate_after_loop_jump.m_attr) = m_builder.current_loc();
 
-  for (uint32_t i = 0; i < ptr->symbol_table()->size(); ++i) {
+  for (uint32_t i = 0; i < ref.symbol_table()->size(); ++i) {
     m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::pop_desc});
   }
 
   m_symtab_stack.end_scope();
 }
 
-void codegen_visitor::visit(ast::unary_expression *ptr) {
-  assert(ptr);
+void codegen_visitor::generate(ast::unary_expression &ref) {
   using unary_op = ast::unary_operation;
 
   reset_currently_statement();
-  switch (ptr->op_type()) {
+  switch (ref.op_type()) {
   case unary_op::E_UN_OP_NEG: {
     m_builder.emit_operation(
         vm_builder::encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
-    ast_node_visit(*this, ptr->expr());
+    apply(ref.expr());
     m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::sub_desc});
     break;
   }
 
   case unary_op::E_UN_OP_POS: {
-    ast_node_visit(*this, ptr->expr()); /* Do nothing */
+    apply(ref.expr()); /* Do nothing */
     break;
   }
 
   case unary_op::E_UN_OP_NOT: {
-    ast_node_visit(*this, ptr->expr());
+    apply(ref.expr());
     m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::not_desc});
     break;
   }
@@ -303,10 +293,9 @@ paracl::bytecode_vm::decl_vm::chunk codegen_visitor::to_chunk() {
   return ch;
 }
 
-bytecode_vm::decl_vm::chunk generate_code(ast::i_ast_node *ptr) {
-  assert(ptr);
+bytecode_vm::decl_vm::chunk generate_code(ast::i_ast_node &ref) {
   codegen_visitor generator;
-  ast_node_visit(generator, ptr);
+  generator.apply(ref);
   return generator.to_chunk();
 }
 

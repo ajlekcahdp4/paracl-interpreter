@@ -10,32 +10,57 @@
 
 #pragma once
 
-#include "ast/ast_nodes.hpp"
-#include "ast/visitor.hpp"
+#include "ast/ast_nodes/i_ast_node.hpp"
+#include "ezvis/ezvis.hpp"
+#include "utils/serialization.hpp"
+
+#include <cassert>
 #include <iostream>
 
 namespace paracl::frontend::ast {
 
-class ast_dump_visitor final : public i_ast_visitor {
+class ast_dumper final : public ezvis::visitor_base<i_ast_node, ast_dumper, void> {
+private:
+  using to_visit = tuple_ast_nodes;
+
 private:
   std::ostream &m_os;
 
-public:
-  ast_dump_visitor(std::ostream &os) : m_os{os} {}
+  static void print_declare_node(std::ostream &os, const i_ast_node &ref, std::string_view label) {
+    os << "\tnode_0x" << std::hex << utils::pointer_to_uintptr(&ref) << " [label = \"" << label << "\" ];\n";
+  }
 
-  void visit(assignment_statement *) override;
-  void visit(binary_expression *) override;
-  void visit(constant_expression *) override;
-  void visit(if_statement *) override;
-  void visit(print_statement *) override;
-  void visit(read_expression *) override;
-  void visit(statement_block *) override;
-  void visit(unary_expression *) override;
-  void visit(variable_expression *) override;
-  void visit(while_statement *) override;
-  void visit(error_node *) override;
+  static void print_bind_node(std::ostream &os, const i_ast_node &parent, const i_ast_node &child,
+                              std::string_view label = "") {
+    os << "\tnode_0x" << std::hex << utils::pointer_to_uintptr(&parent) << " -> node_0x"
+       << utils::pointer_to_uintptr(&child) << " [label = \"" << label << "\" ];\n";
+  }
+
+public:
+  explicit ast_dumper(std::ostream &os) : m_os{os} {}
+
+  EZVIS_VISIT(to_visit);
+
+  void dump(assignment_statement &);
+  void dump(binary_expression &);
+  void dump(constant_expression &);
+  void dump(if_statement &);
+  void dump(print_statement &);
+  void dump(read_expression &);
+  void dump(statement_block &);
+  void dump(unary_expression &);
+  void dump(variable_expression &);
+  void dump(while_statement &);
+  void dump(error_node &);
+
+  EZVIS_VISIT_INVOKER(dump);
 };
 
-void ast_dump(i_ast_node *node, std::ostream &os);
+inline void ast_dump(i_ast_node &node, std::ostream &os) {
+  ast_dumper dumper{os};
+  os << "digraph abstract_syntax_tree {\n";
+  dumper.apply(node);
+  os << "}\n";
+}
 
 } // namespace paracl::frontend::ast

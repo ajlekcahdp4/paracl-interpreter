@@ -10,8 +10,9 @@
 
 #pragma once
 
+#include "ast_nodes/i_ast_node.hpp"
+#include "ezvis/ezvis.hpp"
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
-#include "visitor.hpp"
 
 #include <cassert>
 
@@ -19,40 +20,35 @@ namespace paracl::frontend::ast {
 
 class ast_container;
 
-class ast_copier final : public i_ast_visitor {
-private:
+class ast_copier : public ezvis::visitor_base<i_ast_node, ast_copier, i_ast_node &> {
+  using to_visit = tuple_ast_nodes;
   ast_container &m_container;
-  i_ast_node    *m_ret_node = nullptr;
-
-  void return_node(i_ast_node *ptr) {
-    assert(ptr);
-    m_ret_node = ptr;
-  }
-
-  template <typename T> T *copy_subtree(T *node) {
-    ast_node_visit(*this, node);
-    return static_cast<T *>(m_ret_node);
-  }
 
 public:
   ast_copier(ast_container &container) : m_container{container} {}
 
-  void visit(assignment_statement *ptr) override;
-  void visit(binary_expression *ptr) override;
-  void visit(constant_expression *ptr) override;
-  void visit(if_statement *) override;
-  void visit(print_statement *ptr) override;
-  void visit(read_expression *ptr) override;
-  void visit(statement_block *ptr) override;
-  void visit(unary_expression *) override;
-  void visit(variable_expression *) override;
-  void visit(while_statement *) override;
-  void visit(error_node *) override;
+  EZVIS_VISIT(to_visit);
 
-  i_ast_node *get_return() { return m_ret_node; }
+  assignment_statement &copy(assignment_statement &);
+  binary_expression    &copy(binary_expression &);
+  constant_expression  &copy(constant_expression &);
+  if_statement         &copy(if_statement &);
+  print_statement      &copy(print_statement &);
+  read_expression      &copy(read_expression &);
+  statement_block      &copy(statement_block &);
+  unary_expression     &copy(unary_expression &);
+  variable_expression  &copy(variable_expression &);
+  while_statement      &copy(while_statement &);
+  error_node           &copy(error_node &);
+
+  EZVIS_VISIT_INVOKER(copy);
 };
 
-i_ast_node *ast_copy(i_ast_node *node, ast_container &container);
+inline i_ast_node *ast_copy(i_ast_node *node, ast_container &container) {
+  if (!node) return nullptr; // In case the ast is empty. nullptr is a valid paramter
+  ast_copier copier = {container};
+  return &copier.apply(*node);
+}
 
 } // namespace paracl::frontend::ast
 

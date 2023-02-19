@@ -17,112 +17,81 @@
 
 namespace paracl::frontend {
 
-// clang-format off
+void semantic_analyzer::analyze_node(ast::unary_expression &ref) { apply(ref.expr()); }
+void semantic_analyzer::analyze_node(ast::error_node &ref) { report_error(ref.error_msg(), ref.loc()); }
 
-void semantic_analyzer_visitor::visit(ast::constant_expression *) { /* Do nothing */ }
-void semantic_analyzer_visitor::visit(ast::read_expression *) { /* Do nothing */ }
-
-// clang-format on
-
-void semantic_analyzer_visitor::report_error(std::string msg, location loc) {
-  m_valid = false; // As we have encountered an error the program is ill-formed
-  std::cerr << "Error at " << loc << " : " << msg << "\n";
-}
-
-void semantic_analyzer_visitor::visit(ast::assignment_statement *ptr) {
-  assert(ptr);
-
+void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
   set_state(semantic_analysis_state::E_LVALUE);
-  for (auto &v : *ptr) {
-    ast_node_visit(*this, &v);
+  for (auto &v : ref) {
+    apply(v);
   }
 
   set_state(semantic_analysis_state::E_RVALUE);
-  ast_node_visit(*this, ptr->right());
+  apply(ref.right());
   reset_state();
 }
 
-void semantic_analyzer_visitor::visit(ast::binary_expression *ptr) {
-  assert(ptr);
+void semantic_analyzer::analyze_node(ast::binary_expression &ref) {
   set_state(semantic_analysis_state::E_RVALUE);
-  ast_node_visit(*this, ptr->right());
-  ast_node_visit(*this, ptr->left());
+
+  apply(ref.right());
+  apply(ref.left());
+
   reset_state();
 }
 
-void semantic_analyzer_visitor::visit(ast::print_statement *ptr) {
-  assert(ptr);
+void semantic_analyzer::analyze_node(ast::print_statement &ref) {
   set_state(semantic_analysis_state::E_RVALUE);
-  ast_node_visit(*this, ptr->expr());
+  apply(ref.expr());
   reset_state();
 }
 
-void semantic_analyzer_visitor::visit(ast::error_node *ptr) {
-  assert(ptr);
-  report_error(ptr->error_msg(), ptr->loc());
-}
+void semantic_analyzer::analyze_node(ast::statement_block &ref) {
+  m_scopes.begin_scope(ref.symbol_table());
 
-void semantic_analyzer_visitor::visit(ast::statement_block *ptr) {
-  assert(ptr);
-  m_scopes.begin_scope(ptr->symbol_table());
-
-  for (auto &statement : *ptr) {
-    ast_node_visit(*this, statement);
+  for (auto &statement : ref) {
+    assert(statement);
+    apply(*statement);
   }
 
   m_scopes.end_scope();
 }
 
-void semantic_analyzer_visitor::visit(ast::if_statement *ptr) {
-  assert(ptr);
-  m_scopes.begin_scope(ptr->control_block_symtab());
-  ast_node_visit(*this, ptr->cond());
+void semantic_analyzer::analyze_node(ast::if_statement &ref) {
+  m_scopes.begin_scope(ref.control_block_symtab());
+  apply(ref.cond());
 
-  m_scopes.begin_scope(ptr->true_symtab());
-  ast_node_visit(*this, ptr->true_block());
+  m_scopes.begin_scope(ref.true_symtab());
+  apply(ref.true_block());
   m_scopes.end_scope();
 
-  if (ptr->else_block() != nullptr) {
-    m_scopes.begin_scope(ptr->else_symtab());
-    ast_node_visit(*this, ptr->else_block());
+  if (ref.else_block() != nullptr) {
+    m_scopes.begin_scope(ref.else_symtab());
+    apply(*ref.else_block());
     m_scopes.end_scope();
   }
 
   m_scopes.end_scope();
 }
 
-void semantic_analyzer_visitor::visit(ast::while_statement *ptr) {
-  assert(ptr);
-  m_scopes.begin_scope(ptr->symbol_table());
+void semantic_analyzer::analyze_node(ast::while_statement &ref) {
+  m_scopes.begin_scope(ref.symbol_table());
 
-  ast_node_visit(*this, ptr->cond());
-  ast_node_visit(*this, ptr->block());
+  apply(ref.cond());
+  apply(ref.block());
 
   m_scopes.end_scope();
 }
 
-void semantic_analyzer_visitor::visit(ast::unary_expression *ptr) {
-  assert(ptr);
-  ast_node_visit(*this, ptr->expr());
-}
-
-void semantic_analyzer_visitor::visit(ast::variable_expression *ptr) {
-  assert(ptr);
-  if (!m_scopes.declared(ptr->name())) {
+void semantic_analyzer::analyze_node(ast::variable_expression &ref) {
+  if (!m_scopes.declared(ref.name())) {
     if (current_state == semantic_analysis_state::E_LVALUE) {
-      m_scopes.declare(ptr->name());
+      m_scopes.declare(ref.name());
     } else {
-      report_error("Use of undeclared variable", ptr->loc());
+      report_error("Use of undeclared variable", ref.loc());
     }
   }
   /* TODO[Sergei]: Bind the variable to it's declaration symbol table */
-}
-
-bool ast_analyze(ast::i_ast_node *node) {
-  assert(node);
-  semantic_analyzer_visitor analyzer;
-  ast_node_visit(analyzer, node);
-  return analyzer.valid();
 }
 
 } // namespace paracl::frontend

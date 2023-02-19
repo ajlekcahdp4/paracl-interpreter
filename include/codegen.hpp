@@ -10,11 +10,7 @@
 
 #pragma once
 
-#include <algorithm>
-#include <cstdint>
-#include <stdexcept>
-#include <string>
-#include <unordered_map>
+#include "ezvis/ezvis.hpp"
 
 #include "bytecode_vm/bytecode_builder.hpp"
 #include "bytecode_vm/decl_vm.hpp"
@@ -23,7 +19,13 @@
 #include "bytecode_vm/virtual_machine.hpp"
 
 #include "frontend/ast/ast_container.hpp"
-#include "frontend/ast/visitor.hpp"
+#include "frontend/ast/ast_nodes/i_ast_node.hpp"
+
+#include <algorithm>
+#include <cstdint>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
 
 namespace paracl::codegen {
 
@@ -57,9 +59,8 @@ public:
   }
 };
 
-class codegen_visitor final : public paracl::frontend::ast::i_ast_visitor {
-  using builder_type =
-      paracl::bytecode_vm::builder::bytecode_builder<decltype(paracl::bytecode_vm::instruction_set::paracl_isa)>;
+class codegen_visitor final : public ezvis::visitor_base<frontend::ast::i_ast_node, codegen_visitor, void> {
+  using builder_type = bytecode_vm::builder::bytecode_builder<decltype(bytecode_vm::instruction_set::paracl_isa)>;
 
   std::unordered_map<int, uint32_t> m_constant_map;
 
@@ -72,29 +73,35 @@ class codegen_visitor final : public paracl::frontend::ast::i_ast_visitor {
   void reset_currently_statement();
   bool is_currently_statement() const;
 
-  void visit_if_no_else(paracl::frontend::ast::if_statement *);
-  void visit_if_with_else(paracl::frontend::ast::if_statement *);
+  void visit_if_no_else(frontend::ast::if_statement &);
+  void visit_if_with_else(frontend::ast::if_statement &);
 
   uint32_t lookup_or_insert_constant(int constant);
+
+  using to_visit = frontend::ast::tuple_ast_nodes;
 
 public:
   codegen_visitor() = default;
 
-  void visit(paracl::frontend::ast::assignment_statement *) override;
-  void visit(paracl::frontend::ast::binary_expression *) override;
-  void visit(paracl::frontend::ast::constant_expression *) override;
-  void visit(paracl::frontend::ast::if_statement *) override;
-  void visit(paracl::frontend::ast::print_statement *) override;
-  void visit(paracl::frontend::ast::read_expression *) override;
-  void visit(paracl::frontend::ast::statement_block *) override;
-  void visit(paracl::frontend::ast::unary_expression *) override;
-  void visit(paracl::frontend::ast::variable_expression *) override;
-  void visit(paracl::frontend::ast::while_statement *) override;
-  void visit(paracl::frontend::ast::error_node *) override;
+  EZVIS_VISIT(to_visit);
 
-  paracl::bytecode_vm::decl_vm::chunk to_chunk();
+  void generate(frontend::ast::assignment_statement &);
+  void generate(frontend::ast::binary_expression &);
+  void generate(frontend::ast::constant_expression &);
+  void generate(frontend::ast::if_statement &);
+  void generate(frontend::ast::print_statement &);
+  void generate(frontend::ast::read_expression &);
+  void generate(frontend::ast::statement_block &);
+  void generate(frontend::ast::unary_expression &);
+  void generate(frontend::ast::variable_expression &);
+  void generate(frontend::ast::while_statement &);
+  void generate(frontend::ast::error_node &);
+
+  EZVIS_VISIT_INVOKER(generate);
+
+  bytecode_vm::decl_vm::chunk to_chunk();
 };
 
-paracl::bytecode_vm::decl_vm::chunk generate_code(paracl::frontend::ast::i_ast_node *);
+bytecode_vm::decl_vm::chunk generate_code(frontend::ast::i_ast_node &);
 
 } // namespace paracl::codegen

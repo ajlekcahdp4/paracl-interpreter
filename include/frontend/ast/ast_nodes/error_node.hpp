@@ -17,13 +17,13 @@
 
 namespace paracl::frontend::ast {
 
-class error_node final : public visitable_ast_node<error_node> {
+class error_node final : public i_ast_node {
 private:
   std::string m_error_message;
 
 public:
-  error_node(const std::string &msg, location l) : visitable_ast_node{l}, m_error_message{msg} {};
-
+  EZVIS_VISITABLE();
+  error_node(const std::string &msg, location l) : i_ast_node{l}, m_error_message{msg} {};
   std::string error_msg() { return m_error_message; }
 };
 

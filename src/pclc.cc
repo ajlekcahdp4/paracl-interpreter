@@ -19,7 +19,6 @@
 #include "popl.hpp"
 
 int main(int argc, char *argv[]) {
-
   std::string input_file_name;
   bool        dump_binary = false;
 
@@ -63,17 +62,21 @@ int main(int argc, char *argv[]) {
   drv.parse();
 
   auto parse_tree = drv.take_ast();
-
-  if (ast_dump_option->is_set()) {
-    paracl::frontend::ast::ast_dump(parse_tree.get_root_ptr(), std::cout);
+  if (!parse_tree.get_root_ptr()) {
     return 0;
   }
 
-  if (!paracl::frontend::ast_analyze(parse_tree.get_root_ptr())) {
+  if (ast_dump_option->is_set()) {
+    paracl::frontend::ast::ast_dump(*parse_tree.get_root_ptr(), std::cout);
+    return 0;
+  }
+
+  paracl::frontend::semantic_analyzer analyzer;
+  if (!analyzer.analyze(*parse_tree.get_root_ptr())) {
     return 1;
   }
 
-  auto ch = paracl::codegen::generate_code(parse_tree.get_root_ptr());
+  auto ch = paracl::codegen::generate_code(*parse_tree.get_root_ptr());
 
   if (dump_binary) {
     paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler disas{

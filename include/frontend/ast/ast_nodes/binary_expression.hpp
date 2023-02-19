@@ -55,19 +55,21 @@ constexpr std::string_view binary_operation_to_string(binary_operation op) {
   throw std::invalid_argument{"Broken enum"};
 }
 
-class binary_expression final : public visitable_ast_node<binary_expression> {
+class binary_expression final : public i_ast_node {
   binary_operation m_operation_type;
   i_ast_node      *m_left, *m_right;
 
 public:
-  binary_expression(binary_operation op_type, i_ast_node *left, i_ast_node *right, location l)
-      : visitable_ast_node{l}, m_operation_type{op_type}, m_left{left}, m_right{right} {
+  EZVIS_VISITABLE();
+
+  binary_expression(binary_operation op_type, i_ast_node &left, i_ast_node &right, location l)
+      : i_ast_node{l}, m_operation_type{op_type}, m_left{&left}, m_right{&right} {
     assert(m_left);
     assert(m_right);
   }
 
-  i_ast_node *left() const { return m_left; }
-  i_ast_node *right() const { return m_right; }
+  i_ast_node &left() const { return *m_left; }
+  i_ast_node &right() const { return *m_right; }
 
   binary_operation op_type() const { return m_operation_type; }
 };

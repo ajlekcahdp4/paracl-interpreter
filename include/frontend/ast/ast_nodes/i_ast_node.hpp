@@ -10,33 +10,39 @@
 
 #pragma once
 
+#include "ezvis/ezvis.hpp"
 #include "location.hpp"
 
 namespace paracl::frontend::ast {
 
-struct i_ast_visitor;
-
-class i_ast_node {
+class i_ast_node : public ezvis::visitable_base<i_ast_node> {
 protected:
   location m_loc;
 
 public:
+  EZVIS_VISITABLE();
+  location loc() { return m_loc; }
+
   i_ast_node() = default;
   i_ast_node(location l) : m_loc{l} {}
   virtual ~i_ast_node() {}
-
-  virtual void accept(i_ast_visitor &) = 0;
-  location     loc() { return m_loc; }
 };
 
-} // namespace paracl::frontend::ast
+class i_ast_node;
+class assignment_statement;
+class binary_expression;
+class constant_expression;
+class if_statement;
+class print_statement;
+class read_expression;
+class statement_block;
+class unary_expression;
+class variable_expression;
+class while_statement;
+class error_node;
 
-#include "frontend/ast/visitor.hpp"
-
-namespace paracl::frontend::ast {
-template <typename t_derived> struct visitable_ast_node : public i_ast_node {
-  visitable_ast_node(location l = location{}) : i_ast_node{l} {}
-  virtual void accept(i_ast_visitor &visitor) override { visitor.visit(static_cast<t_derived *>(this)); }
-};
+using tuple_ast_nodes =
+    std::tuple<assignment_statement, binary_expression, constant_expression, if_statement, print_statement,
+               read_expression, statement_block, unary_expression, variable_expression, while_statement, error_node>;
 
 } // namespace paracl::frontend::ast

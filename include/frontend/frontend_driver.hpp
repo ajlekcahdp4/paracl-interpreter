@@ -48,11 +48,10 @@ public:
   void switch_input_stream(std::istream *is) { m_scanner.switch_streams(is, nullptr); }
 
   template <typename t_node_type, typename... t_args> t_node_type *make_ast_node(t_args &&...args) {
-    return m_ast.make_node<t_node_type>(std::forward<t_args>(args)...);
+    return &m_ast.make_node<t_node_type>(std::forward<t_args>(args)...);
   }
 
-  void set_ast_root_ptr(ast::i_ast_node *ptr) {
-    assert(ptr);
+  void set_ast_root_ptr(ast::i_ast_node *ptr) { // nullptr is possible
     m_ast.set_root_ptr(ptr);
   }
 
