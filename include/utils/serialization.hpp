@@ -10,18 +10,33 @@
 
 #pragma once
 
+#include "utils/algorithm.hpp"
+
 #include <algorithm>
 #include <array>
 #include <bit>
 #include <concepts>
+#include <cstdint>
 #include <iomanip>
 #include <iterator>
 #include <optional>
-#include <stdint.h>
-
-#include "utils/algorithm.hpp"
+#include <span>
 
 namespace paracl::utils {
+
+namespace detail {
+
+inline auto get_iterator_endian(std::span<char> raw_bytes) {
+  static_assert(std::endian::native == std::endian::little || std::endian::native == std::endian::big,
+                "Mixed endian, bailing out");
+  if constexpr (std::endian::native == std::endian::little) {
+    return raw_bytes.begin();
+  } else {
+    return raw_bytes.rbegin();
+  }
+}
+
+} // namespace detail
 
 template <typename T, std::input_iterator iter>
 std::pair<std::optional<T>, iter> read_little_endian(iter first, iter last)
@@ -29,17 +44,7 @@ requires std::integral<T> || std::floating_point<T>
 {
   std::array<char, sizeof(T)> raw_bytes;
 
-  const auto get_input_iter = [&raw_bytes]() {
-    if constexpr (std::endian::native == std::endian::little) {
-      return raw_bytes.begin();
-    } else if constexpr (std::endian::native == std::endian::big) {
-      return raw_bytes.rbegin();
-    } else {
-      throw std::runtime_error{"Mixed endian, bailing out"};
-    }
-  };
-
-  const auto input_iter = get_input_iter();
+  const auto input_iter = detail::get_iterator_endian(raw_bytes);
   auto       size = sizeof(T);
   first = copy_while(first, last, input_iter, [&size](auto) { return size && size--; });
 
@@ -53,17 +58,7 @@ requires std::integral<T> || std::floating_point<T>
 {
   std::array<char, sizeof(T)> raw_bytes = std::bit_cast<decltype(raw_bytes)>(val);
 
-  const auto get_input_iter = [&raw_bytes]() {
-    if constexpr (std::endian::native == std::endian::little) {
-      return raw_bytes.begin();
-    } else if constexpr (std::endian::native == std::endian::big) {
-      return raw_bytes.rbegin();
-    } else {
-      throw std::runtime_error{"Mixed endian, bailing out"};
-    }
-  };
-
-  const auto input_iter = get_input_iter();
+  const auto input_iter = detail::get_iterator_endian(raw_bytes);
   auto       size = sizeof(T);
   std::copy_n(input_iter, size, oput);
 }
