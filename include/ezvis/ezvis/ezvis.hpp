@@ -49,6 +49,10 @@ template <typename t_base> struct visitable_base {
 
 namespace detail {
 
+template <typename T, typename... Ts>
+struct are_unique : std::conjunction<std::negation<std::is_same<T, Ts>>..., are_unique<Ts...>> {};
+template <typename T> struct are_unique<T> : std::true_type {};
+
 template <typename t_base, typename t_visitor, typename t_return_type> struct vtable_traits {
   using base_type = t_base;                                           // Base type in the hierarchy
   using visitor_type = t_visitor;                                     // Visitor base class
@@ -91,6 +95,12 @@ private:
 
   template <typename T> struct init_helper {};
   template <typename... t_types> struct init_helper<std::tuple<t_types...>> {
+    // It is very unlikely that there will be collisions with a 64-bit hash, but we should verify it nontheless.
+    static_assert(
+        are_unique<std::integral_constant<detail::unique_tag_type, detail::unique_tag<base_type, t_types>()>...>::value,
+        "There are unique tag collisions. You either passes duplicates to to_visit, or there are actually hash "
+        "collisions. Then consider renaming some classes");
+
     static void put(vtable_type &table) {
       (table.template add<t_types>(
            &visitor_type::template thunk_ezvis__<visitor_type, t_types, typename visitor_type::invoker_ezvis__>),
