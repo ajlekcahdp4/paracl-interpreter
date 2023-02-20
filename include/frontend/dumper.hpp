@@ -19,7 +19,7 @@
 
 namespace paracl::frontend::ast {
 
-class ast_dumper final : public ezvis::visitor_base<i_ast_node, ast_dumper, void> {
+class ast_dumper final : public ezvis::visitor_base<const i_ast_node, ast_dumper, void> {
 private:
   using to_visit = tuple_ast_nodes;
 
@@ -41,17 +41,17 @@ public:
 
   EZVIS_VISIT(to_visit);
 
-  void dump(assignment_statement &);
-  void dump(binary_expression &);
-  void dump(constant_expression &);
-  void dump(if_statement &);
-  void dump(print_statement &);
-  void dump(read_expression &);
-  void dump(statement_block &);
-  void dump(unary_expression &);
-  void dump(variable_expression &);
-  void dump(while_statement &);
-  void dump(error_node &);
+  void dump(const assignment_statement &);
+  void dump(const binary_expression &);
+  void dump(const constant_expression &);
+  void dump(const if_statement &);
+  void dump(const print_statement &);
+  void dump(const read_expression &);
+  void dump(const statement_block &);
+  void dump(const unary_expression &);
+  void dump(const variable_expression &);
+  void dump(const while_statement &);
+  void dump(const error_node &);
 
   EZVIS_VISIT_INVOKER(dump);
 };

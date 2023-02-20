@@ -18,22 +18,22 @@
 
 namespace paracl::frontend::ast {
 
-void ast_dumper::dump(error_node &ref) { print_declare_node(m_os, ref, "<error>"); }
-void ast_dumper::dump(read_expression &ref) { print_declare_node(m_os, ref, "<read> ?"); }
+void ast_dumper::dump(const error_node &ref) { print_declare_node(m_os, ref, "<error>"); }
+void ast_dumper::dump(const read_expression &ref) { print_declare_node(m_os, ref, "<read> ?"); }
 
-void ast_dumper::dump(variable_expression &ref) {
+void ast_dumper::dump(const variable_expression &ref) {
   std::stringstream ss;
   ss << "<identifier> " << ref.name();
   print_declare_node(m_os, ref, ss.str());
 }
 
-void ast_dumper::dump(constant_expression &ref) {
+void ast_dumper::dump(const constant_expression &ref) {
   std::stringstream ss;
   ss << "<integer constant> " << std::dec << ref.value();
   print_declare_node(m_os, ref, ss.str());
 }
 
-void ast_dumper::dump(binary_expression &ref) {
+void ast_dumper::dump(const binary_expression &ref) {
   std::stringstream ss;
   ss << "<binary_expression> " << ast::binary_operation_to_string(ref.op_type());
   print_declare_node(m_os, ref, ss.str());
@@ -45,7 +45,7 @@ void ast_dumper::dump(binary_expression &ref) {
   apply(ref.right());
 }
 
-void ast_dumper::dump(unary_expression &ref) {
+void ast_dumper::dump(const unary_expression &ref) {
   std::stringstream ss;
   ss << "<binary_expression> " << ast::unary_operation_to_string(ref.op_type());
 
@@ -55,7 +55,7 @@ void ast_dumper::dump(unary_expression &ref) {
   apply(ref.expr());
 }
 
-void ast_dumper::dump(assignment_statement &ref) {
+void ast_dumper::dump(const assignment_statement &ref) {
   print_declare_node(m_os, ref, "<assignment>");
   const i_ast_node *prev = &ref;
 
@@ -72,7 +72,7 @@ void ast_dumper::dump(assignment_statement &ref) {
   apply(ref.right());
 }
 
-void ast_dumper::dump(if_statement &ref) {
+void ast_dumper::dump(const if_statement &ref) {
   print_declare_node(m_os, ref, "<if>");
 
   print_bind_node(m_os, ref, ref.cond(), "<condition>");
@@ -87,13 +87,13 @@ void ast_dumper::dump(if_statement &ref) {
   }
 }
 
-void ast_dumper::dump(print_statement &ref) {
+void ast_dumper::dump(const print_statement &ref) {
   print_declare_node(m_os, ref, "<print_statement>");
   print_bind_node(m_os, ref, ref.expr());
   apply(ref.expr());
 }
 
-void ast_dumper::dump(statement_block &ref) {
+void ast_dumper::dump(const statement_block &ref) {
   print_declare_node(m_os, ref, "<statement_block>");
 
   for (const auto &v : ref) {
@@ -102,7 +102,7 @@ void ast_dumper::dump(statement_block &ref) {
   }
 }
 
-void ast_dumper::dump(while_statement &ref) {
+void ast_dumper::dump(const while_statement &ref) {
   print_declare_node(m_os, ref, "<while>");
 
   print_bind_node(m_os, ref, ref.cond(), "<condition>");

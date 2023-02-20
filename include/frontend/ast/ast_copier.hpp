@@ -20,7 +20,7 @@ namespace paracl::frontend::ast {
 
 class ast_container;
 
-class ast_copier : public ezvis::visitor_base<i_ast_node, ast_copier, i_ast_node &> {
+class ast_copier : public ezvis::visitor_base<const i_ast_node, ast_copier, i_ast_node &> {
   using to_visit = tuple_ast_nodes;
   ast_container &m_container;
 
@@ -29,17 +29,17 @@ public:
 
   EZVIS_VISIT(to_visit);
 
-  assignment_statement &copy(assignment_statement &);
-  binary_expression    &copy(binary_expression &);
-  constant_expression  &copy(constant_expression &);
-  if_statement         &copy(if_statement &);
-  print_statement      &copy(print_statement &);
-  read_expression      &copy(read_expression &);
-  statement_block      &copy(statement_block &);
-  unary_expression     &copy(unary_expression &);
-  variable_expression  &copy(variable_expression &);
-  while_statement      &copy(while_statement &);
-  error_node           &copy(error_node &);
+  assignment_statement &copy(const assignment_statement &);
+  binary_expression    &copy(const binary_expression &);
+  constant_expression  &copy(const constant_expression &);
+  if_statement         &copy(const if_statement &);
+  print_statement      &copy(const print_statement &);
+  read_expression      &copy(const read_expression &);
+  statement_block      &copy(const statement_block &);
+  unary_expression     &copy(const unary_expression &);
+  variable_expression  &copy(const variable_expression &);
+  while_statement      &copy(const while_statement &);
+  error_node           &copy(const error_node &);
 
   EZVIS_VISIT_INVOKER(copy);
 };

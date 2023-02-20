@@ -28,7 +28,7 @@ using unique_tag_type = uint64_t;
 // This is a dummy type to get a unique type name
 template <typename t_base, typename t_visitable> struct dummy_tag {};
 template <typename t_base, typename t_visitable> constexpr unique_tag_type unique_tag() {
-  using dummy_type = dummy_tag<std::remove_cv<t_base>, std::remove_cv<t_visitable>>;
+  using dummy_type = dummy_tag<std::remove_cv_t<t_base>, std::remove_cv_t<t_visitable>>;
   return ctti::unnamed_type_id<dummy_type>().hash();
 }
 
@@ -52,6 +52,18 @@ namespace detail {
 template <typename T, typename... Ts>
 struct are_unique : std::conjunction<std::negation<std::is_same<T, Ts>>..., are_unique<Ts...>> {};
 template <typename T> struct are_unique<T> : std::true_type {};
+
+// clang-format off
+template <typename T, bool t_add> struct cond_add_const;
+template <typename T> struct cond_add_const<T, true> : std::add_const<T> {};
+template <typename T> struct cond_add_const<T, false> { using type = T; };
+template <typename T, bool t_add> using cond_add_const_t = typename cond_add_const<T, t_add>::type;
+// clang-format on
+
+template <typename t_tovisit, bool t_add> struct cond_add_const_tuple {};
+template <bool t_add, typename... Ts> struct cond_add_const_tuple<std::tuple<Ts...>, t_add> {
+  using type = std::tuple<cond_add_const_t<Ts, t_add>...>;
+};
 
 template <typename t_base, typename t_visitor, typename t_return_type> struct vtable_traits {
   using base_type = t_base;                                           // Base type in the hierarchy
@@ -130,13 +142,17 @@ private:
 
 public:
   template <typename t_visitor, typename t_visitable, typename t_invoker> t_return_type thunk_ezvis__(t_base &base) {
-    constexpr bool has_invoke = requires(t_visitor & visitor, t_visitable & visitable) {
+    using const_valid_visitable = detail::cond_add_const_t<t_visitable, std::is_const_v<base_type>>;
+
+    constexpr bool has_invoke = requires(t_visitor & visitor, const_valid_visitable & visitable) {
                                   {
                                     t_invoker::template invoke<t_return_type>(visitor, visitable)
                                     } -> std::convertible_to<t_return_type>;
                                 };
+
     static_assert(has_invoke, "Invoker type does not have an appropriate invoke method");
-    return t_invoker::template invoke<t_return_type>(static_cast<t_visitor &>(*this), static_cast<t_visitable &>(base));
+    return t_invoker::template invoke<t_return_type>(static_cast<t_visitor &>(*this),
+                                                     static_cast<const_valid_visitable &>(base));
   }
 
 public:
