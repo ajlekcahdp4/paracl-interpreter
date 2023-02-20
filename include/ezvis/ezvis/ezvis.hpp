@@ -14,10 +14,10 @@
 
 #include <concepts>
 #include <cstdint>
-#include <map>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
+#include <unordered_map>
 
 namespace ezvis {
 
@@ -67,7 +67,7 @@ template <typename t_traits> struct vtable {
   using function_type = typename t_traits::function_type;
 
 private:
-  std::map<detail::unique_tag_type, function_type> m_table;
+  std::unordered_map<detail::unique_tag_type, function_type> m_table;
 
 public:
   template <typename t_visitable> void add(function_type func) {
