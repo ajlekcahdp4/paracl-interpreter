@@ -21,7 +21,7 @@ protected:
 
 public:
   EZVIS_VISITABLE();
-  location loc() { return m_loc; }
+  location loc() const { return m_loc; }
 
   i_ast_node() = default;
   i_ast_node(location l) : m_loc{l} {}

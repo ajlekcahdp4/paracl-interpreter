@@ -18,28 +18,32 @@ namespace paracl::frontend::ast {
 
 template <typename T> T &trivial_ast_node_copy(const T &ref, ast_container &cont) { return cont.make_node<T>(ref); }
 
-read_expression     &ast_copier::copy(read_expression &ref) { return trivial_ast_node_copy(ref, m_container); }
-variable_expression &ast_copier::copy(variable_expression &ref) { return trivial_ast_node_copy(ref, m_container); }
-error_node          &ast_copier::copy(error_node &ref) { return trivial_ast_node_copy(ref, m_container); }
-constant_expression &ast_copier::copy(constant_expression &ref) { return trivial_ast_node_copy(ref, m_container); }
+read_expression     &ast_copier::copy(const read_expression &ref) { return trivial_ast_node_copy(ref, m_container); }
+variable_expression &ast_copier::copy(const variable_expression &ref) {
+  return trivial_ast_node_copy(ref, m_container);
+}
+error_node          &ast_copier::copy(const error_node &ref) { return trivial_ast_node_copy(ref, m_container); }
+constant_expression &ast_copier::copy(const constant_expression &ref) {
+  return trivial_ast_node_copy(ref, m_container);
+}
 
-binary_expression &ast_copier::copy(binary_expression &ref) {
+binary_expression &ast_copier::copy(const binary_expression &ref) {
   return m_container.make_node<binary_expression>(ref.op_type(), apply(ref.left()), apply(ref.right()), ref.loc());
 }
 
-print_statement &ast_copier::copy(print_statement &ref) {
+print_statement &ast_copier::copy(const print_statement &ref) {
   return m_container.make_node<print_statement>(apply(ref.expr()), ref.loc());
 }
 
-unary_expression &ast_copier::copy(unary_expression &ref) {
+unary_expression &ast_copier::copy(const unary_expression &ref) {
   return m_container.make_node<unary_expression>(ref.op_type(), apply(ref.expr()), ref.loc());
 }
 
-while_statement &ast_copier::copy(while_statement &ref) {
+while_statement &ast_copier::copy(const while_statement &ref) {
   return m_container.make_node<while_statement>(apply(ref.cond()), apply(ref.block()), ref.loc());
 }
 
-assignment_statement &ast_copier::copy(assignment_statement &ref) {
+assignment_statement &ast_copier::copy(const assignment_statement &ref) {
   auto &copy = m_container.make_node<assignment_statement>(*ref.rbegin(), ref.right(), ref.loc());
 
   for (auto start = std::next(ref.rbegin()), finish = ref.rend(); start != finish; ++start) {
@@ -49,7 +53,7 @@ assignment_statement &ast_copier::copy(assignment_statement &ref) {
   return copy;
 }
 
-if_statement &ast_copier::copy(if_statement &ref) {
+if_statement &ast_copier::copy(const if_statement &ref) {
   if (ref.else_block()) {
     return m_container.make_node<if_statement>(apply(ref.cond()), apply(ref.true_block()), apply(*ref.else_block()),
                                                ref.loc());
@@ -58,7 +62,7 @@ if_statement &ast_copier::copy(if_statement &ref) {
   return m_container.make_node<if_statement>(apply(ref.cond()), apply(ref.true_block()), ref.loc());
 }
 
-statement_block &ast_copier::copy(statement_block &ref) {
+statement_block &ast_copier::copy(const statement_block &ref) {
   auto &copy = m_container.make_node<statement_block>();
 
   for (const auto &v : ref) {
