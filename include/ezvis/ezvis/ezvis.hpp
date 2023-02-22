@@ -12,12 +12,15 @@
 
 #include <ctti/type_id.hpp>
 
+#include <algorithm>
+#include <cassert>
 #include <concepts>
 #include <cstdint>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 
 namespace ezvis {
 
@@ -53,6 +56,10 @@ template <typename T, typename... Ts>
 struct are_unique : std::conjunction<std::negation<std::is_same<T, Ts>>..., are_unique<Ts...>> {};
 template <typename T> struct are_unique<T> : std::true_type {};
 
+template <typename t_tuple> struct are_tuple_elements_unique {};
+template <typename... t_elems>
+struct are_tuple_elements_unique<std::tuple<t_elems...>> : public are_unique<t_elems...> {};
+
 // clang-format off
 template <typename T, bool t_add> struct cond_add_const;
 template <typename T> struct cond_add_const<T, true> : std::add_const<T> {};
@@ -65,6 +72,44 @@ template <bool t_add, typename... Ts> struct cond_add_const_tuple<std::tuple<Ts.
   using type = std::tuple<cond_add_const_t<Ts, t_add>...>;
 };
 
+template <typename t_key, typename t_value, std::size_t t_size> class ct_map {
+public:
+  using value_type = std::pair<t_key, t_value>;
+  static constexpr auto c_size = t_size;
+
+private:
+  std::array<value_type, t_size> m_map;
+
+public:
+  template <typename... t_types> constexpr ct_map(t_types... vals) { m_map = {vals...}; }
+
+  constexpr auto find(t_key key) const {
+    return std::find_if(m_map.begin(), m_map.end(), [key](auto elem) { return elem.first == key; });
+  }
+
+  constexpr std::size_t size() const { return c_size; }
+  constexpr auto        begin() const { return m_map.begin(); }
+  constexpr auto        end() const { return m_map.end(); }
+};
+
+} // namespace detail
+
+struct compile_time_vtable;
+struct runtime_vtable;
+
+namespace detail {
+
+template <typename t_base, typename t_to_visit> struct are_hash_values_unique {};
+template <typename t_base, typename... t_types>
+struct are_hash_values_unique<t_base, std::tuple<t_types...>>
+    : public are_unique<std::integral_constant<detail::unique_tag_type, detail::unique_tag<t_base, t_types>()>...> {};
+
+template <typename t_base, typename t_to_visit>
+constexpr auto are_hash_values_unique_v = are_hash_values_unique<t_base, t_to_visit>::value;
+
+template <typename t_base, typename t_to_visit>
+concept unique_hash_values = are_hash_values_unique_v<t_base, t_to_visit>;
+
 template <typename t_base, typename t_visitor, typename t_return_type> struct vtable_traits {
   using base_type = t_base;                                           // Base type in the hierarchy
   using visitor_type = t_visitor;                                     // Visitor base class
@@ -72,19 +117,42 @@ template <typename t_base, typename t_visitor, typename t_return_type> struct vt
   using function_type = t_return_type (visitor_type::*)(base_type &); // Pointer to member function type
 };
 
-template <typename t_traits> struct vtable {
+template <typename t_traits, std::size_t t_size, typename t_storage_flag> struct vtable_storage {};
+
+template <typename t_traits, std::size_t t_size> struct vtable_storage<t_traits, t_size, compile_time_vtable> {
+  using type = detail::ct_map<detail::unique_tag_type, typename t_traits::function_type, t_size>;
+};
+
+template <typename t_traits, std::size_t t_size> struct vtable_storage<t_traits, t_size, runtime_vtable> {
+  using type = std::unordered_map<detail::unique_tag_type, typename t_traits::function_type>;
+};
+
+template <typename t_traits, std::size_t t_size, typename t_storage_flag>
+using vtable_storage_t = typename vtable_storage<t_traits, t_size, t_storage_flag>::type;
+
+template <typename t_traits, typename t_storage_flag, typename t_to_visit> struct vtable {};
+
+template <typename t_traits, typename t_storage_flag, typename... t_types>
+requires unique_hash_values<typename t_traits::base_type, std::tuple<t_types...>>
+// It is very unlikely that there will be collisions with a 64-bit hash, but we should verify it nontheless.
+struct vtable<t_traits, t_storage_flag, std::tuple<t_types...>> {
   using base_type = typename t_traits::base_type;
   using visitor_type = typename t_traits::visitor_type;
   using return_type = typename t_traits::return_type;
   using function_type = typename t_traits::function_type;
 
 private:
-  std::unordered_map<detail::unique_tag_type, function_type> m_table;
+  using storage_type = vtable_storage_t<t_traits, sizeof...(t_types), t_storage_flag>;
+  vtable_storage_t<t_traits, sizeof...(t_types), t_storage_flag> m_table;
+
+  template <typename t_visitable> constexpr auto make_id_func_pair() {
+    return std::pair{
+        detail::unique_tag<base_type, t_visitable>(),
+        &visitor_type::template thunk_ezvis__<visitor_type, t_visitable, typename visitor_type::invoker_ezvis__>};
+  }
 
 public:
-  template <typename t_visitable> void add(function_type func) {
-    m_table[detail::unique_tag<base_type, t_visitable>()] = func;
-  }
+  constexpr vtable() : m_table{make_id_func_pair<t_types>()...} {}
 
   function_type get(detail::unique_tag_type tag) const {
     auto found_handler = m_table.find(tag);
@@ -94,41 +162,6 @@ public:
     throw std::runtime_error{"Unimplemented fallback visit"};
   }
 };
-
-template <typename t_traits, typename t_to_visit> class vtable_builder {
-public:
-  using vtable_type = vtable<t_traits>;
-  using visitor_type = typename t_traits::visitor_type;
-  using base_type = typename t_traits::base_type;
-  using to_visit = t_to_visit;
-
-private:
-  vtable_type m_vtable;
-
-  template <typename T> struct init_helper {};
-  template <typename... t_types> struct init_helper<std::tuple<t_types...>> {
-    // It is very unlikely that there will be collisions with a 64-bit hash, but we should verify it nontheless.
-    static_assert(
-        are_unique<std::integral_constant<detail::unique_tag_type, detail::unique_tag<base_type, t_types>()>...>::value,
-        "There are unique tag collisions. You either passes duplicates to to_visit, or there are actually hash "
-        "collisions. Then consider renaming some classes");
-
-    static void put(vtable_type &table) {
-      (table.template add<t_types>(
-           &visitor_type::template thunk_ezvis__<visitor_type, t_types, typename visitor_type::invoker_ezvis__>),
-       ...);
-    }
-  };
-
-public:
-  vtable_builder() { init_helper<to_visit>::put(m_vtable); }
-  const auto *get() { return &m_vtable; }
-};
-
-template <typename t_traits, typename t_to_visit> const auto *get_vtable() {
-  static vtable_builder<t_traits, t_to_visit> builder;
-  return builder.get();
-}
 
 } // namespace detail
 
@@ -174,10 +207,17 @@ public:
   };
   // clang-format on
 
-#define EZVIS_VISIT(tovisit)                                                                                           \
+#define EZVIS_VISIT_CT(tovisit)                                                                                        \
   template <typename t_traits> const auto *get_vtable_ezviz__() const {                                                \
-    return ezvis::detail::get_vtable<t_traits, tovisit>();                                                             \
+    static constexpr ezvis::detail::vtable<t_traits, ezvis::compile_time_vtable, tovisit> table;                       \
+    return &table;                                                                                                     \
   }
-};
 
+#define EZVIS_VISIT_RT(tovisit)                                                                                        \
+  template <typename t_traits> const auto *get_vtable_ezviz__() const {                                                \
+    static ezvis::detail::vtable<t_traits, ezvis::runtime_vtable, tovisit> table;                                      \
+    return &table;                                                                                                     \
+  }
 }; // namespace ezvis
+
+} // namespace ezvis

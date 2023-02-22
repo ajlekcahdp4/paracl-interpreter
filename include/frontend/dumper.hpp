@@ -39,7 +39,7 @@ private:
 public:
   explicit ast_dumper(std::ostream &os) : m_os{os} {}
 
-  EZVIS_VISIT(to_visit);
+  EZVIS_VISIT_CT(to_visit);
 
   void dump(const assignment_statement &);
   void dump(const binary_expression &);

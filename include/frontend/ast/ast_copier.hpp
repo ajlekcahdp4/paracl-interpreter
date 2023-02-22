@@ -27,7 +27,7 @@ class ast_copier : public ezvis::visitor_base<const i_ast_node, ast_copier, i_as
 public:
   ast_copier(ast_container &container) : m_container{container} {}
 
-  EZVIS_VISIT(to_visit);
+  EZVIS_VISIT_CT(to_visit);
 
   assignment_statement &copy(const assignment_statement &);
   binary_expression    &copy(const binary_expression &);
