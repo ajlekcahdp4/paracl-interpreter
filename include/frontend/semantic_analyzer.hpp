@@ -40,7 +40,7 @@ private:
   }
 
 public:
-  EZVIS_VISIT(to_visit);
+  EZVIS_VISIT_CT(to_visit);
 
   // clang-format off
   void analyze_node(ast::read_expression &) { /* Do nothing */ }

@@ -83,7 +83,7 @@ class codegen_visitor final : public ezvis::visitor_base<frontend::ast::i_ast_no
 public:
   codegen_visitor() = default;
 
-  EZVIS_VISIT(to_visit);
+  EZVIS_VISIT_CT(to_visit);
 
   void generate(frontend::ast::assignment_statement &);
   void generate(frontend::ast::binary_expression &);
