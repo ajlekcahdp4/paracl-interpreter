@@ -13,6 +13,7 @@
 #include <ctti/type_id.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <concepts>
 #include <cstdint>
