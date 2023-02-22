@@ -41,7 +41,7 @@ template <typename t_base> struct visitable_base {
   using base_type = t_base;
 
   template <typename t_visitable>
-  static detail::unique_tag_type
+  static constexpr detail::unique_tag_type
   unique_tag_helper_ezviz__(const t_visitable * /* Dummy parameter for template deduction */) {
     return detail::unique_tag<base_type, t_visitable>();
   }
@@ -81,7 +81,7 @@ private:
   std::array<value_type, t_size> m_map;
 
 public:
-  template <typename... t_types> constexpr ct_map(t_types... vals) { m_map = {vals...}; }
+  template <typename... t_types> constexpr ct_map(t_types &&...vals) { m_map = {std::forward<t_types>(vals)...}; }
 
   constexpr auto find(t_key key) const {
     return std::find_if(m_map.begin(), m_map.end(), [key](auto elem) { return elem.first == key; });
@@ -143,18 +143,21 @@ struct vtable<t_traits, t_storage_flag, std::tuple<t_types...>> {
 
 private:
   using storage_type = vtable_storage_t<t_traits, sizeof...(t_types), t_storage_flag>;
-  vtable_storage_t<t_traits, sizeof...(t_types), t_storage_flag> m_table;
+  storage_type m_table;
 
-  template <typename t_visitable> constexpr auto make_id_func_pair() {
-    return std::pair{
-        detail::unique_tag<base_type, t_visitable>(),
-        &visitor_type::template thunk_ezvis__<visitor_type, t_visitable, typename visitor_type::invoker_ezvis__>};
+  template <typename t_visitable>
+  static constexpr std::pair<detail::unique_tag_type, function_type> make_id_func_pair() {
+    constexpr auto tag = detail::unique_tag<base_type, t_visitable>();
+    // Static cast to avoid UB. See https://en.cppreference.com/w/cpp/language/pointer
+    constexpr auto ptr = static_cast<function_type>(
+        &visitor_type::template thunk_ezvis__<visitor_type, t_visitable, typename visitor_type::invoker_ezvis__>);
+    return {tag, ptr};
   }
 
 public:
-  constexpr vtable() : m_table{make_id_func_pair<t_types>()...} {}
+  constexpr vtable() { m_table = {make_id_func_pair<t_types>()...}; }
 
-  function_type get(detail::unique_tag_type tag) const {
+  constexpr function_type get(detail::unique_tag_type tag) const {
     auto found_handler = m_table.find(tag);
     if (found_handler != m_table.end()) return found_handler->second;
     auto found_base = m_table.find(detail::unique_tag<base_type, base_type>());
@@ -204,7 +207,7 @@ public:
     static t_return_type invoke(t_visitor &visitor, t_visitable &visitable) {                                          \
       return visitor. name (visitable);                                                                                \
     }                                                                                                                  \
-  };
+  }
   // clang-format on
 
 #define EZVIS_VISIT_CT(tovisit)                                                                                        \
@@ -218,6 +221,6 @@ public:
     static ezvis::detail::vtable<t_traits, ezvis::runtime_vtable, tovisit> table;                                      \
     return &table;                                                                                                     \
   }
-}; // namespace ezvis
+};
 
 } // namespace ezvis
