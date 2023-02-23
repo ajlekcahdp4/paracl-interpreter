@@ -1,9 +1,9 @@
 /*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
- * <tsimmerman.ss@phystech.edu>, <alex.rom23@mail.ru> wrote this file.  As long as you
- * retain this notice you can do whatever you want with this stuff. If we meet
- * some day, and you think this stuff is worth it, you can buy me a beer in
+ * <tsimmerman.ss@phystech.edu>, <alex.rom23@mail.ru> wrote this file.  As long
+ * as you retain this notice you can do whatever you want with this stuff. If we
+ * meet some day, and you think this stuff is worth it, you can buy me a beer in
  * return.
  * ----------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@ namespace paracl::frontend::ast {
 
 class while_statement final : public i_ast_node {
 private:
-  symtab      m_symtab;
+  symtab m_symtab;
   i_ast_node *m_condition;
   i_ast_node *m_block;
 

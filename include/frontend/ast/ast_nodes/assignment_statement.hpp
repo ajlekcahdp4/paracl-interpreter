@@ -20,7 +20,7 @@ namespace paracl::frontend::ast {
 class assignment_statement final : public i_ast_node {
 private:
   std::vector<variable_expression> m_lefts;
-  i_ast_node                      *m_right;
+  i_ast_node *m_right;
 
 public:
   EZVIS_VISITABLE();

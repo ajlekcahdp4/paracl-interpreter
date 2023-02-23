@@ -66,7 +66,6 @@ void codegen_visitor::generate(ast::assignment_statement &ref) {
 }
 
 void codegen_visitor::generate(ast::binary_expression &ref) {
-
   reset_currently_statement();
   apply(ref.left());
 
@@ -119,13 +118,12 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
 }
 
 void codegen_visitor::generate(ast::statement_block &ref) {
-
   m_symtab_stack.begin_scope();
 
   for (const auto &v : *ref.symbol_table()) {
     m_symtab_stack.push_variable(v);
-    m_builder.emit_operation(
-        vm_builder::encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
+    m_builder.emit_operation(vm_builder::encoded_instruction{
+        vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
 
   for (auto &statement : ref) {
@@ -150,14 +148,13 @@ void codegen_visitor::visit_if_no_else(ast::if_statement &ref) {
   set_currently_statement();
   apply(ref.true_block());
 
-  auto  jump_to_index = m_builder.current_loc();
+  auto jump_to_index = m_builder.current_loc();
   auto &to_relocate = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_false_block);
 
   std::get<0>(to_relocate.m_attr) = jump_to_index;
 }
 
 void codegen_visitor::visit_if_with_else(ast::if_statement &ref) {
-
   reset_currently_statement();
   apply(ref.cond());
 
@@ -184,8 +181,8 @@ void codegen_visitor::generate(ast::if_statement &ref) {
 
   for (const auto &v : *ref.control_block_symtab()) {
     m_symtab_stack.push_variable(v);
-    m_builder.emit_operation(
-        vm_builder::encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
+    m_builder.emit_operation(vm_builder::encoded_instruction{
+        vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
 
   if (!ref.else_block()) {
@@ -206,8 +203,8 @@ void codegen_visitor::generate(ast::while_statement &ref) {
 
   for (const auto &v : *ref.symbol_table()) {
     m_symtab_stack.push_variable(v);
-    m_builder.emit_operation(
-        vm_builder::encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
+    m_builder.emit_operation(vm_builder::encoded_instruction{
+        vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
 
   auto while_location_start = m_builder.current_loc();
@@ -236,8 +233,8 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
   reset_currently_statement();
   switch (ref.op_type()) {
   case unary_op::E_UN_OP_NEG: {
-    m_builder.emit_operation(
-        vm_builder::encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
+    m_builder.emit_operation(vm_builder::encoded_instruction{
+        vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
     apply(ref.expr());
     m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::sub_desc});
     break;
@@ -256,12 +253,20 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
   }
 }
 
-void codegen_visitor::set_currently_statement() { m_is_currently_statement = true; }
-void codegen_visitor::reset_currently_statement() { m_is_currently_statement = false; }
-bool codegen_visitor::is_currently_statement() const { return m_is_currently_statement; }
+void codegen_visitor::set_currently_statement() {
+  m_is_currently_statement = true;
+}
+
+void codegen_visitor::reset_currently_statement() {
+  m_is_currently_statement = false;
+}
+
+bool codegen_visitor::is_currently_statement() const {
+  return m_is_currently_statement;
+}
 
 uint32_t codegen_visitor::lookup_or_insert_constant(int constant) {
-  auto     found = m_constant_map.find(constant);
+  auto found = m_constant_map.find(constant);
   uint32_t index;
 
   if (found == m_constant_map.end()) {

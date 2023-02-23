@@ -43,7 +43,7 @@ template <typename t_desc> struct encoded_instruction {
   }
 
 public:
-  auto    get_size() const { return t_desc::get_size(); }
+  auto get_size() const { return t_desc::get_size(); }
   uint8_t get_opcode() const { return t_desc::get_opcode(); }
 
   void encode(auto iter) const {
@@ -69,7 +69,7 @@ public:
 
 private:
   std::vector<instruction_variant_type> m_code;
-  uint32_t                              m_cur_loc = 0;
+  uint32_t m_cur_loc = 0;
 
 public:
   bytecode_builder() = default;

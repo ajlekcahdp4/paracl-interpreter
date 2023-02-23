@@ -32,14 +32,15 @@ constexpr std::string_view unary_operation_to_string(unary_operation op) {
   case unary_op::E_UN_OP_NOT: return "!";
   }
 
-  assert(0); // We really shouldn't get here. If we do, then someone has broken the enum class intentionally.
+  assert(0); // We really shouldn't get here. If we do, then someone has broken
+             // the enum class intentionally.
   throw std::invalid_argument{"Broken enum"};
 }
 
 class unary_expression final : public i_ast_node {
 private:
   unary_operation m_operation_type;
-  i_ast_node     *m_expr;
+  i_ast_node *m_expr;
 
 public:
   EZVIS_VISITABLE();
@@ -48,7 +49,7 @@ public:
       : i_ast_node{l}, m_operation_type{op_type}, m_expr{&p_expr} {}
 
   unary_operation op_type() const { return m_operation_type; }
-  i_ast_node     &expr() const { return *m_expr; }
+  i_ast_node &expr() const { return *m_expr; }
 };
 
 } // namespace paracl::frontend::ast

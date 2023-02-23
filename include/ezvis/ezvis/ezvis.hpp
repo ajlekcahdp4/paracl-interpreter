@@ -89,8 +89,8 @@ public:
   }
 
   constexpr std::size_t size() const { return c_size; }
-  constexpr auto        begin() const { return m_map.begin(); }
-  constexpr auto        end() const { return m_map.end(); }
+  constexpr auto begin() const { return m_map.begin(); }
+  constexpr auto end() const { return m_map.end(); }
 };
 
 } // namespace detail
@@ -134,7 +134,7 @@ using vtable_storage_t = typename vtable_storage<t_traits, t_size, t_storage_fla
 template <typename t_traits, typename t_storage_flag, typename t_to_visit> struct vtable {};
 
 template <typename t_traits, typename t_storage_flag, typename... t_types>
-requires unique_hash_values<typename t_traits::base_type, std::tuple<t_types...>>
+  requires unique_hash_values<typename t_traits::base_type, std::tuple<t_types...>>
 // It is very unlikely that there will be collisions with a 64-bit hash, but we should verify it nontheless.
 struct vtable<t_traits, t_storage_flag, std::tuple<t_types...>> {
   using base_type = typename t_traits::base_type;
@@ -150,8 +150,8 @@ private:
   static constexpr std::pair<detail::unique_tag_type, function_type> make_id_func_pair() {
     constexpr auto tag = detail::unique_tag<base_type, t_visitable>();
     // Static cast to avoid UB. See https://en.cppreference.com/w/cpp/language/pointer
-    constexpr auto ptr = static_cast<function_type>(
-        &visitor_type::template thunk_ezvis__<visitor_type, t_visitable, typename visitor_type::invoker_ezvis__>);
+    constexpr auto ptr = static_cast<function_type>(&visitor_type::template thunk_ezvis__<
+                                                    visitor_type, t_visitable, typename visitor_type::invoker_ezvis__>);
     return {tag, ptr};
   }
 
@@ -188,13 +188,14 @@ public:
                                 };
 
     static_assert(has_invoke, "Invoker type does not have an appropriate invoke method");
-    return t_invoker::template invoke<t_return_type>(static_cast<t_visitor &>(*this),
-                                                     static_cast<const_valid_visitable &>(base));
+    return t_invoker::template invoke<t_return_type>(
+        static_cast<t_visitor &>(*this), static_cast<const_valid_visitable &>(base)
+    );
   }
 
 public:
   return_type apply(base_type &base) {
-    const auto   *vtable = static_cast<t_concrete_visitor &>(*this).template get_vtable_ezviz__<vtable_traits_type>();
+    const auto *vtable = static_cast<t_concrete_visitor &>(*this).template get_vtable_ezviz__<vtable_traits_type>();
     function_type thunk = vtable->get(base.unique_tag_ezvis__());
     return (static_cast<t_concrete_visitor &>(*this).*thunk)(base);
   }

@@ -1,9 +1,9 @@
 /*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
- * <tsimmerman.ss@phystech.edu>, <alex.rom23@mail.ru> wrote this file.  As long as you
- * retain this notice you can do whatever you want with this stuff. If we meet
- * some day, and you think this stuff is worth it, you can buy me a beer in
+ * <tsimmerman.ss@phystech.edu>, <alex.rom23@mail.ru> wrote this file.  As long
+ * as you retain this notice you can do whatever you want with this stuff. If we
+ * meet some day, and you think this stuff is worth it, you can buy me a beer in
  * return.
  * ----------------------------------------------------------------------------
  */
@@ -30,16 +30,16 @@ public:
   EZVIS_VISIT_CT(to_visit);
 
   assignment_statement &copy(const assignment_statement &);
-  binary_expression    &copy(const binary_expression &);
-  constant_expression  &copy(const constant_expression &);
-  if_statement         &copy(const if_statement &);
-  print_statement      &copy(const print_statement &);
-  read_expression      &copy(const read_expression &);
-  statement_block      &copy(const statement_block &);
-  unary_expression     &copy(const unary_expression &);
-  variable_expression  &copy(const variable_expression &);
-  while_statement      &copy(const while_statement &);
-  error_node           &copy(const error_node &);
+  binary_expression &copy(const binary_expression &);
+  constant_expression &copy(const constant_expression &);
+  if_statement &copy(const if_statement &);
+  print_statement &copy(const print_statement &);
+  read_expression &copy(const read_expression &);
+  statement_block &copy(const statement_block &);
+  unary_expression &copy(const unary_expression &);
+  variable_expression &copy(const variable_expression &);
+  while_statement &copy(const while_statement &);
+  error_node &copy(const error_node &);
 
   EZVIS_VISIT_INVOKER(copy);
 };

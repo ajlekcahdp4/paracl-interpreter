@@ -30,8 +30,8 @@ private:
     os << "\tnode_0x" << std::hex << utils::pointer_to_uintptr(&ref) << " [label = \"" << label << "\" ];\n";
   }
 
-  static void print_bind_node(std::ostream &os, const i_ast_node &parent, const i_ast_node &child,
-                              std::string_view label = "") {
+  static void
+  print_bind_node(std::ostream &os, const i_ast_node &parent, const i_ast_node &child, std::string_view label = "") {
     os << "\tnode_0x" << std::hex << utils::pointer_to_uintptr(&parent) << " -> node_0x"
        << utils::pointer_to_uintptr(&child) << " [label = \"" << label << "\" ];\n";
   }

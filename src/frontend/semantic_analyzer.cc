@@ -17,8 +17,13 @@
 
 namespace paracl::frontend {
 
-void semantic_analyzer::analyze_node(ast::unary_expression &ref) { apply(ref.expr()); }
-void semantic_analyzer::analyze_node(ast::error_node &ref) { report_error(ref.error_msg(), ref.loc()); }
+void semantic_analyzer::analyze_node(ast::unary_expression &ref) {
+  apply(ref.expr());
+}
+
+void semantic_analyzer::analyze_node(ast::error_node &ref) {
+  report_error(ref.error_msg(), ref.loc());
+}
 
 void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
   set_state(semantic_analysis_state::E_LVALUE);

@@ -10,7 +10,7 @@
 
 namespace paracl::bytecode_vm::decl_vm {
 
-constexpr unsigned                                magic_bytes_length = 6;
+constexpr unsigned magic_bytes_length = 6;
 constexpr std::array<uint8_t, magic_bytes_length> header = {0xB, 0x0, 0x0, 0xB, 0xE, 0xC};
 
 std::optional<chunk> read_chunk(std::istream &is) {

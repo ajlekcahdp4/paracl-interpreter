@@ -40,7 +40,7 @@ using binary_code_buffer_type = std::vector<uint8_t>;
 class chunk {
 private:
   binary_code_buffer_type m_binary_code;
-  constant_pool_type      m_constant_pool;
+  constant_pool_type m_constant_pool;
 
 public:
   using value_type = uint8_t;
@@ -74,7 +74,7 @@ public:
 };
 
 std::optional<chunk> read_chunk(std::istream &);
-void                 write_chunk(std::ostream &, const chunk &);
+void write_chunk(std::ostream &, const chunk &);
 
 template <typename, typename> struct instruction;
 
@@ -86,7 +86,7 @@ template <opcode_underlying_type ident, typename... Ts> struct instruction_desc 
   const std::string_view name;
   using attribute_types = std::tuple<Ts...>;
 
-  constexpr auto        get_name() const { return name; }
+  constexpr auto get_name() const { return name; }
   static constexpr auto get_opcode() { return opcode; }
   static constexpr auto get_size() { return binary_size; }
 
@@ -119,7 +119,7 @@ template <typename t_desc, typename t_action> struct instruction {
   using attribute_tuple_type = typename description_type::attribute_types;
 
   const t_desc description;
-  t_action     action = nullptr;
+  t_action action = nullptr;
 
   constexpr instruction(t_desc p_description, t_action p_action) : description{p_description}, action{p_action} {}
   constexpr auto get_name() const { return description.get_name(); }
@@ -132,7 +132,7 @@ template <typename t_desc, typename t_action> struct instruction {
   }
 
   struct decoded_instruction {
-    const instruction   *instr;
+    const instruction *instr;
     attribute_tuple_type attributes;
   };
 
@@ -162,11 +162,11 @@ template <typename t_desc> struct context {
   friend class virtual_machine<t_desc>;
 
 private:
-  std::vector<execution_value_type>       m_execution_stack;
+  std::vector<execution_value_type> m_execution_stack;
   binary_code_buffer_type::const_iterator m_ip, m_ip_end;
 
   chunk m_program_code;
-  bool  m_halted = false;
+  bool m_halted = false;
 
 public:
   context() = default;
@@ -176,7 +176,7 @@ public:
     m_ip_end = m_program_code.binary_end();
   }
 
-  auto  ip() const { return m_ip; }
+  auto ip() const { return m_ip; }
   auto &at_stack(uint32_t index) & { return m_execution_stack.at(index); }
 
   void set_ip(uint32_t new_ip) {
@@ -212,7 +212,7 @@ template <typename... t_instructions> struct instruction_set_description {
 };
 
 template <typename t_desc> class virtual_machine {
-  t_desc          instruction_set;
+  t_desc instruction_set;
   context<t_desc> m_execution_context;
 
 public:

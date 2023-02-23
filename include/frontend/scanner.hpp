@@ -28,7 +28,7 @@ class frontend_driver;
 class scanner final : public yyFlexLexer {
 private:
   frontend_driver &m_driver;
-  position         m_pos;
+  position m_pos;
 
   frontend_driver &driver() { return m_driver; }
 
@@ -36,7 +36,7 @@ public:
   scanner(frontend_driver &driver) : m_driver{driver} {}
 
   paracl::frontend::parser::symbol_type get_next_token();
-  position                             &pos() { return m_pos; }
+  position &pos() { return m_pos; }
 };
 
 } // namespace paracl::frontend
