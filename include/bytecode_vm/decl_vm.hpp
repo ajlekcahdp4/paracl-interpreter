@@ -162,8 +162,11 @@ template <typename t_desc> struct context {
   friend class virtual_machine<t_desc>;
 
 private:
-  std::vector<execution_value_type> m_execution_stack;
+  using execution_stack_type = std::vector<execution_value_type>;
+
+  execution_stack_type m_execution_stack;
   binary_code_buffer_type::const_iterator m_ip, m_ip_end;
+  execution_stack_type::const_iterator m_sp;
 
   chunk m_program_code;
   bool m_halted = false;
@@ -177,11 +180,18 @@ public:
   }
 
   auto ip() const { return m_ip; }
+  auto sp() const { return m_sp; }
+
   auto &at_stack(uint32_t index) & { return m_execution_stack.at(index); }
 
   void set_ip(uint32_t new_ip) {
     m_ip = m_program_code.binary_begin();
     std::advance(m_ip, new_ip);
+  }
+
+  void set_sp(uint32_t new_sp) {
+    m_sp = m_execution_stack.cbegin();
+    std::advance(m_sp, new_sp);
   }
 
   auto pop() {
