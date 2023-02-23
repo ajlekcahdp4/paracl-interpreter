@@ -156,7 +156,7 @@ template <typename t_desc, typename t_action> struct instruction {
 };
 
 template <typename t_desc> class virtual_machine;
-using execution_value_type = uint32_t;
+using execution_value_type = int32_t;
 
 template <typename t_desc> struct context {
   friend class virtual_machine<t_desc>;
@@ -179,7 +179,7 @@ public:
     m_ip_end = m_program_code.binary_end();
   }
 
-  uint32_t ip() const { return std::distance(m_program_code.begin(), m_ip); }
+  uint32_t ip() const { return std::distance(m_program_code.binary_begin(), m_ip); }
   uint32_t sp() const { return std::distance(m_execution_stack.begin(), m_sp); }
 
   auto &at_stack(uint32_t index) & { return m_execution_stack.at(index); }
