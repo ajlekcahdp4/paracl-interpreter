@@ -12,6 +12,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 
 #include <iostream>
 #include <stdexcept>
@@ -27,7 +28,15 @@ constexpr auto push_const_instr = push_const_desc >>
     [](auto &&ctx, auto &&attr) { ctx.push(ctx.constant(std::get<0>(attr))); };
 
 constexpr decl_vm::instruction_desc<E_RETURN_NULLARY> return_desc = "ret";
-constexpr auto return_instr = return_desc >> [](auto &&ctx, auto &&) { ctx.halt(); };
+constexpr auto return_instr = return_desc >> [](auto &&ctx, auto &&) {
+  if (ctx.stack_empty()) ctx.halt();
+  else {
+    auto sp = ctx.pop();
+    ctx.set_sp(sp);
+    auto ip = ctx.pop();
+    ctx.set_ip(ip);
+  }
+};
 
 constexpr decl_vm::instruction_desc<E_POP_NULLARY> pop_desc = "pop";
 constexpr auto pop_instr = pop_desc >> [](auto &&ctx, auto &&) { ctx.pop(); };
@@ -172,6 +181,16 @@ constexpr decl_vm::instruction_desc<E_JMP_FALSE_UNARY, uint32_t> jmp_false_desc 
 constexpr auto jmp_false_instr = jmp_false_desc >> [](auto &&ctx, auto &&attr) {
   auto first = ctx.pop();
   conditional_jump(ctx, attr, !first);
+};
+
+constexpr decl_vm::instruction_desc<E_SETUP_CALL_NULLARY, uint32_t> setup_call_desc = "call";
+constexpr auto setup_call_instr = setup_call_desc >> [](auto &&ctx, auto &&attr) {
+  auto cur_ip = ctx.ip();
+  ctx.push(std::numeric_limits<uint32_t>::max()); // reserve place at stack to later fill with correct instruction
+                                                  // pointer value
+  auto cur_sp = ctx.sp();
+  ctx.push(cur_sp);
+  ctx.sp(ctx.stack_size());
 };
 
 static const auto paracl_isa = decl_vm::instruction_set_description(
