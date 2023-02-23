@@ -179,8 +179,8 @@ public:
     m_ip_end = m_program_code.binary_end();
   }
 
-  auto ip() const { return m_ip; }
-  auto sp() const { return m_sp; }
+  uint32_t ip() const { return std::distance(m_program_code.begin(), m_ip); }
+  uint32_t sp() const { return std::distance(m_execution_stack.begin(), m_sp); }
 
   auto &at_stack(uint32_t index) & { return m_execution_stack.at(index); }
 
@@ -193,6 +193,10 @@ public:
     m_sp = m_execution_stack.cbegin();
     std::advance(m_sp, new_sp);
   }
+
+  unsigned stack_size() const { return m_execution_stack.size(); }
+
+  bool stack_empty() const { return m_execution_stack.empty(); }
 
   auto pop() {
     if (m_execution_stack.size() == 0) throw vm_error{"Bad stack pop"};
