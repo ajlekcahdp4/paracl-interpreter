@@ -29,47 +29,51 @@ cpp_style_comment ([/][/].*)
 
 %%
 
-"while"         { return parser::make_WHILE(location{pos(), pos() += yyleng}); }
-"if"            { return parser::make_IF(location{pos(), pos() += yyleng}); }
-"else"          { return parser::make_ELSE(location{pos(), pos() += yyleng}); }
-"print"         { return parser::make_PRINT(location{pos(), pos() += yyleng}); }
+"while"         { return parser::make_WHILE(update_loc()); }
+"if"            { return parser::make_IF(update_loc()); }
+"else"          { return parser::make_ELSE(update_loc()); }
+"print"         { return parser::make_PRINT(update_loc()); }
+"func"          { return parser::make_FUNC(update_loc()); }
+"return"        { return parser::make_RET(update_loc());}
 
-"("             { return parser::make_LPAREN(location{pos(), pos() += yyleng}); }
-")"             { return parser::make_RPAREN(location{pos(), pos() += yyleng}); }
-"{"             { return parser::make_LBRACE(location{pos(), pos() += yyleng}); }
-"}"             { return parser::make_RBRACE(location{pos(), pos() += yyleng}); }
-";"             { return parser::make_SEMICOL(location{pos(), pos() += yyleng}); }
+"("             { return parser::make_LPAREN(update_loc()); }
+")"             { return parser::make_RPAREN(update_loc()); }
+"{"             { return parser::make_LBRACE(update_loc()); }
+"}"             { return parser::make_RBRACE(update_loc()); }
+";"             { return parser::make_SEMICOL(update_loc()); }
+":"             { return parser::make_COL(update_loc()); }
 
-"=="            { return parser::make_COMP_EQ(location{pos(), pos() += yyleng}); }
-"!="            { return parser::make_COMP_NE(location{pos(), pos() += yyleng}); }
-">"             { return parser::make_COMP_GT(location{pos(), pos() += yyleng}); }
-"<"             { return parser::make_COMP_LS(location{pos(), pos() += yyleng}); }
-">="            { return parser::make_COMP_GE(location{pos(), pos() += yyleng}); }
-"<="            { return parser::make_COMP_LE(location{pos(), pos() += yyleng}); }
+"=="            { return parser::make_COMP_EQ(update_loc()); }
+"!="            { return parser::make_COMP_NE(update_loc()); }
+">"             { return parser::make_COMP_GT(update_loc()); }
+"<"             { return parser::make_COMP_LS(update_loc()); }
+">="            { return parser::make_COMP_GE(update_loc()); }
+"<="            { return parser::make_COMP_LE(update_loc()); }
 
-"&&"            { return parser::make_LOGICAL_AND(location{pos(), pos() += yyleng}); }
-"||"            { return parser::make_LOGICAL_OR(location{pos(), pos() += yyleng}); }
+"&&"            { return parser::make_LOGICAL_AND(update_loc()); }
+"||"            { return parser::make_LOGICAL_OR(update_loc()); }
 
-"!"             { return parser::make_BANG(location{pos(), pos() += yyleng}); }
-"?"             { return parser::make_QMARK(location{pos(), pos() += yyleng}); }
+"!"             { return parser::make_BANG(update_loc()); }
+"?"             { return parser::make_QMARK(update_loc()); }
 
-"+"             { return parser::make_PLUS(location{pos(), pos() += yyleng}); }
-"-"             { return parser::make_MINUS(location{pos(), pos() += yyleng}); }
-"*"             { return parser::make_MULTIPLY(location{pos(), pos() += yyleng}); }
-"/"             { return parser::make_DIVIDE(location{pos(), pos() += yyleng}); }
-"%"             { return parser::make_MODULUS(location{pos(), pos() += yyleng}); }
+"+"             { return parser::make_PLUS(update_loc()); }
+"-"             { return parser::make_MINUS(update_loc()); }
+"*"             { return parser::make_MULTIPLY(update_loc()); }
+"/"             { return parser::make_DIVIDE(update_loc()); }
+"%"             { return parser::make_MODULUS(update_loc()); }
 
-"="             { return parser::make_ASSIGN(location{pos(), pos() += yyleng}); }
+"="             { return parser::make_ASSIGN(update_loc()); }
 
-{identifier}    { return parser::make_IDENTIFIER(yytext, location{pos(), pos() += yyleng}); }
-{number}        { return parser::make_INTEGER_CONSTANT(std::atoi(yytext), location{pos(), pos() += yyleng}); }
+{identifier}    { return parser::make_IDENTIFIER(yytext, update_loc()); }
+{number}        { return parser::make_INTEGER_CONSTANT(std::atoi(yytext), update_loc()); }
 
-[\n|\r\n]+          { pos().lines(yyleng); }
-[ \t]+              { pos().columns(yyleng); }
+[\n|\r\n]+          { m_pos.lines(yyleng); }
+[ \t]+              { m_pos.columns(yyleng); }
+
 {cpp_style_comment} { }
 
-.               { location loc = {pos(), pos() += yyleng}; std::string msg = "Unknown character"; m_driver.report_error(msg, loc); throw parser::syntax_error{loc, msg}; }
+.               { auto loc = update_loc(); std::string msg = "Unknown character"; m_driver.report_error(msg, loc); throw parser::syntax_error{loc, msg}; }
 
-<<EOF>>         { return paracl::frontend::parser::make_EOF(location{pos(), pos() += yyleng}); }
+<<EOF>>         { return paracl::frontend::parser::make_EOF(update_loc()); }
 
 %%

@@ -19,6 +19,8 @@
 %define api.value.type variant
 %define api.namespace { paracl::frontend }
 %define parse.error verbose
+%glr-parser
+%expect-rr 2
 
 %code requires {
 #include <iostream>
@@ -96,12 +98,15 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %token LOGICAL_OR   "||"
 
 %token SEMICOL  ";"
+%token COL      ":"
 
 /* Keywords */
-%token WHILE  "while"
-%token IF     "if"
-%token ELSE   "else"
-%token PRINT  "print"
+%token WHILE    "while"
+%token IF       "if"
+%token ELSE     "else"
+%token PRINT    "print"
+%token FUNC     "func"
+%token RET      "return"
 
 /* Terminals */
 %token <int> INTEGER_CONSTANT "constant"
@@ -109,9 +114,9 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 
 /* Rules that model the AST */
 %type <ast::i_ast_node *> primary_expression multiplicative_expression unary_expression
-additive_expression comparison_expression equality_expression logical_expression expression
+additive_expression comparison_expression equality_expression logical_expression expression expression_statement
 
-%type <ast::i_ast_node *> print_statement assignment_statement statement_block statement if_statement while_statement
+%type <ast::i_ast_node *> print_statement statement_block statement if_statement while_statement
 %type <ast::statement_block> statements
 %type <ast::assignment_statement *> chainable_assignment
 
@@ -123,12 +128,14 @@ additive_expression comparison_expression equality_expression logical_expression
 %%
 
 program:  statements    { auto ptr = driver.make_ast_node<ast::statement_block>(std::move($1)); driver.m_ast.set_root_ptr(ptr); }
+          | %empty      { }
 
 primary_expression: INTEGER_CONSTANT            { $$ = driver.make_ast_node<ast::constant_expression>($1, @$); }
                     | IDENTIFIER                { $$ = driver.make_ast_node<ast::variable_expression>($1, @$); }
                     | QMARK                     { $$ = driver.make_ast_node<ast::read_expression>(@$); }
                     | LPAREN expression RPAREN  { $$ = $2; }
                     | LPAREN error RPAREN       { auto error = driver.take_error(); $$ = driver.make_ast_node<ast::error_node>(error.error_message, error.loc); yyerrok; }
+                    | statement_block           { $$ = $1; }
 
 unary_expression: PLUS unary_expression           { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_POS, *$2, @$); }
                   | MINUS unary_expression        { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_NEG, *$2, @$); }
@@ -150,7 +157,6 @@ comparison_expression:  comparison_expression COMP_GT additive_expression     { 
                         | comparison_expression COMP_LE additive_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_LE, *$1, *$3, @$); }
                         | additive_expression                                 { $$ = $1; }
 
-
 equality_expression:  equality_expression COMP_EQ comparison_expression   { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_EQ, *$1, *$3, @$); }
                       | equality_expression COMP_NE comparison_expression { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_NE, *$1, *$3, @$); }
                       | comparison_expression                             { $$ = $1; }
@@ -160,32 +166,34 @@ logical_expression: logical_expression LOGICAL_AND equality_expression    { $$ =
                     | equality_expression                                 { $$ = $1; }
 
 expression: logical_expression                  { $$ = $1; }
-            | chainable_assignment              { $$ = $1; }             
+            | chainable_assignment              { $$ = $1; }      
 
 chainable_assignment: IDENTIFIER ASSIGN chainable_assignment      { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
                       | IDENTIFIER ASSIGN logical_expression      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
-
-assignment_statement: chainable_assignment SEMICOL                { $$ = $1; }
 
 print_statement: PRINT expression SEMICOL { $$ = driver.make_ast_node<ast::print_statement>(*$2, @$); }
 
 statements: statements statement        { $$ = std::move($1); $$.append_statement(*$2); }
             | statements error SEMICOL  { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
             | statements error EOF      { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
-            | %empty                    { }
+            | statement                 { $$.append_statement(*$1); }
 
-statement_block: LBRACE statements RBRACE   { $$ = driver.make_ast_node<ast::statement_block>(std::move($2)); }
+statement_block:  LBRACE statements RBRACE    { $$ = driver.make_ast_node<ast::statement_block>(std::move($2)); }
+                  | LBRACE RBRACE             { $$ = driver.make_ast_node<ast::statement_block>(); }
+                  | LBRACE error RBRACE       { auto error = driver.take_error(); $$ = driver.make_ast_node<ast::error_node>(error.error_message, error.loc); yyerrok; }
 
 while_statement: WHILE LPAREN expression RPAREN statement { $$ = driver.make_ast_node<ast::while_statement>(*$3, *$5, @$); }
 
 if_statement: IF LPAREN expression RPAREN statement %prec THEN        { $$ = driver.make_ast_node<ast::if_statement>(*$3, *$5, @$); }
               | IF LPAREN expression RPAREN statement ELSE statement  { $$ = driver.make_ast_node<ast::if_statement>(*$3, *$5, *$7, @$); }
 
-statement:  assignment_statement  { $$ = $1; }
-            | print_statement     { $$ = $1; }
-            | statement_block     { $$ = $1; }
-            | while_statement     { $$ = $1; }
-            | if_statement        { $$ = $1; }
+expression_statement: expression SEMICOL  { $$ = $1; }
+
+statement:  print_statement         { $$ = $1; }
+            | statement_block       { $$ = $1; }
+            | while_statement       { $$ = $1; }
+            | if_statement          { $$ = $1; }
+            | expression_statement  { $$ = $1; }
 
 %%
 

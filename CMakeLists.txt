@@ -123,7 +123,13 @@ if(BASH_PROGRAM)
     NAME test.paracl.external
     COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh
             "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/test/external)
+
   add_test(NAME test.paracl.basic
            COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh
                    "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/test/basic)
+
+  add_test(
+    NAME test.paracl.functions
+    COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh
+            "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/test/functions)
 endif()

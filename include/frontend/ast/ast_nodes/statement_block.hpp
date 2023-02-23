@@ -18,7 +18,7 @@
 
 namespace paracl::frontend::ast {
 
-class statement_block final : public i_ast_node {
+class statement_block : public i_ast_node {
 private:
   symtab m_symtab;
   std::vector<i_ast_node *> m_statements;
@@ -45,6 +45,13 @@ public:
   auto end() const { return m_statements.end(); }
 
   symtab *symbol_table() { return &m_symtab; }
+};
+
+class statement_block_expression : public statement_block {
+public:
+  EZVIS_VISITABLE();
+  statement_block_expression() = default;
+  statement_block_expression(const statement_block &block) : statement_block{block} {}
 };
 
 } // namespace paracl::frontend::ast

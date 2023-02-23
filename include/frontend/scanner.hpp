@@ -36,7 +36,7 @@ public:
   scanner(frontend_driver &driver) : m_driver{driver} {}
 
   paracl::frontend::parser::symbol_type get_next_token();
-  position &pos() { return m_pos; }
+  location update_loc() { return location(m_pos, m_pos += yyleng); }
 };
 
 } // namespace paracl::frontend
