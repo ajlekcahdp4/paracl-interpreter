@@ -156,7 +156,7 @@ template <typename t_desc, typename t_action> struct instruction {
 };
 
 template <typename t_desc> class virtual_machine;
-using execution_value_type = int;
+using execution_value_type = uint32_t;
 
 template <typename t_desc> struct context {
   friend class virtual_machine<t_desc>;
