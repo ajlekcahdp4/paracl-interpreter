@@ -18,8 +18,13 @@
 
 namespace paracl::frontend::ast {
 
-void ast_dumper::dump(const error_node &ref) { print_declare_node(m_os, ref, "<error>"); }
-void ast_dumper::dump(const read_expression &ref) { print_declare_node(m_os, ref, "<read> ?"); }
+void ast_dumper::dump(const error_node &ref) {
+  print_declare_node(m_os, ref, "<error>");
+}
+
+void ast_dumper::dump(const read_expression &ref) {
+  print_declare_node(m_os, ref, "<read> ?");
+}
 
 void ast_dumper::dump(const variable_expression &ref) {
   std::stringstream ss;

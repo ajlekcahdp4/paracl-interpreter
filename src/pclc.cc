@@ -20,7 +20,7 @@
 
 int main(int argc, char *argv[]) {
   std::string input_file_name;
-  bool        dump_binary = false;
+  bool dump_binary = false;
 
   popl::OptionParser op("Allowed options");
 
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
   }
 
   if (output_file_option->is_set()) {
-    std::string   output_file_name = output_file_option->value();
+    std::string output_file_name = output_file_option->value();
     std::ofstream output_file;
 
     output_file.exceptions(exception_mask);

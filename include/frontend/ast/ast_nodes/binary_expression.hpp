@@ -57,7 +57,7 @@ constexpr std::string_view binary_operation_to_string(binary_operation op) {
 
 class binary_expression final : public i_ast_node {
   binary_operation m_operation_type;
-  i_ast_node      *m_left, *m_right;
+  i_ast_node *m_left, *m_right;
 
 public:
   EZVIS_VISITABLE();

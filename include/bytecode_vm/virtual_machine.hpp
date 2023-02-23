@@ -23,120 +23,120 @@
 namespace paracl::bytecode_vm::instruction_set {
 
 constexpr decl_vm::instruction_desc<E_PUSH_CONST_UNARY, uint32_t> push_const_desc = "push_const";
-constexpr auto                                                    push_const_instr = push_const_desc >>
-                                  [](auto &&ctx, auto &&attr) { ctx.push(ctx.constant(std::get<0>(attr))); };
+constexpr auto push_const_instr = push_const_desc >>
+    [](auto &&ctx, auto &&attr) { ctx.push(ctx.constant(std::get<0>(attr))); };
 
 constexpr decl_vm::instruction_desc<E_RETURN_NULLARY> return_desc = "ret";
 constexpr auto return_instr = return_desc >> [](auto &&ctx, auto &&) { ctx.halt(); };
 
 constexpr decl_vm::instruction_desc<E_POP_NULLARY> pop_desc = "pop";
-constexpr auto                                     pop_instr = pop_desc >> [](auto &&ctx, auto &&) { ctx.pop(); };
+constexpr auto pop_instr = pop_desc >> [](auto &&ctx, auto &&) { ctx.pop(); };
 
 constexpr decl_vm::instruction_desc<E_ADD_NULLARY> add_desc = "add";
-constexpr auto                                     add_instr = add_desc >> [](auto &&ctx, auto &&) {
+constexpr auto add_instr = add_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
   auto first = ctx.pop();
   ctx.push(first + second);
 };
 
 constexpr decl_vm::instruction_desc<E_SUB_NULLARY> sub_desc = "sub";
-constexpr auto                                     sub_instr = sub_desc >> [](auto &&ctx, auto &&) {
+constexpr auto sub_instr = sub_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
   auto first = ctx.pop();
   ctx.push(first - second);
 };
 
 constexpr decl_vm::instruction_desc<E_MUL_NULLARY> mul_desc = "mul";
-constexpr auto                                     mul_instr = mul_desc >> [](auto &&ctx, auto &&) {
+constexpr auto mul_instr = mul_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
   auto first = ctx.pop();
   ctx.push(first * second);
 };
 
 constexpr decl_vm::instruction_desc<E_DIV_NULLARY> div_desc = "div";
-constexpr auto                                     div_instr = div_desc >> [](auto &&ctx, auto &&) {
+constexpr auto div_instr = div_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
   auto first = ctx.pop();
   ctx.push(first / second);
 };
 
 constexpr decl_vm::instruction_desc<E_MOD_NULLARY> mod_desc = "mod";
-constexpr auto                                     mod_instr = mod_desc >> [](auto &&ctx, auto &&) {
+constexpr auto mod_instr = mod_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
   auto first = ctx.pop();
   ctx.push(first % second);
 };
 
 constexpr decl_vm::instruction_desc<E_AND_NULLARY> and_desc = "and";
-constexpr auto                                     and_instr = and_desc >> [](auto &&ctx, auto &&) {
+constexpr auto and_instr = and_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
   auto first = ctx.pop();
   ctx.push(first && second);
 };
 
 constexpr decl_vm::instruction_desc<E_OR_NULLARY> or_desc = "or";
-constexpr auto                                    or_instr = or_desc >> [](auto &&ctx, auto &&) {
+constexpr auto or_instr = or_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
   auto first = ctx.pop();
   ctx.push(first || second);
 };
 
 constexpr decl_vm::instruction_desc<E_NOT_NULLARY> not_desc = "not";
-constexpr auto                                     not_instr = not_desc >> [](auto &&ctx, auto &&) {
+constexpr auto not_instr = not_desc >> [](auto &&ctx, auto &&) {
   auto first = ctx.pop();
   ctx.push(!first);
 };
 
 constexpr decl_vm::instruction_desc<E_CMP_EQ_NULLARY> cmp_eq_desc = "cmp_eq";
-constexpr auto                                        cmp_eq_instr = cmp_eq_desc >> [](auto &&ctx, auto &&) {
+constexpr auto cmp_eq_instr = cmp_eq_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
   auto first = ctx.pop();
   ctx.push(first == second);
 };
 
 constexpr decl_vm::instruction_desc<E_CMP_NE_NULLARY> cmp_ne_desc = "cmp_ne";
-constexpr auto                                        cmp_ne_instr = cmp_ne_desc >> [](auto &&ctx, auto &&) {
+constexpr auto cmp_ne_instr = cmp_ne_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
   auto first = ctx.pop();
   ctx.push(first != second);
 };
 
 constexpr decl_vm::instruction_desc<E_CMP_GT_NULLARY> cmp_gt_desc = "cmp_gt";
-constexpr auto                                        cmp_gt_instr = cmp_gt_desc >> [](auto &&ctx, auto &&) {
+constexpr auto cmp_gt_instr = cmp_gt_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
   auto first = ctx.pop();
   ctx.push(first > second);
 };
 
 constexpr decl_vm::instruction_desc<E_CMP_LS_NULLARY> cmp_ls_desc = "cmp_ls";
-constexpr auto                                        cmp_ls_instr = cmp_ls_desc >> [](auto &&ctx, auto &&) {
+constexpr auto cmp_ls_instr = cmp_ls_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
   auto first = ctx.pop();
   ctx.push(first < second);
 };
 
 constexpr decl_vm::instruction_desc<E_CMP_GE_NULLARY> cmp_ge_desc = "cmp_ge";
-constexpr auto                                        cmp_ge_instr = cmp_ge_desc >> [](auto &&ctx, auto &&) {
+constexpr auto cmp_ge_instr = cmp_ge_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
   auto first = ctx.pop();
   ctx.push(first >= second);
 };
 
 constexpr decl_vm::instruction_desc<E_CMP_LE_NULLARY> cmp_le_desc = "cmp_le";
-constexpr auto                                        cmp_le_instr = cmp_le_desc >> [](auto &&ctx, auto &&) {
+constexpr auto cmp_le_instr = cmp_le_desc >> [](auto &&ctx, auto &&) {
   auto second = ctx.pop();
   auto first = ctx.pop();
   ctx.push(first <= second);
 };
 
 constexpr decl_vm::instruction_desc<E_PRINT_NULLARY> print_desc = "print";
-constexpr auto                                       print_instr = print_desc >> [](auto &&ctx, auto &&) {
+constexpr auto print_instr = print_desc >> [](auto &&ctx, auto &&) {
   auto first = ctx.pop();
   std::cout << std::dec << first << "\n";
 };
 
 constexpr decl_vm::instruction_desc<E_PUSH_READ_NULLARY> push_read_desc = "push_read";
-constexpr auto                                           push_read = push_read_desc >> [](auto &&ctx, auto &&) {
+constexpr auto push_read = push_read_desc >> [](auto &&ctx, auto &&) {
   int val;
   std::cin >> val;
   ctx.push(val);
@@ -177,7 +177,8 @@ constexpr auto jmp_false_instr = jmp_false_desc >> [](auto &&ctx, auto &&attr) {
 static const auto paracl_isa = decl_vm::instruction_set_description(
     push_const_instr, return_instr, pop_instr, add_instr, sub_instr, mul_instr, div_instr, mod_instr, and_instr,
     or_instr, cmp_eq_instr, cmp_ne_instr, cmp_gt_instr, cmp_ls_instr, cmp_ge_instr, cmp_le_instr, print_instr,
-    push_read, mov_local_instr, push_local_instr, jmp_instr, jmp_true_instr, jmp_false_instr, not_instr);
+    push_read, mov_local_instr, push_local_instr, jmp_instr, jmp_true_instr, jmp_false_instr, not_instr
+);
 
 } // namespace paracl::bytecode_vm::instruction_set
 

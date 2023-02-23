@@ -27,8 +27,9 @@ namespace paracl::utils {
 namespace detail {
 
 inline auto get_iterator_endian(std::span<char> raw_bytes) {
-  static_assert(std::endian::native == std::endian::little || std::endian::native == std::endian::big,
-                "Mixed endian, bailing out");
+  static_assert(
+      std::endian::native == std::endian::little || std::endian::native == std::endian::big, "Mixed endian, bailing out"
+  );
   if constexpr (std::endian::native == std::endian::little) {
     return raw_bytes.begin();
   } else {
@@ -40,12 +41,12 @@ inline auto get_iterator_endian(std::span<char> raw_bytes) {
 
 template <typename T, std::input_iterator iter>
 std::pair<std::optional<T>, iter> read_little_endian(iter first, iter last)
-requires std::integral<T> || std::floating_point<T>
+  requires std::integral<T> || std::floating_point<T>
 {
   std::array<char, sizeof(T)> raw_bytes;
 
   const auto input_iter = detail::get_iterator_endian(raw_bytes);
-  auto       size = sizeof(T);
+  auto size = sizeof(T);
   first = copy_while(first, last, input_iter, [&size](auto) { return size && size--; });
 
   if (size != 0) return std::make_pair(std::nullopt, first);
@@ -54,12 +55,12 @@ requires std::integral<T> || std::floating_point<T>
 
 template <typename T, std::output_iterator<uint8_t> iter>
 void write_little_endian(T val, iter oput)
-requires std::integral<T> || std::floating_point<T>
+  requires std::integral<T> || std::floating_point<T>
 {
   std::array<char, sizeof(T)> raw_bytes = std::bit_cast<decltype(raw_bytes)>(val);
 
   const auto input_iter = detail::get_iterator_endian(raw_bytes);
-  auto       size = sizeof(T);
+  auto size = sizeof(T);
   std::copy_n(input_iter, size, oput);
 }
 
@@ -73,6 +74,8 @@ struct padded_hex {
 
 constexpr auto padded_hex_printer = padded_hex{};
 
-template <typename T> auto pointer_to_uintptr(T *pointer) { return std::bit_cast<uintptr_t>(pointer); }
+template <typename T> auto pointer_to_uintptr(T *pointer) {
+  return std::bit_cast<uintptr_t>(pointer);
+}
 
 } // namespace paracl::utils

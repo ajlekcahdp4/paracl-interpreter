@@ -16,13 +16,22 @@
 
 namespace paracl::frontend::ast {
 
-template <typename T> T &trivial_ast_node_copy(const T &ref, ast_container &cont) { return cont.make_node<T>(ref); }
+template <typename T> T &trivial_ast_node_copy(const T &ref, ast_container &cont) {
+  return cont.make_node<T>(ref);
+}
 
-read_expression     &ast_copier::copy(const read_expression &ref) { return trivial_ast_node_copy(ref, m_container); }
+read_expression &ast_copier::copy(const read_expression &ref) {
+  return trivial_ast_node_copy(ref, m_container);
+}
+
 variable_expression &ast_copier::copy(const variable_expression &ref) {
   return trivial_ast_node_copy(ref, m_container);
 }
-error_node          &ast_copier::copy(const error_node &ref) { return trivial_ast_node_copy(ref, m_container); }
+
+error_node &ast_copier::copy(const error_node &ref) {
+  return trivial_ast_node_copy(ref, m_container);
+}
+
 constant_expression &ast_copier::copy(const constant_expression &ref) {
   return trivial_ast_node_copy(ref, m_container);
 }
@@ -55,8 +64,9 @@ assignment_statement &ast_copier::copy(const assignment_statement &ref) {
 
 if_statement &ast_copier::copy(const if_statement &ref) {
   if (ref.else_block()) {
-    return m_container.make_node<if_statement>(apply(ref.cond()), apply(ref.true_block()), apply(*ref.else_block()),
-                                               ref.loc());
+    return m_container.make_node<if_statement>(
+        apply(ref.cond()), apply(ref.true_block()), apply(*ref.else_block()), ref.loc()
+    );
   }
 
   return m_container.make_node<if_statement>(apply(ref.cond()), apply(ref.true_block()), ref.loc());

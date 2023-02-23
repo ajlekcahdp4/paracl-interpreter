@@ -24,10 +24,10 @@ namespace paracl::frontend {
 class frontend_driver final {
 private:
   scanner m_scanner;
-  parser  m_parser;
+  parser m_parser;
 
   std::optional<error_kind> m_current_error;
-  ast::ast_container        m_ast;
+  ast::ast_container m_ast;
 
   friend class parser;
   friend class scanner;
