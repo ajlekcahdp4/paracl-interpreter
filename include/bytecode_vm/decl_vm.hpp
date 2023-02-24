@@ -156,16 +156,20 @@ template <typename t_desc, typename t_action> struct instruction {
 };
 
 template <typename t_desc> class virtual_machine;
-using execution_value_type = int;
+using execution_value_type = int32_t;
 
 template <typename t_desc> struct context {
   friend class virtual_machine<t_desc>;
 
 private:
-  std::vector<execution_value_type> m_execution_stack;
-  binary_code_buffer_type::const_iterator m_ip, m_ip_end;
+  using execution_stack_type = std::vector<execution_value_type>;
 
+  execution_stack_type m_execution_stack;
   chunk m_program_code;
+
+  binary_code_buffer_type::const_iterator m_ip, m_ip_end;
+  execution_stack_type::size_type m_sp = 0;
+
   bool m_halted = false;
 
 public:
@@ -176,13 +180,24 @@ public:
     m_ip_end = m_program_code.binary_end();
   }
 
-  auto ip() const { return m_ip; }
-  auto &at_stack(uint32_t index) & { return m_execution_stack.at(index); }
+  uint32_t ip() const { return std::distance(m_program_code.binary_begin(), m_ip); }
+  uint32_t sp() const { return m_sp; }
+
+  auto &at_stack(uint32_t index) & {
+    if (index >= m_execution_stack.size()) throw std::out_of_range{"Out of range index in at_stack"};
+    return m_execution_stack.at(index);
+  }
 
   void set_ip(uint32_t new_ip) {
     m_ip = m_program_code.binary_begin();
     std::advance(m_ip, new_ip);
   }
+
+  void set_sp(uint32_t new_sp) { m_sp = new_sp; }
+
+  auto stack_size() const { return m_execution_stack.size(); }
+
+  bool stack_empty() const { return m_execution_stack.empty(); }
 
   auto pop() {
     if (m_execution_stack.size() == 0) throw vm_error{"Bad stack pop"};

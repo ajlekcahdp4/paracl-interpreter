@@ -12,6 +12,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 
 #include <iostream>
 #include <stdexcept>
@@ -27,7 +28,15 @@ constexpr auto push_const_instr = push_const_desc >>
     [](auto &&ctx, auto &&attr) { ctx.push(ctx.constant(std::get<0>(attr))); };
 
 constexpr decl_vm::instruction_desc<E_RETURN_NULLARY> return_desc = "ret";
-constexpr auto return_instr = return_desc >> [](auto &&ctx, auto &&) { ctx.halt(); };
+constexpr auto return_instr = return_desc >> [](auto &&ctx, auto &&) {
+  if (ctx.stack_empty()) ctx.halt();
+  else {
+    auto sp = ctx.pop();
+    ctx.set_sp(sp);
+    auto ip = ctx.pop();
+    ctx.set_ip(ip);
+  }
+};
 
 constexpr decl_vm::instruction_desc<E_POP_NULLARY> pop_desc = "pop";
 constexpr auto pop_instr = pop_desc >> [](auto &&ctx, auto &&) { ctx.pop(); };
@@ -148,9 +157,21 @@ constexpr auto mov_local_instr = mov_local_desc >> [](auto &&ctx, auto &&attr) {
   ctx.at_stack(std::get<0>(attr)) = val;
 };
 
+constexpr decl_vm::instruction_desc<E_MOV_LOCAL_REL_UNARY, uint32_t> mov_local_rel_desc = "mov_local_rel";
+constexpr auto mov_local_rel_instr = mov_local_rel_desc >> [](auto &&ctx, auto &&attr) {
+  auto val = ctx.pop();
+  ctx.at_stack(std::get<0>(attr) + ctx.sp()) = val;
+};
+
 constexpr decl_vm::instruction_desc<E_PUSH_LOCAL_UNARY, uint32_t> push_local_desc = "push_local";
 constexpr auto push_local_instr = push_local_desc >> [](auto &&ctx, auto &&attr) {
   auto val = ctx.at_stack(std::get<0>(attr));
+  ctx.push(val);
+};
+
+constexpr decl_vm::instruction_desc<E_PUSH_LOCAL_REL_UNARY, uint32_t> push_local_rel_desc = "push_local_rel";
+constexpr auto push_local_rel_instr = push_local_rel_desc >> [](auto &&ctx, auto &&attr) {
+  auto val = ctx.at_stack(std::get<0>(attr) + ctx.sp());
   ctx.push(val);
 };
 
@@ -174,10 +195,20 @@ constexpr auto jmp_false_instr = jmp_false_desc >> [](auto &&ctx, auto &&attr) {
   conditional_jump(ctx, attr, !first);
 };
 
+constexpr decl_vm::instruction_desc<E_SETUP_CALL_NULLARY, uint32_t> setup_call_desc = "call";
+constexpr auto setup_call_instr = setup_call_desc >> [](auto &&ctx, auto &&attr) {
+  ctx.push(std::numeric_limits<uint32_t>::max()); // reserve place at stack to later fill with correct instruction
+                                                  // pointer value
+  auto cur_sp = ctx.sp();
+  ctx.push(cur_sp);
+  ctx.set_sp(ctx.stack_size());
+};
+
 static const auto paracl_isa = decl_vm::instruction_set_description(
     push_const_instr, return_instr, pop_instr, add_instr, sub_instr, mul_instr, div_instr, mod_instr, and_instr,
     or_instr, cmp_eq_instr, cmp_ne_instr, cmp_gt_instr, cmp_ls_instr, cmp_ge_instr, cmp_le_instr, print_instr,
-    push_read, mov_local_instr, push_local_instr, jmp_instr, jmp_true_instr, jmp_false_instr, not_instr
+    push_read, mov_local_instr, mov_local_rel_instr, push_local_instr, push_local_rel_instr, jmp_instr, jmp_true_instr,
+    jmp_false_instr, not_instr, setup_call_instr
 );
 
 } // namespace paracl::bytecode_vm::instruction_set
