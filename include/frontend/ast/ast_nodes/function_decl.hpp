@@ -13,6 +13,8 @@
 #include "i_ast_node.hpp"
 #include "variable_expression.hpp"
 #include <optional>
+#include <string>
+#include <string_view>
 #include <vector>
 
 namespace paracl::frontend::ast {
@@ -31,6 +33,13 @@ public:
       std::optional<std::string> name, i_ast_node &body, location l, std::vector<variable_expression> vars = {}
   )
       : i_ast_node{l}, m_name{name}, m_arguments{std::move(vars)}, m_block{&body} {}
+
+  bool named() const { return m_name.has_value(); }
+
+  std::string_view name() const {
+    if (!named()) throw std::runtime_error{"Attempt to get name of the anonymous function"};
+    return m_name.value();
+  }
 };
 
 } // namespace paracl::frontend::ast

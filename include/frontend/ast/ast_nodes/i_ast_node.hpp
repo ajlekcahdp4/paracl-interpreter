@@ -40,9 +40,13 @@ class unary_expression;
 class variable_expression;
 class while_statement;
 class error_node;
+class function_definition;
+class return_statement;
+class statement_block_expression;
 
 using tuple_ast_nodes = std::tuple<
     assignment_statement, binary_expression, constant_expression, if_statement, print_statement, read_expression,
-    statement_block, unary_expression, variable_expression, while_statement, error_node>;
+    statement_block, unary_expression, variable_expression, while_statement, error_node, function_definition,
+    return_statement, statement_block_expression>;
 
 } // namespace paracl::frontend::ast

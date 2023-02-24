@@ -20,7 +20,7 @@ class return_statement final : public i_ast_node {
 public:
   EZVIS_VISITABLE();
   return_statement(i_ast_node *p_expr, location l) : i_ast_node{l}, m_expr{p_expr} {}
-  i_ast_node *expr() const { return m_expr; }
+  i_ast_node &expr() const { return *m_expr; }
 };
 
 } // namespace paracl::frontend::ast

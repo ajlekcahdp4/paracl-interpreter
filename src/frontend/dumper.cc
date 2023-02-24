@@ -117,4 +117,24 @@ void ast_dumper::dump(const while_statement &ref) {
   apply(ref.block());
 }
 
+void ast_dumper::dump(const function_definition &ref) {
+  std::stringstream ss;
+  ss << "<function defenition>";
+
+  if (ref.named()) ss << ref.name();
+  else ss << "ananymous";
+
+  print_declare_node(m_os, ref, ss.str());
+}
+
+void ast_dumper::dump(const return_statement &ref) {
+  print_declare_node(m_os, ref, "<return statement>");
+  print_bind_node(m_os, ref, ref.expr(), "<expression>");
+  apply(ref.expr());
+}
+
+void ast_dumper::dump(const statement_block_expression &ref) {
+  print_declare_node(m_os, ref, "<statement block>");
+}
+
 } // namespace paracl::frontend::ast

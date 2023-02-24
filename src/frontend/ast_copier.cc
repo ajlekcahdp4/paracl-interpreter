@@ -82,4 +82,16 @@ statement_block &ast_copier::copy(const statement_block &ref) {
   return copy;
 }
 
+function_definition &ast_copier::copy(const function_definition &ref) {
+  return trivial_ast_node_copy(ref, m_container);
+}
+
+return_statement &ast_copier::copy(const return_statement &ref) {
+  return trivial_ast_node_copy(ref, m_container);
+}
+
+statement_block_expression &ast_copier::copy(const statement_block_expression &ref) {
+  return trivial_ast_node_copy(ref, m_container);
+}
+
 } // namespace paracl::frontend::ast

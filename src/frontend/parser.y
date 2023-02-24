@@ -135,6 +135,9 @@ additive_expression comparison_expression equality_expression logical_expression
 program:  statements    { auto ptr = driver.make_ast_node<ast::statement_block>(std::move($1)); driver.m_ast.set_root_ptr(ptr); }
           | %empty      { }
 
+optional_semicol: %empty {}
+                  | SEMICOL {}
+
 primary_expression: INTEGER_CONSTANT            { $$ = driver.make_ast_node<ast::constant_expression>($1, @$); }
                     | IDENTIFIER                { $$ = driver.make_ast_node<ast::variable_expression>($1, @$); }
                     | QMARK                     { $$ = driver.make_ast_node<ast::read_expression>(@$); }
@@ -177,7 +180,7 @@ expression: logical_expression                  { $$ = $1; }
 chainable_assignment_statement: IDENTIFIER ASSIGN chainable_assignment_statement    { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
                       | IDENTIFIER ASSIGN logical_expression SEMICOL                { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
                       | IDENTIFIER ASSIGN statement_block                           { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
-                      | IDENTIFIER ASSIGN function_def                              { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
+                      | IDENTIFIER ASSIGN function_def optional_semicol             { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
 
 chainable_assignment: IDENTIFIER ASSIGN chainable_assignment      { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
                       | IDENTIFIER ASSIGN logical_expression      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
@@ -206,7 +209,7 @@ statement:  print_statement                   { $$ = $1; }
             | if_statement                    { $$ = $1; }
             | chainable_assignment_statement  { $$ = $1; }
             | expression_statement            { $$ = $1; }
-            | function_def                    { $$ = $1; }
+            | function_def optional_semicol   { $$ = $1; }
             | return_statement                { $$ = $1; }
 
 arglist:  arglist COMMA IDENTIFIER            { $$ = std::move($1); $$.emplace_back($3, @3); }

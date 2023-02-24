@@ -99,4 +99,10 @@ void semantic_analyzer::analyze_node(ast::variable_expression &ref) {
   /* TODO[Sergei]: Bind the variable to it's declaration symbol table */
 }
 
+void semantic_analyzer::analyze_node(ast::function_definition &ref) {}
+
+void semantic_analyzer::analyze_node(ast::return_statement &ref) {}
+
+void semantic_analyzer::analyze_node(ast::statement_block_expression &ref) {}
+
 } // namespace paracl::frontend
