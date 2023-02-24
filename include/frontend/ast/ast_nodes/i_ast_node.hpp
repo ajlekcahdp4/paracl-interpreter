@@ -19,12 +19,14 @@ class i_ast_node : public ezvis::visitable_base<i_ast_node> {
 protected:
   location m_loc;
 
+protected:
+  i_ast_node() = default;
+  i_ast_node(location l) : m_loc{l} {}
+
 public:
   EZVIS_VISITABLE();
   location loc() const { return m_loc; }
 
-  i_ast_node() = default;
-  i_ast_node(location l) : m_loc{l} {}
   virtual ~i_ast_node() {}
 };
 

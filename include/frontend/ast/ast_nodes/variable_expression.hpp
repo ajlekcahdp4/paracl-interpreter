@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include "frontend/types/types.hpp"
 #include "i_ast_node.hpp"
+
 #include <string>
 #include <string_view>
 
