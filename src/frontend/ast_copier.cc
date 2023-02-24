@@ -83,15 +83,23 @@ statement_block &ast_copier::copy(const statement_block &ref) {
 }
 
 function_definition &ast_copier::copy(const function_definition &ref) {
-  return trivial_ast_node_copy(ref, m_container);
+  std::vector<variable_expression> arguments{ref.begin(), ref.end()};
+  return m_container.make_node<function_definition>(std::string{ref.name()}, ref.body(), ref.loc(), arguments);
 }
 
 return_statement &ast_copier::copy(const return_statement &ref) {
-  return trivial_ast_node_copy(ref, m_container);
+  if (!ref.empty()) return m_container.make_node<return_statement>(&apply(ref.expr()), ref.loc());
+  return m_container.make_node<return_statement>(nullptr, ref.loc());
 }
 
 statement_block_expression &ast_copier::copy(const statement_block_expression &ref) {
-  return trivial_ast_node_copy(ref, m_container);
+  auto &copy = m_container.make_node<statement_block_expression>();
+
+  for (const auto &v : ref) {
+    copy.append_statement(apply(*v));
+  }
+
+  return copy;
 }
 
 } // namespace paracl::frontend::ast

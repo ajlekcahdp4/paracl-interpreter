@@ -34,6 +34,18 @@ public:
   )
       : i_ast_node{l}, m_name{name}, m_arguments{std::move(vars)}, m_block{&body} {}
 
+  auto size() const { return m_arguments.size(); }
+
+  auto begin() { return m_arguments.begin(); }
+  auto end() { return m_arguments.end(); }
+  auto begin() const { return m_arguments.cbegin(); }
+  auto end() const { return m_arguments.cend(); }
+
+  auto rbegin() const { return m_arguments.crbegin(); }
+  auto rend() const { return m_arguments.crend(); }
+
+  i_ast_node &body() const { return *m_block; }
+
   bool named() const { return m_name.has_value(); }
 
   std::string_view name() const {
