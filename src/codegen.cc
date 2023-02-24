@@ -37,7 +37,7 @@ void codegen_visitor::generate(ast::error_node &) {
 
 void codegen_visitor::generate(ast::variable_expression &ref) {
   auto index = m_symtab_stack.lookup_location(std::string{ref.name()});
-  m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_local_desc, index});
+  m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_local_rel_desc, index});
 }
 
 void codegen_visitor::generate(ast::print_statement &ref) {
@@ -53,15 +53,15 @@ void codegen_visitor::generate(ast::assignment_statement &ref) {
   const auto last_it = std::prev(ref.rend());
   for (auto start = ref.rbegin(), finish = last_it; start != finish; ++start) {
     const auto left_index = m_symtab_stack.lookup_location(std::string{start->name()});
-    m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::mov_local_desc, left_index});
-    m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_local_desc, left_index});
+    m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::mov_local_rel_desc, left_index});
+    m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_local_rel_desc, left_index});
   }
 
   // Last iteration:
   const auto left_index = m_symtab_stack.lookup_location(std::string{last_it->name()});
-  m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::mov_local_desc, left_index});
+  m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::mov_local_rel_desc, left_index});
   if (emit_push) {
-    m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_local_desc, left_index});
+    m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_local_rel_desc, left_index});
   }
 }
 
