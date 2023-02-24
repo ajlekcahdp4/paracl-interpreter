@@ -21,6 +21,8 @@
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
 
+#include "frontend/symtab.hpp"
+
 #include <algorithm>
 #include <cstdint>
 #include <stdexcept>
@@ -29,42 +31,12 @@
 
 namespace paracl::codegen {
 
-class codegen_symtab_stack final {
-private:
-  std::vector<std::unordered_map<std::string, uint32_t>> m_stack;
-  uint32_t total_count = 0;
-
-public:
-  uint32_t lookup_location(const std::string &name) const {
-    for (auto its = m_stack.rbegin(), ite = m_stack.rend(); its != ite; ++its) {
-      const auto &elem = *its;
-      auto found = elem.find(name);
-      if (found != elem.end()) return found->second;
-    }
-
-    throw std::logic_error{"Codegen: trying to look up location of a variable "
-                           "not present in the symbol table"};
-  }
-
-  void begin_scope() { m_stack.emplace_back(); }
-
-  void end_scope() {
-    total_count -= m_stack.back().size();
-    m_stack.pop_back();
-  }
-
-  void push_variable(const std::string &name) {
-    m_stack.back().insert({name, total_count});
-    total_count++;
-  }
-};
-
 class codegen_visitor final : public ezvis::visitor_base<frontend::ast::i_ast_node, codegen_visitor, void> {
   using builder_type = bytecode_vm::builder::bytecode_builder<decltype(bytecode_vm::instruction_set::paracl_isa)>;
 
 private:
   std::unordered_map<int, uint32_t> m_constant_map;
-  codegen_symtab_stack m_symtab_stack;
+  frontend::symtab_stack m_symtab_stack;
   builder_type m_builder;
   bool m_is_currently_statement = false;
 
