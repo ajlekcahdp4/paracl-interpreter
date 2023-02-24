@@ -119,8 +119,9 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
 
 void codegen_visitor::generate(ast::statement_block &ref) {
   m_symtab_stack.begin_scope(ref.symbol_table());
+  m_symtab_stack.begin_scope(ref.symbol_table());
 
-  for (unsigned i = 0; i < ref.symbol_table()->size(); ++i) {
+  for (const auto &v : *ref.symbol_table()) {
     m_builder.emit_operation(vm_builder::encoded_instruction{
         vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
@@ -177,8 +178,9 @@ void codegen_visitor::visit_if_with_else(ast::if_statement &ref) {
 
 void codegen_visitor::generate(ast::if_statement &ref) {
   m_symtab_stack.begin_scope(ref.control_block_symtab());
+  m_symtab_stack.begin_scope(ref.control_block_symtab());
 
-  for (unsigned i = 0; i < ref.control_block_symtab()->size(); ++i) {
+  for (const auto &v : *ref.control_block_symtab()) {
     m_builder.emit_operation(vm_builder::encoded_instruction{
         vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
@@ -198,8 +200,9 @@ void codegen_visitor::generate(ast::if_statement &ref) {
 
 void codegen_visitor::generate(ast::while_statement &ref) {
   m_symtab_stack.begin_scope(ref.symbol_table());
+  m_symtab_stack.begin_scope(ref.symbol_table());
 
-  for (unsigned i = 0; i < ref.symbol_table()->size(); ++i) {
+  for (const auto &v : *ref.symbol_table()) {
     m_builder.emit_operation(vm_builder::encoded_instruction{
         vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
