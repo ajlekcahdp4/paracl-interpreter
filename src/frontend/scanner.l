@@ -42,6 +42,7 @@ cpp_style_comment ([/][/].*)
 "}"             { return parser::make_RBRACE(update_loc()); }
 ";"             { return parser::make_SEMICOL(update_loc()); }
 ":"             { return parser::make_COL(update_loc()); }
+","             { return parser::make_COMMA(update_loc()); }
 
 "=="            { return parser::make_COMP_EQ(update_loc()); }
 "!="            { return parser::make_COMP_NE(update_loc()); }

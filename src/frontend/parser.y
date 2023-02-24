@@ -20,7 +20,7 @@
 %define api.namespace { paracl::frontend }
 %define parse.error verbose
 %glr-parser
-%expect-rr 2
+%expect-rr 4
 
 %code requires {
 #include <iostream>
@@ -99,6 +99,7 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 
 %token SEMICOL  ";"
 %token COL      ":"
+%token COMMA    ","
 
 /* Keywords */
 %token WHILE    "while"
@@ -116,9 +117,13 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %type <ast::i_ast_node *> primary_expression multiplicative_expression unary_expression
 additive_expression comparison_expression equality_expression logical_expression expression expression_statement
 
-%type <ast::i_ast_node *> print_statement statement_block statement if_statement while_statement
+%type <ast::i_ast_node *> print_statement statement_block statement if_statement while_statement function_def
+
+%type <ast::return_statement *> return_statement
 %type <ast::statement_block> statements
-%type <ast::assignment_statement *> chainable_assignment
+%type <ast::assignment_statement *> chainable_assignment chainable_assignment_statement
+
+%type <std::vector<ast::variable_expression>> arglist arglist_or_empty
 
 %precedence THEN
 %precedence ELSE
@@ -168,6 +173,12 @@ logical_expression: logical_expression LOGICAL_AND equality_expression    { $$ =
 expression: logical_expression                  { $$ = $1; }
             | chainable_assignment              { $$ = $1; }      
 
+/* Allow statement_block not to be followed by a semicol */
+chainable_assignment_statement: IDENTIFIER ASSIGN chainable_assignment_statement    { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
+                      | IDENTIFIER ASSIGN logical_expression SEMICOL                { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
+                      | IDENTIFIER ASSIGN statement_block                           { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
+                      | IDENTIFIER ASSIGN function_def                              { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
+
 chainable_assignment: IDENTIFIER ASSIGN chainable_assignment      { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
                       | IDENTIFIER ASSIGN logical_expression      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
 
@@ -187,13 +198,32 @@ while_statement: WHILE LPAREN expression RPAREN statement { $$ = driver.make_ast
 if_statement: IF LPAREN expression RPAREN statement %prec THEN        { $$ = driver.make_ast_node<ast::if_statement>(*$3, *$5, @$); }
               | IF LPAREN expression RPAREN statement ELSE statement  { $$ = driver.make_ast_node<ast::if_statement>(*$3, *$5, *$7, @$); }
 
-expression_statement: expression SEMICOL  { $$ = $1; }
+expression_statement: logical_expression SEMICOL  { $$ = $1; }
 
-statement:  print_statement         { $$ = $1; }
-            | statement_block       { $$ = $1; }
-            | while_statement       { $$ = $1; }
-            | if_statement          { $$ = $1; }
-            | expression_statement  { $$ = $1; }
+statement:  print_statement                   { $$ = $1; }
+            | statement_block                 { $$ = $1; }
+            | while_statement                 { $$ = $1; }
+            | if_statement                    { $$ = $1; }
+            | chainable_assignment_statement  { $$ = $1; }
+            | expression_statement            { $$ = $1; }
+            | function_def                    { $$ = $1; }
+            | return_statement                { $$ = $1; }
+
+arglist:  arglist COMMA IDENTIFIER            { $$ = std::move($1); $$.emplace_back($3, @3); }
+          | IDENTIFIER                        { $$.emplace_back($1, @1); }
+
+arglist_or_empty: arglist   { $$ = std::move($1); }
+                  | %empty  { }
+
+function_def: FUNC LPAREN arglist_or_empty RPAREN statement_block {
+                $$ = driver.make_ast_node<ast::function_definition>(std::nullopt, *$5, @$, $3);
+              }
+              | FUNC LPAREN arglist_or_empty RPAREN COL IDENTIFIER statement_block {
+                $$ = driver.make_ast_node<ast::function_definition>($6, *$7, @$, $3);
+              }
+
+return_statement: RET expression SEMICOL    { $$ = driver.make_ast_node<ast::return_statement>($2, @$); }
+                  | RET SEMICOL             { $$ = driver.make_ast_node<ast::return_statement>(nullptr, @$); }
 
 %%
 

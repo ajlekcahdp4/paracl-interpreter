@@ -47,16 +47,4 @@ public:
   i_ast_node &right() const { return *m_right; }
 };
 
-class function_assignment_statement final : public i_ast_node {
-private:
-  variable_expression m_left;
-  i_ast_node *m_right;
-
-public:
-  EZVIS_VISITABLE();
-
-  function_assignment_statement(variable_expression left, i_ast_node &right, location l)
-      : i_ast_node{l}, m_left{left}, m_right{&right} {}
-};
-
 } // namespace paracl::frontend::ast
