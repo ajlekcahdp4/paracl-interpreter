@@ -133,3 +133,12 @@ if(BASH_PROGRAM)
     COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh
             "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/test/functions)
 endif()
+
+set(UNIT_TEST_SOURCES unit_tests/main.cc unit_tests/ezvis.cc)
+
+if(ENABLE_GTEST AND NOT PARACL_NO_TESTING__)
+  add_executable(unit_tests ${UNIT_TEST_SOURCES})
+  target_link_libraries(unit_tests ${GTEST_BOTH_LIBRARIES} ctti)
+  target_include_directories(unit_tests PRIVATE include/ezvis include)
+  gtest_discover_tests(unit_tests)
+endif()
