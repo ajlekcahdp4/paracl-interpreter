@@ -19,12 +19,13 @@ class i_ast_node : public ezvis::visitable_base<i_ast_node> {
 protected:
   location m_loc;
 
+protected:
+  i_ast_node(location l = location{}) : m_loc{l} {}
+
 public:
   EZVIS_VISITABLE();
   location loc() const { return m_loc; }
 
-  i_ast_node() = default;
-  i_ast_node(location l) : m_loc{l} {}
   virtual ~i_ast_node() {}
 };
 
@@ -40,9 +41,14 @@ class unary_expression;
 class variable_expression;
 class while_statement;
 class error_node;
+class function_definition;
+class return_statement;
+class statement_block_expression;
+class function_call;
 
 using tuple_ast_nodes = std::tuple<
     assignment_statement, binary_expression, constant_expression, if_statement, print_statement, read_expression,
-    statement_block, unary_expression, variable_expression, while_statement, error_node>;
+    statement_block, unary_expression, variable_expression, while_statement, error_node, function_definition,
+    return_statement, statement_block_expression, function_call>;
 
 } // namespace paracl::frontend::ast

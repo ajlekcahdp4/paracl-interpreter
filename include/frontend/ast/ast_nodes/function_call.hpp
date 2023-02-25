@@ -10,52 +10,36 @@
 
 #pragma once
 
-#include "frontend/symtab.hpp"
 #include "i_ast_node.hpp"
 
-#include <cassert>
-#include <vector>
+#include <string>
+#include <string_view>
 
 namespace paracl::frontend::ast {
 
-class statement_block : public i_ast_node, private std::vector<i_ast_node *> {
+class function_call : public i_ast_node, private std::vector<i_ast_node *> {
 private:
-  symtab m_symtab;
+  std::string m_name;
 
 public:
   EZVIS_VISITABLE();
 
-  statement_block() = default;
-  statement_block(std::vector<i_ast_node *> vec, location l) : i_ast_node{l}, vector{vec} {}
+  function_call(std::string name, location l, std::vector<i_ast_node *> params = {})
+      : i_ast_node{l}, vector{std::move(params)}, m_name{std::move(name)} {}
 
-  void append_statement(i_ast_node &statement) {
-    const bool empty = vector::empty();
-    vector::push_back(&statement);
-
-    if (empty) {
-      m_loc = statement.loc();
-    } else {
-      m_loc += statement.loc();
-    }
-  }
+  std::string_view name() const & { return m_name; }
 
   using vector::cbegin;
   using vector::cend;
   using vector::crbegin;
   using vector::crend;
+  using vector::empty;
   using vector::size;
 
   auto begin() const { return vector::begin(); }
   auto end() const { return vector::end(); }
 
-  symtab *symbol_table() { return &m_symtab; }
-};
-
-class statement_block_expression : public statement_block {
-public:
-  EZVIS_VISITABLE();
-  statement_block_expression() = default;
-  statement_block_expression(const statement_block &block) : statement_block{block} {}
+  void append_parameter(i_ast_node *ptr) { vector::push_back(ptr); }
 };
 
 } // namespace paracl::frontend::ast

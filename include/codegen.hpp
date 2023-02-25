@@ -68,6 +68,10 @@ public:
   void generate(frontend::ast::variable_expression &);
   void generate(frontend::ast::while_statement &);
   void generate(frontend::ast::error_node &);
+  void generate(frontend::ast::function_definition &);
+  void generate(frontend::ast::return_statement &);
+  void generate(frontend::ast::statement_block_expression &);
+  void generate(frontend::ast::function_call &);
 
   EZVIS_VISIT_INVOKER(generate);
 

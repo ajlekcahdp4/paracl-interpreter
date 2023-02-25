@@ -117,4 +117,50 @@ void ast_dumper::dump(const while_statement &ref) {
   apply(ref.block());
 }
 
+void ast_dumper::dump(const function_definition &ref) {
+  std::stringstream ss;
+  ss << "<function definition>: ";
+
+  if (auto opt = ref.name(); opt) ss << opt.value();
+  else ss << "anonymous";
+  ss << " <arg count>: " << ref.size();
+
+  print_declare_node(m_os, ref, ss.str());
+  for (unsigned i = 0; const auto &v : ref) {
+    ss.str("");
+    ss << "arg " << i;
+    print_bind_node(m_os, ref, v, ss.str());
+    apply(v);
+    ++i;
+  }
+
+  print_bind_node(m_os, ref, ref.body());
+  apply(ref.body());
+}
+
+void ast_dumper::dump(const return_statement &ref) {
+  print_declare_node(m_os, ref, "<return statement>");
+  print_bind_node(m_os, ref, ref.expr(), "<expression>");
+  apply(ref.expr());
+}
+
+void ast_dumper::dump(const statement_block_expression &ref) {
+  print_declare_node(m_os, ref, "<statement block>");
+}
+
+void ast_dumper::dump(const function_call &ref) {
+  std::stringstream ss;
+  ss << "<function call>: " << ref.name();
+  print_declare_node(m_os, ref, ss.str());
+  ss << " <param count>: " << ref.size();
+
+  for (unsigned i = 0; const auto &v : ref) {
+    ss.str("");
+    ss << "param " << i;
+    print_bind_node(m_os, ref, *v, ss.str());
+    apply(*v);
+    ++i;
+  }
+}
+
 } // namespace paracl::frontend::ast

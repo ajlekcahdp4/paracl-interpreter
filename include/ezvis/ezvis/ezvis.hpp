@@ -225,4 +225,32 @@ public:
   }
 };
 
+namespace detail {
+
+template <typename T, typename... Ts> using are_all_same = std::integral_constant<bool, (... && std::is_same_v<T, Ts>)>;
+template <typename T, typename... Ts> constexpr auto are_all_same_v = are_all_same<T, Ts...>::value;
+
+template <typename t_base, typename tt_return_type, typename t_visitor_functor, typename t_to_visit>
+class lambda_visitor
+    : public visitor_base<
+          t_base, lambda_visitor<t_base, tt_return_type, t_visitor_functor, t_to_visit>, tt_return_type>,
+      private t_visitor_functor {
+  using to_visit = t_to_visit;
+
+public:
+  lambda_visitor(t_visitor_functor func) : t_visitor_functor{func} {}
+
+  EZVIS_VISIT_CT(to_visit);
+  auto visit(auto &type) { return t_visitor_functor::operator()(type); }
+  EZVIS_VISIT_INVOKER(visit);
+};
+
+} // namespace detail
+
+template <typename t_return_type, typename... t_to_visit, typename t_base, typename t_visitor_functor>
+t_return_type visit(t_visitor_functor func, t_base &base) {
+  detail::lambda_visitor<t_base, t_return_type, t_visitor_functor, std::tuple<t_to_visit...>> visitor{func};
+  return visitor.apply(base);
+}
+
 } // namespace ezvis

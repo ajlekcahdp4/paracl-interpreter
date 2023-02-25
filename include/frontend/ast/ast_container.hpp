@@ -55,10 +55,7 @@ public:
   ast_container &operator=(ast_container &&other) = default;
   ~ast_container() = default;
 
-  void set_root_ptr(i_ast_node *ptr) {
-    assert(ptr);
-    m_root = ptr;
-  }
+  void set_root_ptr(i_ast_node *ptr) { m_root = ptr; }
   i_ast_node *get_root_ptr() const { return m_root; }
 
   template <typename t_node_type, typename... t_args>

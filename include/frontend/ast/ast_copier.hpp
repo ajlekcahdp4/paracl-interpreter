@@ -40,6 +40,10 @@ public:
   variable_expression &copy(const variable_expression &);
   while_statement &copy(const while_statement &);
   error_node &copy(const error_node &);
+  function_definition &copy(const function_definition &);
+  return_statement &copy(const return_statement &);
+  statement_block_expression &copy(const statement_block_expression &);
+  function_call &copy(const function_call &);
 
   EZVIS_VISIT_INVOKER(copy);
 };

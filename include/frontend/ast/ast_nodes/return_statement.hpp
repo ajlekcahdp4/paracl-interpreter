@@ -10,22 +10,23 @@
 
 #pragma once
 
-// #include "frontend/types/types.hpp"
 #include "i_ast_node.hpp"
-
-#include <string>
-#include <string_view>
 
 namespace paracl::frontend::ast {
 
-class variable_expression final : public i_ast_node {
-  std::string m_name;
+class return_statement final : public i_ast_node {
+  i_ast_node *m_expr;
 
 public:
   EZVIS_VISITABLE();
+  return_statement(i_ast_node *p_expr, location l) : i_ast_node{l}, m_expr{p_expr} {}
 
-  variable_expression(std::string p_name, location l) : i_ast_node{l}, m_name{p_name} {}
-  std::string_view name() const & { return m_name; }
+  bool empty() const { return !m_expr; }
+
+  i_ast_node &expr() const {
+    if (m_expr == nullptr) throw std::runtime_error{"Attempt to dereference empty return statement"};
+    return *m_expr;
+  }
 };
 
 } // namespace paracl::frontend::ast
