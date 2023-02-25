@@ -55,6 +55,8 @@ public:
   void dump(const function_definition &);
   void dump(const return_statement &);
   void dump(const statement_block_expression &);
+  void dump(const function_call_params &);
+  void dump(const function_call &);
 
   EZVIS_VISIT_INVOKER(dump);
 };

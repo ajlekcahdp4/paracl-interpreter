@@ -1,0 +1,5 @@
+func() : ret1 {
+    return 1;
+}
+
+ret1();

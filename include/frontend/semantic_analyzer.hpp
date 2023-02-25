@@ -61,6 +61,8 @@ public:
   void analyze_node(ast::function_definition &);
   void analyze_node(ast::return_statement &);
   void analyze_node(ast::statement_block_expression &);
+  void analyze_node(ast::function_call &);
+  void analyze_node(ast::function_call_params &);
 
   EZVIS_VISIT_INVOKER(analyze_node);
 

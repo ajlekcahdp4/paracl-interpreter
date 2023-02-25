@@ -256,6 +256,10 @@ void codegen_visitor::generate(ast::return_statement &ref) {}
 
 void codegen_visitor::generate(ast::statement_block_expression &ref) {}
 
+void codegen_visitor::generate(ast::function_call &ref) {}
+
+void codegen_visitor::generate(ast::function_call_params &ref) {}
+
 void codegen_visitor::set_currently_statement() {
   m_is_currently_statement = true;
 }

@@ -43,6 +43,8 @@ public:
   function_definition &copy(const function_definition &);
   return_statement &copy(const return_statement &);
   statement_block_expression &copy(const statement_block_expression &);
+  function_call &copy(const function_call &);
+  function_call_params &copy(const function_call_params &);
 
   EZVIS_VISIT_INVOKER(copy);
 };

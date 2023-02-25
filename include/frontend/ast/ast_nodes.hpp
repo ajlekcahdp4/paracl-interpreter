@@ -14,6 +14,7 @@
 #include "ast_nodes/binary_expression.hpp"
 #include "ast_nodes/constant_expression.hpp"
 #include "ast_nodes/error_node.hpp"
+#include "ast_nodes/function_call.hpp"
 #include "ast_nodes/function_decl.hpp"
 #include "ast_nodes/i_ast_node.hpp"
 #include "ast_nodes/if_statement.hpp"

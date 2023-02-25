@@ -137,4 +137,26 @@ void ast_dumper::dump(const statement_block_expression &ref) {
   print_declare_node(m_os, ref, "<statement block>");
 }
 
+void ast_dumper::dump(const function_call &ref) {
+  std::stringstream ss;
+  ss << "<function call> " << ref.name();
+  print_declare_node(m_os, ref, ss.str());
+  print_bind_node(m_os, ref, ref.params(), "<params>");
+  apply(ref.params());
+}
+
+void ast_dumper::dump(const function_call_params &ref) {
+  std::stringstream ss;
+  ss << "<function call params> " << ref.size();
+  print_declare_node(m_os, ref, ss.str());
+  unsigned i = 1;
+  for (const auto &v : ref) {
+    ss.str("");
+    ss << "param " << i;
+    print_bind_node(m_os, ref, *v, ss.str());
+    apply(*v);
+    ++i;
+  }
+}
+
 } // namespace paracl::frontend::ast

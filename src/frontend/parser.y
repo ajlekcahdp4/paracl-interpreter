@@ -117,13 +117,15 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %type <ast::i_ast_node *> primary_expression multiplicative_expression unary_expression
 additive_expression comparison_expression equality_expression logical_expression expression expression_statement
 
-%type <ast::i_ast_node *> print_statement statement_block statement if_statement while_statement function_def
+%type <ast::i_ast_node *> print_statement statement_block statement if_statement while_statement function_def function_call
 
 %type <ast::return_statement *> return_statement
 %type <ast::statement_block> statements
 %type <ast::assignment_statement *> chainable_assignment chainable_assignment_statement
 
 %type <std::vector<ast::variable_expression>> arglist arglist_or_empty
+
+%type <ast::function_call_params *> param_list param_list_or_empty
 
 %precedence THEN
 %precedence ELSE
@@ -174,7 +176,8 @@ logical_expression: logical_expression LOGICAL_AND equality_expression    { $$ =
                     | equality_expression                                 { $$ = $1; }
 
 expression: logical_expression                  { $$ = $1; }
-            | chainable_assignment              { $$ = $1; }      
+            | chainable_assignment              { $$ = $1; }   
+            | function_call                     { $$ = $1; }   
 
 /* Allow statement_block not to be followed by a semicol */
 chainable_assignment_statement: IDENTIFIER ASSIGN chainable_assignment_statement    { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
@@ -211,6 +214,7 @@ statement:  print_statement                   { $$ = $1; }
             | expression_statement            { $$ = $1; }
             | function_def optional_semicol   { $$ = $1; }
             | return_statement                { $$ = $1; }
+            | function_call SEMICOL           { $$ = $1; }
 
 arglist:  arglist COMMA IDENTIFIER            { $$ = std::move($1); $$.emplace_back($3, @3); }
           | IDENTIFIER                        { $$.emplace_back($1, @1); }
@@ -227,6 +231,25 @@ function_def: FUNC LPAREN arglist_or_empty RPAREN statement_block {
 
 return_statement: RET expression SEMICOL    { $$ = driver.make_ast_node<ast::return_statement>($2, @$); }
                   | RET SEMICOL             { $$ = driver.make_ast_node<ast::return_statement>(nullptr, @$); }
+
+
+param_list:  param_list COMMA expression {
+                $$ = $1;
+                $$->append_param(*$3);
+              }
+            | expression {
+                $$ = driver.make_ast_node<ast::function_call_params> ();
+                $$->append_param(*$1);
+              }
+
+
+param_list_or_empty:  param_list  { $$ = $1; }
+                    | %empty      { $$ = driver.make_ast_node<ast::function_call_params> (); }
+
+
+function_call:  IDENTIFIER LPAREN param_list_or_empty RPAREN { 
+                  $$ = driver.make_ast_node<ast::function_call> ($1, *$3, @3);
+                }
 
 %%
 

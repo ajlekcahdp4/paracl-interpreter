@@ -1,0 +1,8 @@
+b = func (x, y) : bar {
+    return 5;
+} 
+
+a = 3;
+
+bar(a, bar(a, 4));
+print bar ({a = a + 3; a + 4;}, {return 6;});

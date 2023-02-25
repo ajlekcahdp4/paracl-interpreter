@@ -102,4 +102,15 @@ statement_block_expression &ast_copier::copy(const statement_block_expression &r
   return copy;
 }
 
+function_call &ast_copier::copy(const function_call &ref) {
+  return m_container.make_node<function_call>(std::string{ref.name()}, apply(ref.params()), ref.loc());
+}
+
+function_call_params &ast_copier::copy(const function_call_params &ref) {
+  auto &copy = m_container.make_node<function_call_params>(ref.loc());
+  for (const auto &v : ref)
+    copy.append_param(apply(*v));
+  return copy;
+}
+
 } // namespace paracl::frontend::ast

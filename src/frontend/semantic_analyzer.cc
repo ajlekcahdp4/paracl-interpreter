@@ -105,4 +105,8 @@ void semantic_analyzer::analyze_node(ast::return_statement &ref) {}
 
 void semantic_analyzer::analyze_node(ast::statement_block_expression &ref) {}
 
+void semantic_analyzer::analyze_node(ast::function_call &ref) {}
+
+void semantic_analyzer::analyze_node(ast::function_call_params &ref) {}
+
 } // namespace paracl::frontend
