@@ -241,10 +241,7 @@ public:
   lambda_visitor(t_visitor_functor func) : t_visitor_functor{func} {}
 
   EZVIS_VISIT_CT(to_visit);
-
-  using t_visitor_functor::operator();
-  auto visit(auto &type) { return operator()(type); }
-
+  auto visit(auto &type) { return t_visitor_functor::operator()(type); }
   EZVIS_VISIT_INVOKER(visit);
 };
 

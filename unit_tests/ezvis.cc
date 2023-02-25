@@ -35,7 +35,7 @@ TEST(test_ezvis, test_lambda_visit) {
   std::unique_ptr<i_base> base;
   base = std::make_unique<derived1>();
 
-  const auto get_str = [](auto &base) {
+  const auto get_str = [](const auto &base) {
     auto res = ezvis::visit<std::string, derived1, derived2>(
         [](auto &type) { return std::remove_reference_t<decltype(type)>::msg; }, *base.get()
     );
