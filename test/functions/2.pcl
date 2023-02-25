@@ -6,7 +6,5 @@ while (a != 5) {
 }
 
 print (a * 2);
-
-
 a = { b = 5; c = {b;}};
 print a;

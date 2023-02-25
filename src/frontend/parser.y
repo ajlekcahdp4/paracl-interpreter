@@ -124,8 +124,7 @@ additive_expression comparison_expression equality_expression logical_expression
 %type <ast::assignment_statement *> chainable_assignment chainable_assignment_statement
 
 %type <std::vector<ast::variable_expression>> arglist arglist_or_empty
-
-%type <ast::function_call_params *> param_list param_list_or_empty
+%type <std::vector<ast::i_ast_node *>> param_list param_list_or_empty
 
 %precedence THEN
 %precedence ELSE
@@ -146,6 +145,7 @@ primary_expression: INTEGER_CONSTANT            { $$ = driver.make_ast_node<ast:
                     | LPAREN expression RPAREN  { $$ = $2; }
                     | LPAREN error RPAREN       { auto error = driver.take_error(); $$ = driver.make_ast_node<ast::error_node>(error.error_message, error.loc); yyerrok; }
                     | statement_block           { $$ = $1; }
+                    | function_call             { $$ = $1; }
 
 unary_expression: PLUS unary_expression           { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_POS, *$2, @$); }
                   | MINUS unary_expression        { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_NEG, *$2, @$); }
@@ -177,7 +177,6 @@ logical_expression: logical_expression LOGICAL_AND equality_expression    { $$ =
 
 expression: logical_expression                  { $$ = $1; }
             | chainable_assignment              { $$ = $1; }   
-            | function_call                     { $$ = $1; }   
 
 /* Allow statement_block not to be followed by a semicol */
 chainable_assignment_statement: IDENTIFIER ASSIGN chainable_assignment_statement    { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
@@ -214,7 +213,6 @@ statement:  print_statement                   { $$ = $1; }
             | expression_statement            { $$ = $1; }
             | function_def optional_semicol   { $$ = $1; }
             | return_statement                { $$ = $1; }
-            | function_call SEMICOL           { $$ = $1; }
 
 arglist:  arglist COMMA IDENTIFIER            { $$ = std::move($1); $$.emplace_back($3, @3); }
           | IDENTIFIER                        { $$.emplace_back($1, @1); }
@@ -233,23 +231,15 @@ return_statement: RET expression SEMICOL    { $$ = driver.make_ast_node<ast::ret
                   | RET SEMICOL             { $$ = driver.make_ast_node<ast::return_statement>(nullptr, @$); }
 
 
-param_list:  param_list COMMA expression {
-                $$ = $1;
-                $$->append_param(*$3);
-              }
-            | expression {
-                $$ = driver.make_ast_node<ast::function_call_params> ();
-                $$->append_param(*$1);
-              }
+param_list:  param_list COMMA expression { $$ = std::move($1); $$.push_back($3); }
+            | expression { $$.push_back($1); }
 
 
-param_list_or_empty:  param_list  { $$ = $1; }
-                    | %empty      { $$ = driver.make_ast_node<ast::function_call_params> (); }
+param_list_or_empty:  param_list  { $$ = std::move($1); }
+                    | %empty      { }
 
 
-function_call:  IDENTIFIER LPAREN param_list_or_empty RPAREN { 
-                  $$ = driver.make_ast_node<ast::function_call> ($1, *$3, @3);
-                }
+function_call:  IDENTIFIER LPAREN param_list_or_empty RPAREN { $$ = driver.make_ast_node<ast::function_call>($1, @3, $3); } 
 
 %%
 

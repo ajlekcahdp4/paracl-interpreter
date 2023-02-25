@@ -119,12 +119,23 @@ void ast_dumper::dump(const while_statement &ref) {
 
 void ast_dumper::dump(const function_definition &ref) {
   std::stringstream ss;
-  ss << "<function defenition>";
+  ss << "<function definition>: ";
 
-  if (ref.named()) ss << ref.name();
-  else ss << "ananymous";
+  if (auto opt = ref.name(); opt) ss << opt.value();
+  else ss << "anonymous";
+  ss << " <arg count>: " << ref.size();
 
   print_declare_node(m_os, ref, ss.str());
+  for (unsigned i = 0; const auto &v : ref) {
+    ss.str("");
+    ss << "arg " << i;
+    print_bind_node(m_os, ref, v, ss.str());
+    apply(v);
+    ++i;
+  }
+
+  print_bind_node(m_os, ref, ref.body());
+  apply(ref.body());
 }
 
 void ast_dumper::dump(const return_statement &ref) {
@@ -139,18 +150,11 @@ void ast_dumper::dump(const statement_block_expression &ref) {
 
 void ast_dumper::dump(const function_call &ref) {
   std::stringstream ss;
-  ss << "<function call> " << ref.name();
+  ss << "<function call>: " << ref.name();
   print_declare_node(m_os, ref, ss.str());
-  print_bind_node(m_os, ref, ref.params(), "<params>");
-  apply(ref.params());
-}
+  ss << " <param count>: " << ref.size();
 
-void ast_dumper::dump(const function_call_params &ref) {
-  std::stringstream ss;
-  ss << "<function call params> " << ref.size();
-  print_declare_node(m_os, ref, ss.str());
-  unsigned i = 1;
-  for (const auto &v : ref) {
+  for (unsigned i = 0; const auto &v : ref) {
     ss.str("");
     ss << "param " << i;
     print_bind_node(m_os, ref, *v, ss.str());

@@ -84,7 +84,7 @@ statement_block &ast_copier::copy(const statement_block &ref) {
 
 function_definition &ast_copier::copy(const function_definition &ref) {
   std::vector<variable_expression> arguments{ref.begin(), ref.end()};
-  return m_container.make_node<function_definition>(std::string{ref.name()}, ref.body(), ref.loc(), arguments);
+  return m_container.make_node<function_definition>(ref.name(), ref.body(), ref.loc(), arguments);
 }
 
 return_statement &ast_copier::copy(const return_statement &ref) {
@@ -103,13 +103,12 @@ statement_block_expression &ast_copier::copy(const statement_block_expression &r
 }
 
 function_call &ast_copier::copy(const function_call &ref) {
-  return m_container.make_node<function_call>(std::string{ref.name()}, apply(ref.params()), ref.loc());
-}
+  auto &copy = m_container.make_node<function_call>(std::string{ref.name()}, ref.loc());
 
-function_call_params &ast_copier::copy(const function_call_params &ref) {
-  auto &copy = m_container.make_node<function_call_params>(ref.loc());
-  for (const auto &v : ref)
-    copy.append_param(apply(*v));
+  for (const auto v : ref) {
+    copy.append_parameter(&apply(*v));
+  }
+
   return copy;
 }
 

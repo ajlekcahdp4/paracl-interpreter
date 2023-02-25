@@ -72,7 +72,6 @@ public:
   void generate(frontend::ast::return_statement &);
   void generate(frontend::ast::statement_block_expression &);
   void generate(frontend::ast::function_call &);
-  void generate(frontend::ast::function_call_params &);
 
   EZVIS_VISIT_INVOKER(generate);
 

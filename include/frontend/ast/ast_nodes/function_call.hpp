@@ -17,48 +17,29 @@
 
 namespace paracl::frontend::ast {
 
-class function_call : public i_ast_node {
+class function_call : public i_ast_node, private std::vector<i_ast_node *> {
 private:
-  i_ast_node *m_params;
   std::string m_name;
 
 public:
   EZVIS_VISITABLE();
 
-  function_call() = default;
+  function_call(std::string name, location l, std::vector<i_ast_node *> params = {})
+      : i_ast_node{l}, vector{std::move(params)}, m_name{std::move(name)} {}
 
-  function_call(std::string name, i_ast_node &params, location l)
-      : i_ast_node{l}, m_params{&params}, m_name{std::move(name)} {}
+  std::string_view name() const & { return m_name; }
 
-  std::string_view name() const { return m_name; }
+  using vector::cbegin;
+  using vector::cend;
+  using vector::crbegin;
+  using vector::crend;
+  using vector::empty;
+  using vector::size;
 
-  i_ast_node &params() const { return *m_params; }
-};
+  auto begin() const { return vector::begin(); }
+  auto end() const { return vector::end(); }
 
-class function_call_params : public i_ast_node {
-private:
-  std::vector<i_ast_node *> m_params;
-
-public:
-  EZVIS_VISITABLE();
-
-  function_call_params() = default;
-
-  function_call_params(location l, std::vector<i_ast_node *> vec = {}) : i_ast_node{l}, m_params{std::move(vec)} {}
-
-  void append_param(i_ast_node &expr) {
-    const bool empty = m_params.empty();
-    m_params.push_back(&expr);
-
-    if (empty) m_loc = expr.loc();
-    else m_loc += expr.loc();
-  }
-
-  auto size() const { return m_params.size(); }
-
-  auto begin() const { return m_params.begin(); }
-
-  auto end() const { return m_params.end(); }
+  void append_parameter(i_ast_node *ptr) { vector::push_back(ptr); }
 };
 
 } // namespace paracl::frontend::ast

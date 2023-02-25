@@ -20,11 +20,10 @@
 
 namespace paracl::frontend::ast {
 
-class function_definition final : public i_ast_node {
+class function_definition final : public i_ast_node, private std::vector<variable_expression> {
 private:
   // An optional function name. Those functions that don't have a name will be called anonymous functions
   std::optional<std::string> m_name;
-  std::vector<variable_expression> m_arguments; // Argument list
   i_ast_node *m_block;
 
 public:
@@ -33,25 +32,24 @@ public:
   function_definition(
       std::optional<std::string> name, i_ast_node &body, location l, std::vector<variable_expression> vars = {}
   )
-      : i_ast_node{l}, m_name{name}, m_arguments{std::move(vars)}, m_block{&body} {}
+      : i_ast_node{l}, vector{std::move(vars)}, m_name{name}, m_block{&body} {}
 
-  auto size() const { return m_arguments.size(); }
+  using vector::size;
 
-  auto begin() { return m_arguments.begin(); }
-  auto end() { return m_arguments.end(); }
-  auto begin() const { return m_arguments.cbegin(); }
-  auto end() const { return m_arguments.cend(); }
+  auto begin() const { return vector::begin(); }
+  auto end() const { return vector::end(); }
 
-  auto rbegin() const { return m_arguments.crbegin(); }
-  auto rend() const { return m_arguments.crend(); }
+  using vector::cbegin;
+  using vector::cend;
+  using vector::crbegin;
+  using vector::crend;
 
   i_ast_node &body() const { return *m_block; }
-
   bool named() const { return m_name.has_value(); }
 
-  std::string_view name() const {
-    if (!named()) throw std::runtime_error{"Attempt to get name of the anonymous function"};
-    return m_name.value();
+  std::optional<std::string> name() const {
+    if (m_name) return std::nullopt;
+    return m_name;
   }
 };
 
