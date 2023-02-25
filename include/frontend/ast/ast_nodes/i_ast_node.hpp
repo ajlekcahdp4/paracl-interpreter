@@ -20,8 +20,7 @@ protected:
   location m_loc;
 
 protected:
-  i_ast_node() = default;
-  i_ast_node(location l) : m_loc{l} {}
+  i_ast_node(location l = location{}) : m_loc{l} {}
 
 public:
   EZVIS_VISITABLE();
