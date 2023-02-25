@@ -9,11 +9,11 @@
  */
 
 %{
-#include <iostream>
-#include <string>
-
 #include "bison_paracl_parser.hpp"
 #include "frontend/scanner.hpp"
+
+#include <iostream>
+#include <string>
 %}
 
 %option noyywrap nounput noinput nodefault 

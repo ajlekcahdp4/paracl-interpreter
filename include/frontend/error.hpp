@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include <vector>
-
 #include "location.hpp"
+
+#include <vector>
 
 namespace paracl::frontend {
 

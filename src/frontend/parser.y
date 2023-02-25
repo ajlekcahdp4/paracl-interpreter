@@ -23,16 +23,16 @@
 %expect-rr 4
 
 %code requires {
+#include "frontend/ast/ast_container.hpp"
+#include "frontend/ast/ast_copier.hpp"
+#include "frontend/ast/ast_nodes.hpp"
+
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <cstdlib>
 #include <stdexcept>
-
-#include "frontend/ast/ast_container.hpp"
-#include "frontend/ast/ast_copier.hpp"
-#include "frontend/ast/ast_nodes.hpp"
 
 namespace paracl::frontend {
   class scanner;
@@ -44,13 +44,13 @@ namespace paracl::frontend {
 %code top
 {
 
-#include <iostream>
-#include <string>
-#include <sstream>
-
 #include "frontend/scanner.hpp"
 #include "bison_paracl_parser.hpp"
 #include "frontend/frontend_driver.hpp"
+
+#include <iostream>
+#include <string>
+#include <sstream>
 
 static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_scanner, paracl::frontend::frontend_driver &p_driver) {
   return p_scanner.get_next_token();
