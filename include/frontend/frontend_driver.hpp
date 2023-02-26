@@ -14,6 +14,7 @@
 #include "error.hpp"
 #include "frontend/ast/ast_container.hpp"
 #include "scanner.hpp"
+#include "semantic_analyzer.hpp"
 
 #include <cassert>
 #include <utility>
@@ -25,6 +26,7 @@ class frontend_driver final {
 private:
   scanner m_scanner;
   parser m_parser;
+  semantic_analyzer m_semantic_analyzer;
 
   std::optional<error_kind> m_current_error;
   ast::ast_container m_ast;
@@ -45,6 +47,11 @@ public:
   frontend_driver() : m_scanner{*this}, m_parser{m_scanner, *this} {}
 
   bool parse() { return m_parser.parse(); }
+
+  bool analyze() { return m_semantic_analyzer.analyze(*get_ast_root_ptr()); }
+
+  bool analyze(ast::i_ast_node &root) { return m_semantic_analyzer.analyze(root); }
+
   void switch_input_stream(std::istream *is) { m_scanner.switch_streams(is, nullptr); }
 
   template <typename t_node_type, typename... t_args> t_node_type *make_ast_node(t_args &&...args) {
@@ -55,7 +62,9 @@ public:
     m_ast.set_root_ptr(ptr);
   }
 
+  ast::i_ast_node *get_ast_root_ptr() & { return m_ast.get_root_ptr(); }
+
   ast::ast_container take_ast() && { return std::move(m_ast); }
-  ast::ast_container take_ast() & { return m_ast; }
+  ast::ast_container &take_ast() & { return m_ast; }
 };
 } // namespace paracl::frontend

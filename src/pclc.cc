@@ -60,8 +60,7 @@ int main(int argc, char *argv[]) {
   paracl::frontend::frontend_driver drv{};
   drv.switch_input_stream(&input_file);
   drv.parse();
-
-  auto parse_tree = drv.take_ast();
+  auto &parse_tree = drv.take_ast();
   if (!parse_tree.get_root_ptr()) {
     return 0;
   }
@@ -70,9 +69,7 @@ int main(int argc, char *argv[]) {
     paracl::frontend::ast::ast_dump(*parse_tree.get_root_ptr(), std::cout);
     return 0;
   }
-
-  paracl::frontend::semantic_analyzer analyzer;
-  if (!analyzer.analyze(*parse_tree.get_root_ptr())) {
+  if (!drv.analyze()) {
     return 1;
   }
 
