@@ -56,7 +56,8 @@ public:
   ~ast_container() = default;
 
   void set_root_ptr(i_ast_node *ptr) { m_root = ptr; }
-  i_ast_node *get_root_ptr() const { return m_root; }
+
+  i_ast_node *get_root_ptr() const & { return m_root; }
 
   template <typename t_node_type, typename... t_args>
   t_node_type &make_node(t_args &&...args)

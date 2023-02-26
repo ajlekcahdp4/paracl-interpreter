@@ -48,6 +48,7 @@ int main(int argc, char *argv[]) try {
   drv.parse();
 
   auto &parse_tree = drv.ast();
+
   if (!parse_tree.get_root_ptr()) {
     return 0;
   }

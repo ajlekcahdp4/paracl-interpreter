@@ -34,6 +34,7 @@ class parser_driver {
 private:
   scanner m_scanner;
   parser m_parser;
+  semantic_analyzer m_semantic_analyzer;
 
   std::optional<error_kind> m_current_error;
   ast::ast_container m_ast;
@@ -66,6 +67,7 @@ public:
   }
 
   ast::ast_container &ast() & { return m_ast; }
+  ast::i_ast_node *get_ast_root_ptr() & { return m_ast.get_root_ptr(); }
 };
 
 class source_input {
