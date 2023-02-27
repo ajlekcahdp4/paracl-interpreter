@@ -34,6 +34,7 @@
 #include <string_view>
 #include <vector>
 #include <cstdlib>
+#include <memory>
 #include <stdexcept>
 
 namespace paracl::frontend {
@@ -110,6 +111,8 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %token PRINT    "print"
 %token FUNC     "func"
 %token RET      "return"
+%token INT      "int"
+%token VOID     "void"
 
 /* Terminals */
 %token <int> INTEGER_CONSTANT "constant"
@@ -123,12 +126,14 @@ additive_expression comparison_expression equality_expression logical_expression
 
 %type <ast::return_statement *> return_statement
 %type <ast::statement_block> statements
-%type <ast::assignment_statement *> chainable_assignment chainable_assignment_statement
+%type <ast::assignment_statement *> chainable_assignment chainable_assignment_statement typed_chainable_assignment_statement
 
 %type <std::vector<ast::variable_expression>> arglist arglist_or_empty
 %type <std::vector<ast::i_ast_node *>> param_list param_list_or_empty
 
 %type eof_or_semicol
+%type <std::shared_ptr<types::i_type>> type
+%type <ast::variable_expression *> typed_identifier
 
 %precedence THEN
 %precedence ELSE
@@ -183,10 +188,15 @@ expression: logical_expression                  { $$ = $1; }
             | chainable_assignment              { $$ = $1; }   
 
 /* Allow statement_block not to be followed by a semicol */
-chainable_assignment_statement: IDENTIFIER ASSIGN chainable_assignment_statement    { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
-                      | IDENTIFIER ASSIGN logical_expression SEMICOL                { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
-                      | IDENTIFIER ASSIGN statement_block                           { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
-                      | IDENTIFIER ASSIGN function_def optional_semicol             { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
+chainable_assignment_statement:  IDENTIFIER ASSIGN chainable_assignment_statement         { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
+                      | IDENTIFIER ASSIGN logical_expression SEMICOL                      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
+                      | IDENTIFIER ASSIGN function_def optional_semicol                   { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
+
+typed_chainable_assignment_statement:   typed_identifier ASSIGN chainable_assignment_statement { $$ = $3; $$->append_variable(*$1); }
+                                        | typed_identifier ASSIGN logical_expression SEMICOL                      { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
+                                        | typed_identifier ASSIGN statement_block                                 { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
+                                        | typed_identifier ASSIGN function_def optional_semicol                   { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
+
 
 chainable_assignment: IDENTIFIER ASSIGN chainable_assignment      { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
                       | IDENTIFIER ASSIGN logical_expression      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
@@ -215,7 +225,7 @@ statement:  print_statement                   { $$ = $1; }
             | statement_block                 { $$ = $1; }
             | while_statement                 { $$ = $1; }
             | if_statement                    { $$ = $1; }
-            | chainable_assignment_statement  { $$ = $1; }
+            | typed_chainable_assignment_statement  { $$ = $1; }
             | expression_statement            { $$ = $1; }
             | function_def optional_semicol   { $$ = $1; }
             | return_statement                { $$ = $1; }
@@ -246,6 +256,12 @@ param_list_or_empty:  param_list  { $$ = std::move($1); }
 
 
 function_call:  IDENTIFIER LPAREN param_list_or_empty RPAREN { $$ = driver.make_ast_node<ast::function_call>($1, @3, $3); } 
+
+type: INT       { $$ = std::make_shared<types::type_builtin>(types::builtin_type_class::e_builtin_int); }
+      | VOID    { $$ = std::make_shared<types::type_builtin>(types::builtin_type_class::e_builtin_void); }
+
+typed_identifier: type IDENTIFIER { $$ = driver.make_ast_node<ast::variable_expression>($2, $1, @2); }
+                  | IDENTIFIER { $$ = driver.make_ast_node<ast::variable_expression>($1, @1); }
 
 %%
 
