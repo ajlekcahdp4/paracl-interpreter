@@ -18,7 +18,7 @@
 #include <ostream>
 #include <string>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) try {
   std::string input_file_name;
   bool dump_binary = false;
 
@@ -43,25 +43,11 @@ int main(int argc, char *argv[]) {
   }
 
   dump_binary = disas_option->is_set();
-
   input_file_name = input_file_option->value();
-  std::ifstream input_file;
-
-  std::ios_base::iostate exception_mask = input_file.exceptions() | std::ios::failbit;
-  input_file.exceptions(exception_mask);
-
-  try {
-    input_file.open(input_file_name, std::ios::binary);
-  } catch (std::exception &e) {
-    std::cerr << "Error opening file: " << e.what() << "\n";
-    return 1;
-  }
-
-  paracl::frontend::frontend_driver drv{};
-  drv.switch_input_stream(&input_file);
+  paracl::frontend::frontend_driver drv{input_file_name};
   drv.parse();
 
-  auto parse_tree = drv.take_ast();
+  auto &parse_tree = drv.ast();
   if (!parse_tree.get_root_ptr()) {
     return 0;
   }
@@ -71,13 +57,12 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  paracl::frontend::semantic_analyzer analyzer;
-  if (!analyzer.analyze(*parse_tree.get_root_ptr())) {
+  auto valid = drv.analyze();
+  if (!valid) {
     return 1;
   }
 
   auto ch = paracl::codegen::generate_code(*parse_tree.get_root_ptr());
-
   if (dump_binary) {
     paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler disas{
         paracl::bytecode_vm::instruction_set::paracl_isa};
@@ -89,7 +74,7 @@ int main(int argc, char *argv[]) {
     std::string output_file_name = output_file_option->value();
     std::ofstream output_file;
 
-    output_file.exceptions(exception_mask);
+    output_file.exceptions(output_file.exceptions() | std::ios::badbit | std::ios::failbit);
 
     try {
       output_file.open(output_file_name, std::ios::binary);
@@ -111,4 +96,6 @@ int main(int argc, char *argv[]) {
     std::cerr << "Encountered an unrecoverable error: " << e.what() << "\nExiting...\n";
     return 1;
   }
+} catch (std::exception &e) {
+  std::cout << "Error: " << e.what() << "\n";
 }

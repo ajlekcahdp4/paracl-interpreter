@@ -19,6 +19,8 @@
 %define api.value.type variant
 %define api.namespace { paracl::frontend }
 %define parse.error verbose
+%define parse.lac full
+
 %glr-parser
 %expect-rr 4
 
@@ -36,7 +38,7 @@
 
 namespace paracl::frontend {
   class scanner;
-  class frontend_driver;
+  class parser_driver;
 }
 
 }
@@ -52,16 +54,16 @@ namespace paracl::frontend {
 #include <string>
 #include <sstream>
 
-static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_scanner, paracl::frontend::frontend_driver &p_driver) {
+static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_scanner, paracl::frontend::parser_driver &p_driver) {
   return p_scanner.get_next_token();
 }
 
 }
 
 %lex-param { paracl::frontend::scanner &scanner }
-%lex-param { paracl::frontend::frontend_driver &driver }
+%lex-param { paracl::frontend::parser_driver &driver }
 %parse-param { paracl::frontend::scanner &scanner }
-%parse-param { paracl::frontend::frontend_driver &driver }
+%parse-param { paracl::frontend::parser_driver &driver }
 
 %define parse.trace
 %define api.token.prefix {TOKEN_}
@@ -126,6 +128,8 @@ additive_expression comparison_expression equality_expression logical_expression
 %type <std::vector<ast::variable_expression>> arglist arglist_or_empty
 %type <std::vector<ast::i_ast_node *>> param_list param_list_or_empty
 
+%type eof_or_semicol
+
 %precedence THEN
 %precedence ELSE
 
@@ -139,8 +143,8 @@ program:  statements    { auto ptr = driver.make_ast_node<ast::statement_block>(
 optional_semicol: %empty {}
                   | SEMICOL {}
 
-primary_expression: INTEGER_CONSTANT            { $$ = driver.make_ast_node<ast::constant_expression>($1, @$); }
-                    | IDENTIFIER                { $$ = driver.make_ast_node<ast::variable_expression>($1, @$); }
+primary_expression: INTEGER_CONSTANT            { $$ = driver.make_ast_node<ast::constant_expression>($1, @1); }
+                    | IDENTIFIER                { $$ = driver.make_ast_node<ast::variable_expression>($1, @1); }
                     | QMARK                     { $$ = driver.make_ast_node<ast::read_expression>(@$); }
                     | LPAREN expression RPAREN  { $$ = $2; }
                     | LPAREN error RPAREN       { auto error = driver.take_error(); $$ = driver.make_ast_node<ast::error_node>(error.error_message, error.loc); yyerrok; }
@@ -180,19 +184,21 @@ expression: logical_expression                  { $$ = $1; }
 
 /* Allow statement_block not to be followed by a semicol */
 chainable_assignment_statement: IDENTIFIER ASSIGN chainable_assignment_statement    { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
-                      | IDENTIFIER ASSIGN logical_expression SEMICOL                { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
-                      | IDENTIFIER ASSIGN statement_block                           { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
-                      | IDENTIFIER ASSIGN function_def optional_semicol             { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
+                      | IDENTIFIER ASSIGN logical_expression SEMICOL                { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
+                      | IDENTIFIER ASSIGN statement_block                           { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
+                      | IDENTIFIER ASSIGN function_def optional_semicol             { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
 
 chainable_assignment: IDENTIFIER ASSIGN chainable_assignment      { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
-                      | IDENTIFIER ASSIGN logical_expression      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$); }
+                      | IDENTIFIER ASSIGN logical_expression      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
 
 print_statement: PRINT expression SEMICOL { $$ = driver.make_ast_node<ast::print_statement>(*$2, @$); }
 
-statements: statements statement        { $$ = std::move($1); $$.append_statement(*$2); }
-            | statements error SEMICOL  { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
-            | statements error EOF      { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
-            | statement                 { $$.append_statement(*$1); }
+eof_or_semicol: SEMICOL | EOF
+
+statements: statements statement                { $$ = std::move($1); $$.append_statement(*$2); }
+            | statements error eof_or_semicol   { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
+            | statement                         { $$.append_statement(*$1); }
+            | error eof_or_semicol              { auto error = driver.take_error(); $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
 
 statement_block:  LBRACE statements RBRACE    { $$ = driver.make_ast_node<ast::statement_block>(std::move($2)); }
                   | LBRACE RBRACE             { $$ = driver.make_ast_node<ast::statement_block>(); }

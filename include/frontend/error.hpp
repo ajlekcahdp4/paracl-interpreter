@@ -12,7 +12,7 @@
 
 #include "location.hpp"
 
-#include <vector>
+#include <string>
 
 namespace paracl::frontend {
 

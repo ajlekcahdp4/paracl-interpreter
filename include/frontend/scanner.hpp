@@ -23,20 +23,24 @@
 #include "location.hpp"
 
 namespace paracl::frontend {
-class frontend_driver;
+class parser_driver;
 
 class scanner final : public yyFlexLexer {
 private:
-  frontend_driver &m_driver;
+  parser_driver &m_driver;
   position m_pos;
 
-  frontend_driver &driver() { return m_driver; }
+private:
+  auto symbol_length() const { return yyleng; }
 
 public:
-  scanner(frontend_driver &driver) : m_driver{driver} {}
-
+  scanner(parser_driver &driver, std::string *filename = nullptr) : m_driver{driver}, m_pos{filename} {}
   paracl::frontend::parser::symbol_type get_next_token();
-  location update_loc() { return location(m_pos, m_pos += yyleng); }
+  location update_loc() {
+    auto old_pos = m_pos;
+    auto new_pos = (m_pos += symbol_length());
+    return location{old_pos, new_pos};
+  }
 };
 
 } // namespace paracl::frontend

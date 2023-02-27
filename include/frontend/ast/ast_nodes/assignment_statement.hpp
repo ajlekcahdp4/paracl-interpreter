@@ -30,9 +30,11 @@ public:
     m_lefts.push_back(left);
   }
 
+  // Note[Segei]: Assignment is right associative, so this function appends variables on the left, so location is
+  // extended to the left as well.
   void append_variable(variable_expression var) {
     m_lefts.push_back(var);
-    m_loc += var.loc();
+    m_loc.begin = var.loc().begin;
   }
 
   auto size() const { return m_lefts.size(); }
