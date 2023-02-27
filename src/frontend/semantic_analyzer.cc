@@ -43,6 +43,12 @@ void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
 
   set_state(semantic_analysis_state::E_LVALUE);
   auto &&right_type = ref.right().m_type;
+  if (!right_type) {
+    report_error("Type of the right side of the assignment is unknown or can't be deduced", ref.right().loc());
+    reset_state();
+    return;
+  }
+
   for (auto &v : ref) {
     auto &&declared = analyze_node(v);
     if (right_type.get() && !declared && !v.m_type) {
