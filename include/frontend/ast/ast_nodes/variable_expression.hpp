@@ -19,17 +19,14 @@
 
 namespace paracl::frontend::ast {
 
-class variable_expression final : public i_ast_node {
+class variable_expression final : public i_expression {
   std::string m_name;
-  types::shared_type m_type;
 
 public:
   EZVIS_VISITABLE();
 
-  variable_expression(std::string p_name, types::shared_type type, location l)
-      : i_ast_node{l}, m_name{p_name}, m_type{type} {}
-
-  variable_expression(std::string p_name, location l) : i_ast_node{l}, m_name{p_name} {}
+  variable_expression(std::string p_name, types::shared_type type, location l) : i_expression{l}, m_name{p_name} {}
+  variable_expression(std::string p_name, location l) : i_expression{l}, m_name{p_name} {}
 
   std::string type_str() const {
     if (!m_type) return "";

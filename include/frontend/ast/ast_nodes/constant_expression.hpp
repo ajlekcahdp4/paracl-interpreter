@@ -14,12 +14,13 @@
 
 namespace paracl::frontend::ast {
 
-class constant_expression final : public i_ast_node {
+class constant_expression final : public i_expression { // Inherit from i_expression but dont pass trivial builtin type
+                                                        // by shared ptr. Should fix in the future
   int m_val;
 
 public:
   EZVIS_VISITABLE();
-  constant_expression(int p_val, location l) : i_ast_node{l}, m_val{p_val} {}
+  constant_expression(int p_val, location l) : i_expression{l}, m_val{p_val} {}
   int value() const { return m_val; }
 };
 

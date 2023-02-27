@@ -15,15 +15,14 @@
 namespace paracl::frontend::ast {
 
 class return_statement final : public i_ast_node {
-  i_ast_node *m_expr;
+  i_expression *m_expr;
 
 public:
   EZVIS_VISITABLE();
-  return_statement(i_ast_node *p_expr, location l) : i_ast_node{l}, m_expr{p_expr} {}
+  return_statement(i_expression *p_expr, location l) : i_ast_node{l}, m_expr{p_expr} {}
 
   bool empty() const { return !m_expr; }
-
-  i_ast_node &expr() const {
+  i_expression &expr() const {
     if (m_expr == nullptr) throw std::runtime_error{"Attempt to dereference empty return statement"};
     return *m_expr;
   }

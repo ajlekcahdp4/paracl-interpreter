@@ -14,6 +14,7 @@
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
 #include "frontend/error.hpp"
 #include "frontend/symtab.hpp"
+#include "frontend/types/types.hpp"
 #include "location.hpp"
 
 #include <iostream>
@@ -23,9 +24,8 @@ namespace paracl::frontend {
 class semantic_analyzer final : public ezvis::visitor_base<ast::i_ast_node, semantic_analyzer, void> {
 private:
   symtab_stack m_scopes;
-  std::vector<error_kind> *error_queue = nullptr;
-
-  bool m_valid = true;
+  std::vector<error_kind> *m_error_queue = nullptr;
+  types::builtin_types *m_types = nullptr;
 
   enum class semantic_analysis_state {
     E_LVALUE,
@@ -40,18 +40,24 @@ private:
 
   void set_state(semantic_analysis_state s) { current_state = s; }
   void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
+  void report_error(std::string msg, location loc) { m_error_queue->push_back(error_kind{msg, loc}); }
 
-  void report_error(std::string msg, location loc) {
-    m_valid = false;
-    error_queue->push_back(error_kind{msg, loc});
+  bool expect_type_eq(ast::i_expression &ref, types::i_type &rhs) {
+    auto &&type = ref.m_type;
+    if (!type || !(type->is_equal(*m_types->m_int))) {
+      report_error("Expression is not of type '" + rhs.to_string() + "'", ref.loc());
+      return false;
+    }
+
+    return true;
   }
 
 public:
   EZVIS_VISIT_CT(to_visit);
 
   // clang-format off
-  void analyze_node(ast::read_expression &) { /* Do nothing */ }
-  void analyze_node(ast::constant_expression &) { /* Do nothing */ }
+  void analyze_node(ast::read_expression &);
+  void analyze_node(ast::constant_expression &);
   // clang-format on
 
   void analyze_node(ast::assignment_statement &);
@@ -62,17 +68,19 @@ public:
 
   void analyze_node(ast::statement_block &);
   void analyze_node(ast::unary_expression &);
-  void analyze_node(ast::variable_expression &);
+  bool analyze_node(ast::variable_expression &);
   void analyze_node(ast::while_statement &);
   void analyze_node(ast::error_node &);
 
   EZVIS_VISIT_INVOKER(analyze_node);
 
-  bool analyze(ast::i_ast_node &root, std::vector<error_kind> &errors) {
-    m_valid = true;
-    error_queue = &errors;
+  bool analyze(ast::i_ast_node &root, std::vector<error_kind> &errors, types::builtin_types &builtin_types) {
+    errors.clear();
+    m_error_queue = &errors;
+    m_types = &builtin_types;
+
     apply(root);
-    return m_valid;
+    return errors.empty();
   }
 };
 

@@ -18,7 +18,7 @@
 
 namespace paracl::frontend::ast {
 
-class statement_block : public i_ast_node, private std::vector<i_ast_node *> {
+class statement_block : public i_expression, private std::vector<i_ast_node *> {
 private:
   symtab m_symtab;
 
@@ -26,7 +26,7 @@ public:
   EZVIS_VISITABLE();
 
   statement_block() = default;
-  statement_block(std::vector<i_ast_node *> vec, location l) : i_ast_node{l}, vector{vec} {}
+  statement_block(std::vector<i_ast_node *> vec, location l) : i_expression{l}, vector{vec} {}
 
   void append_statement(i_ast_node &statement) {
     const bool empty = vector::empty();
@@ -39,23 +39,18 @@ public:
     }
   }
 
+  using vector::back;
   using vector::cbegin;
   using vector::cend;
   using vector::crbegin;
   using vector::crend;
+  using vector::front;
   using vector::size;
 
   auto begin() const { return vector::begin(); }
   auto end() const { return vector::end(); }
 
   symtab *symbol_table() { return &m_symtab; }
-};
-
-class statement_block_expression : public statement_block {
-public:
-  EZVIS_VISITABLE();
-  statement_block_expression() = default;
-  statement_block_expression(const statement_block &block) : statement_block{block} {}
 };
 
 } // namespace paracl::frontend::ast

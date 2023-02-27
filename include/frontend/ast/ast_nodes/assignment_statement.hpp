@@ -18,15 +18,15 @@
 
 namespace paracl::frontend::ast {
 
-class assignment_statement final : public i_ast_node {
+class assignment_statement final : public i_expression {
 private:
   std::vector<variable_expression> m_lefts;
-  i_ast_node *m_right;
+  i_expression *m_right;
 
 public:
   EZVIS_VISITABLE();
 
-  assignment_statement(variable_expression left, i_ast_node &right, location l) : i_ast_node{l}, m_right{&right} {
+  assignment_statement(variable_expression left, i_expression &right, location l) : i_expression{l}, m_right{&right} {
     m_lefts.push_back(left);
   }
 
@@ -47,7 +47,7 @@ public:
   auto rbegin() const { return m_lefts.cbegin(); }
   auto rend() const { return m_lefts.cend(); }
 
-  i_ast_node &right() const { return *m_right; }
+  i_expression &right() const { return *m_right; }
 };
 
 } // namespace paracl::frontend::ast

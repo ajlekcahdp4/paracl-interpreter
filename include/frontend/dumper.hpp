@@ -54,8 +54,8 @@ public:
   void dump(const error_node &);
   void dump(const function_definition &);
   void dump(const return_statement &);
-  void dump(const statement_block_expression &);
   void dump(const function_call &);
+  void dump(const function_definition_to_ptr_conv &);
 
   EZVIS_VISIT_INVOKER(dump);
 };

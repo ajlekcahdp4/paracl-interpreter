@@ -134,7 +134,9 @@ using vtable_storage_t = typename vtable_storage<t_traits, t_size, t_storage_fla
 template <typename t_traits, typename t_storage_flag, typename t_to_visit> struct vtable {};
 
 template <typename t_traits, typename t_storage_flag, typename... t_types>
+#ifdef EZVIS_VERIFY
   requires unique_hash_values<typename t_traits::base_type, std::tuple<t_types...>>
+#endif
 // It is very unlikely that there will be collisions with a 64-bit hash, but we should verify it nontheless.
 struct vtable<t_traits, t_storage_flag, std::tuple<t_types...>> {
   using base_type = typename t_traits::base_type;
@@ -207,7 +209,7 @@ public:
   struct invoker_ezvis__ {                                                                                             \
     template <typename t_return_type, typename t_visitor, typename t_visitable>                                        \
     static t_return_type invoke(t_visitor &visitor, t_visitable &visitable) {                                          \
-      return visitor. name (visitable);                                                                                \
+      return static_cast<t_return_type>(visitor. name (visitable));                                                    \
     }                                                                                                                  \
   }
   // clang-format on
@@ -250,6 +252,12 @@ public:
 template <typename t_return_type, typename... t_to_visit, typename t_base, typename t_visitor_functor>
 t_return_type visit(t_visitor_functor func, t_base &base) {
   detail::lambda_visitor<t_base, t_return_type, t_visitor_functor, std::tuple<t_to_visit...>> visitor{func};
+  return visitor.apply(base);
+}
+
+template <typename t_return_type, typename t_to_visit, typename t_base, typename t_visitor_functor>
+t_return_type visit_tuple(t_visitor_functor func, t_base &base) {
+  detail::lambda_visitor<t_base, t_return_type, t_visitor_functor, t_to_visit> visitor{func};
   return visitor.apply(base);
 }
 

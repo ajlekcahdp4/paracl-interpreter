@@ -11,6 +11,7 @@
 #pragma once
 
 #include "ezvis/ezvis.hpp"
+#include "frontend/types/types.hpp"
 #include "location.hpp"
 
 namespace paracl::frontend::ast {
@@ -29,6 +30,22 @@ public:
   virtual ~i_ast_node() {}
 };
 
+class i_expression : public i_ast_node {
+public:
+  types::shared_type m_type;
+
+public:
+  i_expression(location l = location{}, types::shared_type type = nullptr) : i_ast_node{l}, m_type{type} {}
+  types::shared_type get_type() { return m_type; }
+
+  std::string type_str() {
+    if (!m_type.get()) return "<undetermined>";
+    return m_type->to_string();
+  }
+
+  void set_type(types::shared_type type) { m_type = type; }
+};
+
 class i_ast_node;
 class assignment_statement;
 class binary_expression;
@@ -43,12 +60,12 @@ class while_statement;
 class error_node;
 class function_definition;
 class return_statement;
-class statement_block_expression;
 class function_call;
+class function_definition_to_ptr_conv;
 
 using tuple_ast_nodes = std::tuple<
     assignment_statement, binary_expression, constant_expression, if_statement, print_statement, read_expression,
     statement_block, unary_expression, variable_expression, while_statement, error_node, function_definition,
-    return_statement, statement_block_expression, function_call>;
+    return_statement, function_call, function_definition_to_ptr_conv>;
 
 } // namespace paracl::frontend::ast

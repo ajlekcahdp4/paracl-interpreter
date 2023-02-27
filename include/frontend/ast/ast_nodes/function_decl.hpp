@@ -55,16 +55,23 @@ public:
   i_ast_node &body() const { return *m_block; }
 
   bool named() const { return m_name.has_value(); }
+  std::optional<std::string> name() const {
+    if (!m_name) return std::nullopt;
+    return m_name;
+  }
 
   std::string type_str() const {
     if (!m_type) return "";
     return m_type->to_string();
   }
+};
 
-  std::optional<std::string> name() const {
-    if (!m_name) return std::nullopt;
-    return m_name;
-  }
+class function_definition_to_ptr_conv final : public i_expression {
+  function_definition *m_definition;
+
+public:
+  function_definition_to_ptr_conv(location l, function_definition &def) : i_expression{l}, m_definition{&def} {}
+  function_definition &definition() const { return *m_definition; }
 };
 
 } // namespace paracl::frontend::ast

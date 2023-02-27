@@ -42,10 +42,16 @@ public:
   error_node &copy(const error_node &);
   function_definition &copy(const function_definition &);
   return_statement &copy(const return_statement &);
-  statement_block_expression &copy(const statement_block_expression &);
   function_call &copy(const function_call &);
-
+  function_definition_to_ptr_conv &copy(const function_definition_to_ptr_conv &);
   EZVIS_VISIT_INVOKER(copy);
+
+  template <typename T>
+  i_expression &copy_expr(const T &expr)
+    requires std::convertible_to<T, i_expression>
+  {
+    return static_cast<i_expression &>(apply(expr));
+  }
 };
 
 inline i_ast_node *ast_copy(i_ast_node *node, ast_container &container) {

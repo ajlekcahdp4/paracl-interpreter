@@ -12,12 +12,12 @@ if((${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR}) AND NOT
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
-
+set(CONSTEXPR_DEPTH_LIMIT 4096)
 # Possibly support windows and MSVC compiler
 if(MSVC)
   add_compile_options(/W2)
 else()
-  add_compile_options(-Wall)
+  add_compile_options(-Wall -fconstexpr-depth=${CONSTEXPR_DEPTH_LIMIT})
 endif()
 
 find_package(GTest)
@@ -118,20 +118,20 @@ target_link_libraries(paracl_compiler ezvis)
 add_executable(pclc src/pclc.cc)
 target_link_libraries(pclc PUBLIC popl paracl_compiler bytecode_vm)
 
+set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
+
 if(BASH_PROGRAM)
-  add_test(
-    NAME test.paracl.external
-    COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh
-            "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/test/external)
+  add_test(NAME test.paracl.external
+           COMMAND ${BASH_PROGRAM} ${SCRIPTS_DIR}/test.sh "$<TARGET_FILE:pclc>"
+                   ${CMAKE_CURRENT_SOURCE_DIR}/test/external)
 
   add_test(NAME test.paracl.basic
-           COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh
-                   "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/test/basic)
+           COMMAND ${BASH_PROGRAM} ${SCRIPTS_DIR}/test.sh "$<TARGET_FILE:pclc>"
+                   ${CMAKE_CURRENT_SOURCE_DIR}/test/basic)
 
-  add_test(
-    NAME test.paracl.functions
-    COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh
-            "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/test/functions)
+  add_test(NAME test.paracl.functions
+           COMMAND ${BASH_PROGRAM} ${SCRIPTS_DIR}/test.sh "$<TARGET_FILE:pclc>"
+                   ${CMAKE_CURRENT_SOURCE_DIR}/test/functions)
 endif()
 
 set(UNIT_TEST_SOURCES unit_tests/main.cc unit_tests/ezvis.cc)

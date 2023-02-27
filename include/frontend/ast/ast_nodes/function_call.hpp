@@ -17,15 +17,15 @@
 
 namespace paracl::frontend::ast {
 
-class function_call : public i_ast_node, private std::vector<i_ast_node *> {
+class function_call : public i_expression, private std::vector<i_expression *> {
 private:
   std::string m_name;
 
 public:
   EZVIS_VISITABLE();
 
-  function_call(std::string name, location l, std::vector<i_ast_node *> params = {})
-      : i_ast_node{l}, vector{std::move(params)}, m_name{std::move(name)} {}
+  function_call(std::string name, location l, std::vector<i_expression *> params = {})
+      : i_expression{l}, vector{std::move(params)}, m_name{std::move(name)} {}
 
   std::string_view name() const & { return m_name; }
 
@@ -39,7 +39,7 @@ public:
   auto begin() const { return vector::begin(); }
   auto end() const { return vector::end(); }
 
-  void append_parameter(i_ast_node *ptr) { vector::push_back(ptr); }
+  void append_parameter(i_expression *ptr) { vector::push_back(ptr); }
 };
 
 } // namespace paracl::frontend::ast

@@ -23,19 +23,19 @@
 namespace paracl::frontend::types {
 
 enum class type_class {
-  e_builtin,
-  e_composite_function,
+  E_BUILTIN,
+  E_COMPOSITE_FUNCTION,
 };
 
 enum class builtin_type_class {
-  e_builtin_int,
-  e_builtin_void,
+  E_BUILTIN_INT,
+  E_BUILTIN_VOID,
 };
 
 inline std::string builtin_type_to_string(builtin_type_class type_tag) {
   switch (type_tag) {
-  case builtin_type_class::e_builtin_void: return "void";
-  case builtin_type_class::e_builtin_int: return "int";
+  case builtin_type_class::E_BUILTIN_VOID: return "void";
+  case builtin_type_class::E_BUILTIN_INT: return "int";
   }
 
   assert(0 && "Broken builtin_type_class enum");
@@ -72,7 +72,7 @@ private:
 public:
   EZVIS_VISITABLE();
 
-  type_builtin(builtin_type_class type_tag) : i_type{type_class::e_builtin}, m_builtin_type_tag{type_tag} {}
+  type_builtin(builtin_type_class type_tag) : i_type{type_class::E_BUILTIN}, m_builtin_type_tag{type_tag} {}
 
   bool is_equal(const i_type &rhs) const override {
     return m_type_tag == rhs.get_type() &&
@@ -91,7 +91,7 @@ public:
   EZVIS_VISITABLE();
 
   type_composite_function(std::vector<shared_type> arg_types, shared_type return_type)
-      : i_type{type_class::e_composite_function}, vector{std::move(arg_types)}, m_return_type{return_type} {
+      : i_type{type_class::E_COMPOSITE_FUNCTION}, vector{std::move(arg_types)}, m_return_type{return_type} {
     assert(return_type.get() && "Return type can't be a nullptr");
   }
 
@@ -131,7 +131,7 @@ public:
     return std::make_unique<type_composite_function>(std::move(args), m_return_type->clone());
   }
 
-  const i_type &return_type() const & { return *m_return_type.get(); }
+  const i_type &return_type() const & { return *m_return_type; }
 
   using vector::cbegin;
   using vector::cend;
@@ -139,6 +139,11 @@ public:
   using vector::crend;
   using vector::empty;
   using vector::size;
+};
+
+struct builtin_types {
+  types::shared_type m_void = std::make_shared<types::type_builtin>(types::builtin_type_class::E_BUILTIN_VOID);
+  types::shared_type m_int = std::make_shared<types::type_builtin>(types::builtin_type_class::E_BUILTIN_INT);
 };
 
 } // namespace paracl::frontend::types
