@@ -257,8 +257,8 @@ param_list_or_empty:  param_list  { $$ = std::move($1); }
 
 function_call:  IDENTIFIER LPAREN param_list_or_empty RPAREN { $$ = driver.make_ast_node<ast::function_call>($1, @3, $3); } 
 
-type: INT       { $$ = std::make_shared<types::type_builtin>(types::builtin_type_class::e_builtin_int); }
-      | VOID    { $$ = std::make_shared<types::type_builtin>(types::builtin_type_class::e_builtin_void); }
+type: INT       { $$ = driver.int_type_ptr(); }
+      | VOID    { $$ = driver.void_type_ptr(); }
 
 typed_identifier: type IDENTIFIER { $$ = driver.make_ast_node<ast::variable_expression>($2, $1, @2); }
                   | IDENTIFIER { $$ = driver.make_ast_node<ast::variable_expression>($1, @1); }
