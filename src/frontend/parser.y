@@ -132,6 +132,7 @@ additive_expression comparison_expression equality_expression logical_expression
 %type <std::vector<ast::i_ast_node *>> param_list param_list_or_empty
 
 %type eof_or_semicol
+
 %type <std::shared_ptr<types::i_type>> builtin_type function_type type
 %type <std::vector<std::shared_ptr<types::i_type>>> type_list type_list_or_empty
 %type <ast::variable_expression *> typed_identifier
@@ -212,21 +213,23 @@ print_statement:      PRINT expression SEMICOL { $$ = driver.make_ast_node<ast::
 
 eof_or_semicol: SEMICOL | EOF
 
-statements:           statements statement { $$ = std::move($1);
+statements:           statements statement {
+                        $$ = std::move($1);
                         $$.append_statement(*$2);
                       }
-                      | statements error SEMICOL  {
-                        $$ = std::move($1); auto error = driver.take_error();
-                        $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc));
-                        yyerrok;
-                      }
-                      | statements error EOF {
+                      | statements error eof_or_semicol  {
                         $$ = std::move($1);
                         auto error = driver.take_error();
                         $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc));
                         yyerrok;
                       }
                       | statement { $$.append_statement(*$1); }
+                      | error eof_or_semicol {
+                        auto error = driver.take_error();
+                        $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc));
+                        yyerrok;
+                      }
+                      
 
 statement_block:  LBRACE statements RBRACE    { $$ = driver.make_ast_node<ast::statement_block>(std::move($2)); }
                   | LBRACE RBRACE             { $$ = driver.make_ast_node<ast::statement_block>(); }

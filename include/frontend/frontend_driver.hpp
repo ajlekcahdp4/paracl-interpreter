@@ -12,21 +12,15 @@
 
 #include "bison_paracl_parser.hpp"
 #include "frontend/ast/ast_container.hpp"
-<<<<<<< HEAD
 #include "frontend/error.hpp"
 #include "frontend/scanner.hpp"
 #include "frontend/semantic_analyzer.hpp"
-    == == ==
-    =
 #include "frontend/types/types.hpp"
 #include "scanner.hpp"
 #include "semantic_analyzer.hpp"
-        >>>>>>> 59c91c6(store only one copy of void and int types in frontend_driver)
 
 #include <algorithm>
 #include <cassert>
-    <<<<<<<
-        HEAD
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -35,59 +29,61 @@
 #include <ranges>
 #include <sstream>
 #include <string_view>
-            == == ==
-        =
-#include <memory>
-            >>>>>>> 59c91c6(store only one copy of void and int types in frontend_driver)
 #include <utility>
 #include <vector>
 
-        namespace paracl::frontend {
-  class parser_driver {
-  private:
-    scanner m_scanner;
-    parser m_parser;
-    semantic_analyzer m_semantic_analyzer;
+namespace paracl::frontend {
 
-    std::optional<error_kind> m_current_error;
-    ast::ast_container m_ast;
-    std::shared_ptr<types::i_type> m_void;
-    std::shared_ptr<types::i_type> m_int;
+struct builtin_types {
+  types::shared_type m_void = std::make_shared<types::type_builtin>(types::builtin_type_class::e_builtin_void);
+  types::shared_type m_int = std::make_shared<types::type_builtin>(types::builtin_type_class::e_builtin_int);
+};
 
-    friend class parser;
-    friend class scanner;
+class parser_driver {
+private:
+  scanner m_scanner;
+  parser m_parser;
+  semantic_analyzer m_semantic_analyzer;
 
-  private:
-    void report_error(std::string message, location l) { m_current_error = {message, l}; }
+  std::optional<error_kind> m_current_error;
+  ast::ast_container m_ast;
 
-    error_kind take_error() {
-      auto error = m_current_error.value();
-      m_current_error = std::nullopt;
-      return error;
-    }
+  builtin_types m_types;
 
-  public:
-    parser_driver(std::string *filename) : m_scanner{*this, filename}, m_parser{m_scanner, *this} {}
+  friend class parser;
+  friend class scanner;
 
-    bool parse() { return m_parser.parse(); }
+private:
+  void report_error(std::string message, location l) { m_current_error = {message, l}; }
 
-    void switch_input_stream(std::istream *is) { m_scanner.switch_streams(is, nullptr); }
+  error_kind take_error() {
+    auto error = m_current_error.value();
+    m_current_error = std::nullopt;
+    return error;
+  }
 
-    template <typename t_node_type, typename... t_args> t_node_type *make_ast_node(t_args &&...args) {
-      return &m_ast.make_node<t_node_type>(std::forward<t_args>(args)...);
-    }
+public:
+  parser_driver(std::string *filename) : m_scanner{*this, filename}, m_parser{m_scanner, *this}, m_types{} {}
 
-    std::shared_ptr<types::i_type> void_type_ptr() & { return m_void; }
+  bool parse() { return m_parser.parse(); }
 
-    std::shared_ptr<types::i_type> int_type_ptr() & { return m_int; }
+  void switch_input_stream(std::istream *is) { m_scanner.switch_streams(is, nullptr); }
 
-    void set_ast_root_ptr(ast::i_ast_node *ptr) { // nullptr is possible
-      m_ast.set_root_ptr(ptr);
-    }
+  template <typename t_node_type, typename... t_args> t_node_type *make_ast_node(t_args &&...args) {
+    return &m_ast.make_node<t_node_type>(std::forward<t_args>(args)...);
+  }
 
-    ast::ast_container &ast() & { return m_ast; }
-    ast::i_ast_node *get_ast_root_ptr() & { return m_ast.get_root_ptr(); }
-  };
+  types::shared_type void_type_ptr() & { return m_types.m_void; }
+
+  types::shared_type int_type_ptr() & { return m_types.m_int; }
+
+  void set_ast_root_ptr(ast::i_ast_node *ptr) { // nullptr is possible
+    m_ast.set_root_ptr(ptr);
+  }
+
+  ast::ast_container &ast() & { return m_ast; }
+  ast::i_ast_node *get_ast_root_ptr() & { return m_ast.get_root_ptr(); }
+};
 
   class source_input {
   private:
@@ -183,9 +179,7 @@
   public:
     frontend_driver(std::filesystem::path input_path)
         : m_source{input_path}, m_iss{m_source.iss()},
-          m_parsing_driver{std::make_unique<parser_driver>(m_source.filename())}, m_semantic_analyzer{},
-          m_void{std::make_shared<types::type_builtin>(types::builtin_type_class::e_builtin_void)},
-          m_int{std::make_shared<types::type_builtin>(types::builtin_type_class::e_builtin_int)} {
+          m_parsing_driver{std::make_unique<parser_driver>(m_source.filename())}, m_semantic_analyzer{} {
       m_parsing_driver->switch_input_stream(m_iss.get());
     }
 
@@ -207,4 +201,4 @@
     }
   };
 
-} // namespace paracl::frontend
+  } // namespace paracl::frontend

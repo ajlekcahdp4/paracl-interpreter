@@ -1,1 +1,1 @@
-void a = b = func(x) {return 4;}
+a = b = func(x) {return 4;}
