@@ -25,7 +25,8 @@ class variable_expression final : public i_expression {
 public:
   EZVIS_VISITABLE();
 
-  variable_expression(std::string p_name, types::shared_type type, location l) : i_expression{l}, m_name{p_name} {}
+  variable_expression(std::string p_name, types::shared_type type, location l)
+      : i_expression{l, type}, m_name{p_name} {}
   variable_expression(std::string p_name, location l) : i_expression{l}, m_name{p_name} {}
 
   std::string type_str() const {

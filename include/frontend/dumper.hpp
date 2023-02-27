@@ -21,7 +21,7 @@ namespace paracl::frontend::ast {
 
 class ast_dumper final : public ezvis::visitor_base<const i_ast_node, ast_dumper, void> {
 private:
-  using to_visit = tuple_ast_nodes;
+  using to_visit = tuple_all_nodes;
 
 private:
   std::ostream &m_os;

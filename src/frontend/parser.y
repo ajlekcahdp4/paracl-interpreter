@@ -305,7 +305,6 @@ type_list:  type_list COMMA type      { $$ = std::move($1); $$.push_back($3); }
 type_list_or_empty:   type_list       { $$ = std::move($1); }
                       | %empty        {  }  
 
-
 typed_identifier:     type IDENTIFIER { $$ = driver.make_ast_node<ast::variable_expression>($2, $1, @2); }
                       | IDENTIFIER { $$ = driver.make_ast_node<ast::variable_expression>($1, @1); }
 

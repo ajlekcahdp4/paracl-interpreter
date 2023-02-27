@@ -45,7 +45,7 @@ void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
   auto &&right_type = ref.right().m_type;
   for (auto &v : ref) {
     auto &&declared = analyze_node(v);
-    if (right_type.get() && !declared) {
+    if (right_type.get() && !declared && !v.m_type) {
       v.set_type(right_type);
     } else {
       expect_type_eq(v, *(ref.right().m_type));
@@ -80,22 +80,19 @@ void semantic_analyzer::analyze_node(ast::print_statement &ref) {
 void semantic_analyzer::analyze_node(ast::statement_block &ref) {
   m_scopes.begin_scope(ref.symbol_table());
 
+  bool is_rvalue = (current_state == semantic_analysis_state::E_RVALUE);
+  // Save state, because it will get mangled by subsequent apply calls.
   for (auto &statement : ref) {
     assert(statement);
     apply(*statement);
   }
 
-  if (current_state == semantic_analysis_state::E_RVALUE) {
-    auto type = ezvis::visit_tuple<types::shared_type, ast::tuple_ast_nodes>(
-        paracl::utils::visitors{
-            [](ast::i_expression &expr) { return expr.get_type(); },
-            [&](ast::i_ast_node &) { return m_types->m_void; }},
-        *ref.back()
+  if (is_rvalue) {
+    auto type = ezvis::visit_tuple<types::shared_type, ast::tuple_expression_nodes>(
+        [](ast::i_expression &expr) { return expr.get_type(); }, *ref.back()
     );
     ref.set_type(type);
-  }
-
-  else {
+  } else {
     ref.set_type(m_types->m_void);
   }
 

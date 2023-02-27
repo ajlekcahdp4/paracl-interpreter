@@ -46,26 +46,33 @@ public:
   void set_type(types::shared_type type) { m_type = type; }
 };
 
-class i_ast_node;
-class assignment_statement;
+// Expresssions
 class binary_expression;
 class constant_expression;
-class if_statement;
-class print_statement;
 class read_expression;
-class statement_block;
+class assignment_statement;
+class statement_block; // Is a statement as well as an expression, just like assignment
 class unary_expression;
 class variable_expression;
-class while_statement;
-class error_node;
-class function_definition;
-class return_statement;
 class function_call;
 class function_definition_to_ptr_conv;
 
-using tuple_ast_nodes = std::tuple<
+// Statements
+class if_statement;
+class print_statement;
+class while_statement;
+class function_definition;
+class return_statement;
+
+class error_node;
+
+using tuple_all_nodes = std::tuple<
     assignment_statement, binary_expression, constant_expression, if_statement, print_statement, read_expression,
     statement_block, unary_expression, variable_expression, while_statement, error_node, function_definition,
     return_statement, function_call, function_definition_to_ptr_conv>;
+
+using tuple_expression_nodes = std::tuple<
+    assignment_statement, binary_expression, constant_expression, read_expression, statement_block, unary_expression,
+    variable_expression, function_call, function_definition_to_ptr_conv>;
 
 } // namespace paracl::frontend::ast
