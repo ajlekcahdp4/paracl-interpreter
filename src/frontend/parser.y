@@ -149,23 +149,13 @@ program:  statements    { auto ptr = driver.make_ast_node<ast::statement_block>(
 optional_semicol:   %empty {}
                     | SEMICOL {}
 
-<<<<<<< HEAD
-primary_expression: INTEGER_CONSTANT            { $$ = driver.make_ast_node<ast::constant_expression>($1, @1); }
-                    | IDENTIFIER                { $$ = driver.make_ast_node<ast::variable_expression>($1, @1); }
-                    | QMARK                     { $$ = driver.make_ast_node<ast::read_expression>(@$); }
-                    | LPAREN expression RPAREN  { $$ = $2; }
-                    | LPAREN error RPAREN       { auto error = driver.take_error(); $$ = driver.make_ast_node<ast::error_node>(error.error_message, error.loc); yyerrok; }
-                    | statement_block           { $$ = $1; }
-                    | function_call             { $$ = $1; }
-=======
-primary_expression: INTEGER_CONSTANT                { $$ = driver.make_ast_node<ast::constant_expression>($1, @$); }
-                    | IDENTIFIER                    { $$ = driver.make_ast_node<ast::variable_expression>($1, @$); }
+primary_expression: INTEGER_CONSTANT                { $$ = driver.make_ast_node<ast::constant_expression>($1, @1); }
+                    | IDENTIFIER                    { $$ = driver.make_ast_node<ast::variable_expression>($1, @1); }
                     | QMARK                         { $$ = driver.make_ast_node<ast::read_expression>(@$); }
                     | LPAREN expression RPAREN      { $$ = $2; }
                     | LPAREN error RPAREN           { auto error = driver.take_error(); $$ = driver.make_ast_node<ast::error_node>(error.error_message, error.loc); yyerrok; }
                     | statement_block               { $$ = $1; }
                     | function_call                 { $$ = $1; }
->>>>>>> d3cf775 (formatting, fix test)
 
 unary_expression:   PLUS unary_expression           { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_POS, *$2, @$); }
                     | MINUS unary_expression        { $$ = driver.make_ast_node<ast::unary_expression>(ast::unary_operation::E_UN_OP_NEG, *$2, @$); }
@@ -203,20 +193,10 @@ chainable_assignment_statement:  IDENTIFIER ASSIGN chainable_assignment_statemen
                       | IDENTIFIER ASSIGN logical_expression SEMICOL                      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
                       | IDENTIFIER ASSIGN function_def optional_semicol                   { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
 
-<<<<<<< HEAD
-typed_chainable_assignment_statement:   typed_identifier ASSIGN chainable_assignment_statement { $$ = $3; $$->append_variable(*$1); }
-                                        | typed_identifier ASSIGN logical_expression SEMICOL                      { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
-                                        | typed_identifier ASSIGN statement_block                                 { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
-                                        | typed_identifier ASSIGN function_def optional_semicol                   { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
-
-
-chainable_assignment: IDENTIFIER ASSIGN chainable_assignment      { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
-                      | IDENTIFIER ASSIGN logical_expression      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
-=======
 typed_chainable_assignment_statement:   typed_identifier ASSIGN chainable_assignment_statement    { $$ = $3; $$->append_variable(*$1); }
-                                        | typed_identifier ASSIGN logical_expression SEMICOL      { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @$); }
-                                        | typed_identifier ASSIGN statement_block                 { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @$); }
-                                        | typed_identifier ASSIGN function_def optional_semicol   { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @$); }
+                                        | typed_identifier ASSIGN logical_expression SEMICOL      { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
+                                        | typed_identifier ASSIGN statement_block                 { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
+                                        | typed_identifier ASSIGN function_def optional_semicol   { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
 
 
 chainable_assignment: IDENTIFIER ASSIGN chainable_assignment  {
@@ -225,20 +205,13 @@ chainable_assignment: IDENTIFIER ASSIGN chainable_assignment  {
                       }
                       | IDENTIFIER ASSIGN logical_expression  {
                         auto left = ast::variable_expression{$1, @1};
-                        $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @$);
+                        $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3);
                       }
->>>>>>> d3cf775 (formatting, fix test)
 
 print_statement:      PRINT expression SEMICOL { $$ = driver.make_ast_node<ast::print_statement>(*$2, @$); }
 
-<<<<<<< HEAD
 eof_or_semicol: SEMICOL | EOF
 
-statements: statements statement                { $$ = std::move($1); $$.append_statement(*$2); }
-            | statements error eof_or_semicol   { $$ = std::move($1); auto error = driver.take_error(); $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
-            | statement                         { $$.append_statement(*$1); }
-            | error eof_or_semicol              { auto error = driver.take_error(); $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc)); yyerrok; }
-=======
 statements:           statements statement { $$ = std::move($1);
                         $$.append_statement(*$2);
                       }
@@ -254,7 +227,6 @@ statements:           statements statement { $$ = std::move($1);
                         yyerrok;
                       }
                       | statement { $$.append_statement(*$1); }
->>>>>>> d3cf775 (formatting, fix test)
 
 statement_block:  LBRACE statements RBRACE    { $$ = driver.make_ast_node<ast::statement_block>(std::move($2)); }
                   | LBRACE RBRACE             { $$ = driver.make_ast_node<ast::statement_block>(); }
