@@ -230,8 +230,8 @@ statement:  print_statement                   { $$ = $1; }
             | function_def optional_semicol   { $$ = $1; }
             | return_statement                { $$ = $1; }
 
-arglist:  arglist COMMA IDENTIFIER            { $$ = std::move($1); $$.emplace_back($3, @3); }
-          | IDENTIFIER                        { $$.emplace_back($1, @1); }
+arglist:  arglist COMMA typed_identifier            { $$ = std::move($1); $$.push_back(*$3); }
+          | typed_identifier                        { $$.push_back(*$1); }
 
 arglist_or_empty: arglist   { $$ = std::move($1); }
                   | %empty  { }
