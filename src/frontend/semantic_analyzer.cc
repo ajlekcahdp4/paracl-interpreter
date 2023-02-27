@@ -93,18 +93,13 @@ void semantic_analyzer::analyze_node(ast::variable_expression &ref) {
     if (current_state == semantic_analysis_state::E_LVALUE) {
       m_scopes.declare(ref.name());
     } else {
-      report_error("Use of undeclared variable", ref.loc());
+      std::stringstream ss;
+      ss << "Use of undeclared variable "
+         << "'" << ref.name() << "'";
+      report_error(ss.str(), ref.loc());
     }
   }
   /* TODO[Sergei]: Bind the variable to it's declaration symbol table */
 }
-
-void semantic_analyzer::analyze_node(ast::function_definition &ref) {}
-
-void semantic_analyzer::analyze_node(ast::return_statement &ref) {}
-
-void semantic_analyzer::analyze_node(ast::statement_block_expression &ref) {}
-
-void semantic_analyzer::analyze_node(ast::function_call &ref) {}
 
 } // namespace paracl::frontend

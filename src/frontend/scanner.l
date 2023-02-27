@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 %}
 
 %option noyywrap nounput noinput nodefault 
@@ -65,16 +66,22 @@ cpp_style_comment ([/][/].*)
 
 "="             { return parser::make_ASSIGN(update_loc()); }
 
-{identifier}    { return parser::make_IDENTIFIER(yytext, update_loc()); }
-{number}        { return parser::make_INTEGER_CONSTANT(std::atoi(yytext), update_loc()); }
+{identifier}    { auto newloc = update_loc(); return parser::make_IDENTIFIER(yytext, newloc); }
+{number}        { auto newloc = update_loc(); return parser::make_INTEGER_CONSTANT(std::atoi(yytext), newloc); }
 
-[\n|\r\n]+          { m_pos.lines(yyleng); }
-[ \t]+              { m_pos.columns(yyleng); }
+[\n|\r\n]+      { m_pos.lines(yyleng); }
+[ \t]+          { m_pos.columns(yyleng); }
 
-{cpp_style_comment} { }
+{cpp_style_comment} { update_loc(); }
 
-.               { auto loc = update_loc(); std::string msg = "Unknown character"; m_driver.report_error(msg, loc); throw parser::syntax_error{loc, msg}; }
+. { 
+  auto loc = update_loc();
+  std::stringstream ss;
+  ss << "Unknown character '" << yytext << "'";
+  auto msg = ss.str();
+  m_driver.report_error(msg, loc); throw parser::syntax_error{loc, msg}; 
+}
 
-<<EOF>>         { return paracl::frontend::parser::make_EOF(update_loc()); }
+<<EOF>> { return paracl::frontend::parser::make_EOF(update_loc()); }
 
 %%

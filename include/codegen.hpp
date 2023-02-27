@@ -50,7 +50,11 @@ private:
 
   uint32_t lookup_or_insert_constant(int constant);
 
-  using to_visit = frontend::ast::tuple_ast_nodes;
+  using to_visit = std::tuple<
+      frontend::ast::assignment_statement, frontend::ast::binary_expression, frontend::ast::constant_expression,
+      frontend::ast::if_statement, frontend::ast::print_statement, frontend::ast::read_expression,
+      frontend::ast::statement_block, frontend::ast::unary_expression, frontend::ast::variable_expression,
+      frontend::ast::while_statement>;
 
 public:
   codegen_visitor() = default;
@@ -67,11 +71,6 @@ public:
   void generate(frontend::ast::unary_expression &);
   void generate(frontend::ast::variable_expression &);
   void generate(frontend::ast::while_statement &);
-  void generate(frontend::ast::error_node &);
-  void generate(frontend::ast::function_definition &);
-  void generate(frontend::ast::return_statement &);
-  void generate(frontend::ast::statement_block_expression &);
-  void generate(frontend::ast::function_call &);
 
   EZVIS_VISIT_INVOKER(generate);
 

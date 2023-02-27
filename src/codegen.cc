@@ -31,10 +31,6 @@ void codegen_visitor::generate(ast::read_expression &ref) {
   m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_read_desc});
 }
 
-void codegen_visitor::generate(ast::error_node &) {
-  throw std::logic_error{"Calling codegeneration on an ill-formed program"};
-}
-
 void codegen_visitor::generate(ast::variable_expression &ref) {
   auto index = m_symtab_stack.lookup_location(std::string{ref.name()});
   m_builder.emit_operation(vm_builder::encoded_instruction{vm_instruction_set::push_local_rel_desc, index});
@@ -249,14 +245,6 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
   }
   }
 }
-
-void codegen_visitor::generate(ast::function_definition &ref) {}
-
-void codegen_visitor::generate(ast::return_statement &ref) {}
-
-void codegen_visitor::generate(ast::statement_block_expression &ref) {}
-
-void codegen_visitor::generate(ast::function_call &ref) {}
 
 void codegen_visitor::set_currently_statement() {
   m_is_currently_statement = true;
