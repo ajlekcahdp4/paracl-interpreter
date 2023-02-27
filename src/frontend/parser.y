@@ -132,7 +132,8 @@ additive_expression comparison_expression equality_expression logical_expression
 %type <std::vector<ast::i_ast_node *>> param_list param_list_or_empty
 
 %type eof_or_semicol
-%type <std::shared_ptr<types::i_type>> type
+%type <std::shared_ptr<types::i_type>> builtin_type function_type type
+%type <std::vector<std::shared_ptr<types::i_type>>> type_list type_list_or_empty
 %type <ast::variable_expression *> typed_identifier
 
 %precedence THEN
@@ -257,8 +258,20 @@ param_list_or_empty:  param_list  { $$ = std::move($1); }
 
 function_call:  IDENTIFIER LPAREN param_list_or_empty RPAREN { $$ = driver.make_ast_node<ast::function_call>($1, @3, $3); } 
 
-type: INT       { $$ = driver.int_type_ptr(); }
-      | VOID    { $$ = driver.void_type_ptr(); }
+builtin_type: INT       { $$ = driver.int_type_ptr(); }
+              | VOID    { $$ = driver.void_type_ptr(); }
+
+function_type: type FUNC LPAREN type_list_or_empty RPAREN { $$ = std::make_shared<types::type_composite_function>(std::move($4), $1); }
+
+type: builtin_type        { $$ = $1; }
+      | function_type     { $$ = $1; }
+
+type_list:  type_list COMMA type      { $$ = std::move($1); $$.push_back($3); }
+            | type                    { $$.push_back($1); }
+
+type_list_or_empty:   type_list       { $$ = std::move($1); }
+                      | %empty        {  }  
+
 
 typed_identifier: type IDENTIFIER { $$ = driver.make_ast_node<ast::variable_expression>($2, $1, @2); }
                   | IDENTIFIER { $$ = driver.make_ast_node<ast::variable_expression>($1, @1); }

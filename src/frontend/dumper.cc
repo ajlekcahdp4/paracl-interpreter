@@ -122,9 +122,10 @@ void ast_dumper::dump(const function_definition &ref) {
   std::stringstream ss;
   ss << "<function definition>: ";
 
-  if (auto opt = ref.name(); opt) ss << opt.value();
+  if (auto opt = ref.name(); opt) ss << opt.value() << "\n";
   else ss << "anonymous\n";
-  ss << " <arg count>: " << ref.size();
+  ss << " <arg count>: " << ref.size() << "\n";
+  ss << "<type> " << ref.type_str();
 
   print_declare_node(m_os, ref, ss.str());
   for (unsigned i = 0; const auto &v : ref) {

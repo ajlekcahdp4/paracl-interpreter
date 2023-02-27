@@ -21,12 +21,12 @@ namespace paracl::frontend::ast {
 
 class variable_expression final : public i_ast_node {
   std::string m_name;
-  std::shared_ptr<types::i_type> m_type;
+  types::shared_type m_type;
 
 public:
   EZVIS_VISITABLE();
 
-  variable_expression(std::string p_name, std::shared_ptr<types::i_type> type, location l)
+  variable_expression(std::string p_name, types::shared_type type, location l)
       : i_ast_node{l}, m_name{p_name}, m_type{type} {}
 
   variable_expression(std::string p_name, location l) : i_ast_node{l}, m_name{p_name} {}
