@@ -10,9 +10,10 @@
 
 #pragma once
 
-// #include "frontend/types/types.hpp"
+#include "frontend/types/types.hpp"
 #include "i_ast_node.hpp"
 
+#include <memory>
 #include <string>
 #include <string_view>
 
@@ -20,11 +21,21 @@ namespace paracl::frontend::ast {
 
 class variable_expression final : public i_ast_node {
   std::string m_name;
+  types::shared_type m_type;
 
 public:
   EZVIS_VISITABLE();
 
+  variable_expression(std::string p_name, types::shared_type type, location l)
+      : i_ast_node{l}, m_name{p_name}, m_type{type} {}
+
   variable_expression(std::string p_name, location l) : i_ast_node{l}, m_name{p_name} {}
+
+  std::string type_str() const {
+    if (!m_type) return "";
+    return m_type->to_string();
+  }
+
   std::string_view name() const & { return m_name; }
 };
 

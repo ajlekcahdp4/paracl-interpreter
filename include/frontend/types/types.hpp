@@ -44,6 +44,7 @@ inline std::string builtin_type_to_string(builtin_type_class type_tag) {
 class i_type;
 
 using unique_type = std::unique_ptr<i_type>;
+using shared_type = std::shared_ptr<i_type>;
 
 class i_type : public ezvis::visitable_base<i_type> {
 protected:
@@ -82,15 +83,15 @@ public:
   unique_type clone() const override { return std::make_unique<type_builtin>(*this); }
 };
 
-class type_composite_function : public i_type, private std::vector<unique_type> {
+class type_composite_function : public i_type, private std::vector<shared_type> {
 private:
-  unique_type m_return_type;
+  shared_type m_return_type;
 
 public:
   EZVIS_VISITABLE();
 
-  type_composite_function(std::vector<unique_type> arg_types, unique_type return_type)
-      : i_type{type_class::e_composite_function}, vector{std::move(arg_types)}, m_return_type{return_type.release()} {
+  type_composite_function(std::vector<shared_type> arg_types, shared_type return_type)
+      : i_type{type_class::e_composite_function}, vector{std::move(arg_types)}, m_return_type{return_type} {
     assert(return_type.get() && "Return type can't be a nullptr");
   }
 
@@ -113,14 +114,15 @@ public:
       for (auto finish = std::prev(vector::end()); start != finish; ++start) {
         ss << start->get()->to_string() << ", ";
       }
-      ss << start->get()->to_string() << ")";
+      ss << start->get()->to_string();
     }
+    ss << ")";
 
     return ss.str();
   }
 
   unique_type clone() const override {
-    std::vector<unique_type> args;
+    std::vector<shared_type> args;
 
     for (const auto &v : *this) {
       args.push_back(v->clone());

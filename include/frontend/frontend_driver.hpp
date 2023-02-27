@@ -15,6 +15,9 @@
 #include "frontend/error.hpp"
 #include "frontend/scanner.hpp"
 #include "frontend/semantic_analyzer.hpp"
+#include "frontend/types/types.hpp"
+#include "scanner.hpp"
+#include "semantic_analyzer.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -30,6 +33,12 @@
 #include <vector>
 
 namespace paracl::frontend {
+
+struct builtin_types {
+  types::shared_type m_void = std::make_shared<types::type_builtin>(types::builtin_type_class::e_builtin_void);
+  types::shared_type m_int = std::make_shared<types::type_builtin>(types::builtin_type_class::e_builtin_int);
+};
+
 class parser_driver {
 private:
   scanner m_scanner;
@@ -38,6 +47,8 @@ private:
 
   std::optional<error_kind> m_current_error;
   ast::ast_container m_ast;
+
+  builtin_types m_types;
 
   friend class parser;
   friend class scanner;
@@ -52,7 +63,7 @@ private:
   }
 
 public:
-  parser_driver(std::string *filename) : m_scanner{*this, filename}, m_parser{m_scanner, *this} {}
+  parser_driver(std::string *filename) : m_scanner{*this, filename}, m_parser{m_scanner, *this}, m_types{} {}
 
   bool parse() { return m_parser.parse(); }
 
@@ -61,6 +72,10 @@ public:
   template <typename t_node_type, typename... t_args> t_node_type *make_ast_node(t_args &&...args) {
     return &m_ast.make_node<t_node_type>(std::forward<t_args>(args)...);
   }
+
+  types::shared_type void_type_ptr() & { return m_types.m_void; }
+
+  types::shared_type int_type_ptr() & { return m_types.m_int; }
 
   void set_ast_root_ptr(ast::i_ast_node *ptr) { // nullptr is possible
     m_ast.set_root_ptr(ptr);
@@ -186,4 +201,4 @@ public:
   }
 };
 
-} // namespace paracl::frontend
+  } // namespace paracl::frontend

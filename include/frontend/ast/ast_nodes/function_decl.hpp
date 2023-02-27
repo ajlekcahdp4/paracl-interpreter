@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "frontend/types/types.hpp"
 #include "i_ast_node.hpp"
 #include "variable_expression.hpp"
 
@@ -25,6 +26,7 @@ private:
   // An optional function name. Those functions that don't have a name will be called anonymous functions
   std::optional<std::string> m_name;
   i_ast_node *m_block;
+  types::shared_type m_type;
 
 public:
   EZVIS_VISITABLE();
@@ -33,6 +35,12 @@ public:
       std::optional<std::string> name, i_ast_node &body, location l, std::vector<variable_expression> vars = {}
   )
       : i_ast_node{l}, vector{std::move(vars)}, m_name{name}, m_block{&body} {}
+
+  function_definition(
+      std::optional<std::string> name, types::shared_type type, i_ast_node &body, location l,
+      std::vector<variable_expression> vars = {}
+  )
+      : i_ast_node{l}, vector{std::move(vars)}, m_name{name}, m_block{&body}, m_type{type} {}
 
   using vector::size;
 
@@ -45,10 +53,16 @@ public:
   using vector::crend;
 
   i_ast_node &body() const { return *m_block; }
+
   bool named() const { return m_name.has_value(); }
 
+  std::string type_str() const {
+    if (!m_type) return "";
+    return m_type->to_string();
+  }
+
   std::optional<std::string> name() const {
-    if (m_name) return std::nullopt;
+    if (!m_name) return std::nullopt;
     return m_name;
   }
 };

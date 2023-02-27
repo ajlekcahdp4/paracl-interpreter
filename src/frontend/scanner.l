@@ -30,6 +30,9 @@ cpp_style_comment ([/][/].*)
 
 %%
 
+"int"           { return parser::make_INT(update_loc()); }
+"void"          { return parser::make_VOID(update_loc()); }
+
 "while"         { return parser::make_WHILE(update_loc()); }
 "if"            { return parser::make_IF(update_loc()); }
 "else"          { return parser::make_ELSE(update_loc()); }

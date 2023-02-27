@@ -28,7 +28,8 @@ void ast_dumper::dump(const read_expression &ref) {
 
 void ast_dumper::dump(const variable_expression &ref) {
   std::stringstream ss;
-  ss << "<identifier> " << ref.name();
+  ss << "<identifier> " << ref.name() << "\n"
+     << "<type> " << ref.type_str();
   print_declare_node(m_os, ref, ss.str());
 }
 
@@ -121,9 +122,10 @@ void ast_dumper::dump(const function_definition &ref) {
   std::stringstream ss;
   ss << "<function definition>: ";
 
-  if (auto opt = ref.name(); opt) ss << opt.value();
-  else ss << "anonymous";
-  ss << " <arg count>: " << ref.size();
+  if (auto opt = ref.name(); opt) ss << opt.value() << "\n";
+  else ss << "anonymous\n";
+  ss << " <arg count>: " << ref.size() << "\n";
+  ss << "<type> " << ref.type_str();
 
   print_declare_node(m_os, ref, ss.str());
   for (unsigned i = 0; const auto &v : ref) {
