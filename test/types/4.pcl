@@ -1,1 +1,1 @@
-a = func (x, int y) { print x + y; }
+a = func (x, int y) : foo { print x + y; }
