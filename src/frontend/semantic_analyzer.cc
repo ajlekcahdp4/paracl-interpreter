@@ -160,10 +160,10 @@ bool semantic_analyzer::analyze_node(ast::variable_expression &ref) {
 }
 
 void semantic_analyzer::analyze_node(ast::function_definition &ref) {
-  auto name = ref.name();
+  auto &&name = ref.name();
   if (name.has_value()) {
     auto [ptr, inserted] = m_ast->add_named_function(name.value(), &ref);
-    if (inserted) {
+    if (!inserted) {
       std::stringstream ss;
       ss << "Redefinition of function "
          << "\"" << name.value() << "\""; // add information about previously declared function (in that case 'ptr' will
@@ -176,6 +176,22 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
 
 void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) {
   analyze_node(ref.definition());
+}
+
+void semantic_analyzer::analyze_node(ast::function_call &ref) {
+  auto &&function_found = m_ast->lookup_function(std::string{ref.name()});
+  auto &&attr = m_scopes.lookup_symbol(ref.name());
+  if (function_found) {
+    if (attr) {
+      std::stringstream ss;
+      ss << "Ambiguity in function call: \"" << ref.name() << "\"";
+      report_error(ss.str(), ref.loc());
+    }
+  } else if (!attr) {
+    std::stringstream ss;
+    ss << "Call of undefined identifier: \"" << ref.name() << "\"";
+    report_error(ss.str(), ref.loc());
+  }
 }
 
 } // namespace paracl::frontend

@@ -1,7 +1,0 @@
-a = func (): foo {
-  print 1;
-}
-
-b = func (): foo {
-  print 2;
-}
