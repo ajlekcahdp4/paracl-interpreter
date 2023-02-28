@@ -22,9 +22,9 @@ class statement_block : public i_expression, private std::vector<i_ast_node *> {
 private:
   symtab m_symtab;
 
-public:
   EZVIS_VISITABLE();
 
+public:
   statement_block() = default;
   statement_block(std::vector<i_ast_node *> vec, location l) : i_expression{l}, vector{vec} {}
 

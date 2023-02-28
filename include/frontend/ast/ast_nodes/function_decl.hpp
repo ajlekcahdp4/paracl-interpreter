@@ -53,7 +53,6 @@ public:
   using vector::crend;
 
   i_ast_node &body() const { return *m_block; }
-
   bool named() const { return m_name.has_value(); }
 
   std::optional<std::string> name() const {
@@ -69,6 +68,7 @@ public:
 
 class function_definition_to_ptr_conv final : public i_expression {
   function_definition *m_definition;
+
   EZVIS_VISITABLE();
 
 public:

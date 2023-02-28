@@ -38,7 +38,7 @@ public:
   i_expression(location l = location{}, types::shared_type type = nullptr) : i_ast_node{l}, m_type{type} {}
   types::shared_type get_type() { return m_type; }
 
-  std::string type_str() {
+  std::string type_str() const {
     if (!m_type.get()) return "<undetermined>";
     return m_type->to_string();
   }

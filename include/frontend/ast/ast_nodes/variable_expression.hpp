@@ -23,17 +23,12 @@ namespace paracl::frontend::ast {
 class variable_expression final : public i_expression {
   std::string m_name;
 
-public:
   EZVIS_VISITABLE();
 
+public:
   variable_expression(std::string p_name, types::shared_type type, location l)
       : i_expression{l, type}, m_name{p_name} {}
   variable_expression(std::string p_name, location l) : i_expression{l}, m_name{p_name} {}
-
-  std::string type_str() const {
-    if (!m_type) return "";
-    return m_type->to_string();
-  }
 
   std::string_view name() const & { return m_name; }
 };

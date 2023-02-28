@@ -15,8 +15,9 @@
 namespace paracl::frontend::ast {
 
 class read_expression final : public i_expression {
-public:
   EZVIS_VISITABLE();
+
+public:
   read_expression(location l) : i_expression{l} {}
 };
 

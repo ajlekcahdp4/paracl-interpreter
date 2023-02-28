@@ -194,9 +194,7 @@ public:
   }
 
   void set_sp(uint32_t new_sp) { m_sp = new_sp; }
-
   auto stack_size() const { return m_execution_stack.size(); }
-
   bool stack_empty() const { return m_execution_stack.empty(); }
 
   auto pop() {
@@ -207,10 +205,8 @@ public:
   }
 
   void push(execution_value_type val) { m_execution_stack.push_back(val); }
-
   void halt() { m_halted = true; }
   bool is_halted() const { return m_halted; }
-
   auto constant(uint32_t id) const { return m_program_code.constant_at(id); }
 };
 
@@ -234,6 +230,7 @@ public:
   virtual_machine(t_desc desc) : instruction_set{desc}, m_execution_context{} {}
 
   void set_program_code(chunk ch) { m_execution_context = std::move(ch); }
+  bool is_halted() const { return m_execution_context.is_halted(); }
 
   void execute_instruction() {
     auto &ctx = m_execution_context;
@@ -262,8 +259,6 @@ public:
       std::cerr << "Warning: execution finished abnormally: stack size = " << ctx.m_execution_stack.size() << "\n";
     }
   }
-
-  bool is_halted() const { return m_execution_context.is_halted(); }
 };
 
 inline std::vector<uint8_t> read_raw_data(std::istream &is) {

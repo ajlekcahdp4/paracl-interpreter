@@ -21,9 +21,9 @@ class function_call : public i_expression, private std::vector<i_expression *> {
 private:
   std::string m_name;
 
-public:
   EZVIS_VISITABLE();
 
+public:
   function_call(std::string name, location l, std::vector<i_expression *> params = {})
       : i_expression{l}, vector{std::move(params)}, m_name{std::move(name)} {}
 

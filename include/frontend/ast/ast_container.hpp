@@ -74,9 +74,7 @@ public:
   }
 
   auto void_type_ptr() { return m_types.m_void; }
-
   auto int_type_ptr() { return m_types.m_int; }
-
   types::builtin_types &builtin_types() & { return m_types; }
 
   i_ast_node *lookup_function(const std::string &name) {

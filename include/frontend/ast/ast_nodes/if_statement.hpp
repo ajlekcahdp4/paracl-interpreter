@@ -25,9 +25,9 @@ class if_statement final : public i_ast_node {
   i_ast_node *m_true_block;
   i_ast_node *m_else_block = nullptr;
 
-public:
   EZVIS_VISITABLE();
 
+public:
   if_statement(i_expression &cond, i_ast_node &true_block, location l)
       : i_ast_node{l}, m_condition{&cond}, m_true_block{&true_block} {}
 

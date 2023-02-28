@@ -22,9 +22,9 @@ private:
   i_expression *m_condition;
   i_ast_node *m_block;
 
-public:
   EZVIS_VISITABLE();
 
+public:
   while_statement(i_expression &cond, i_ast_node &block, location l)
       : i_ast_node{l}, m_condition{&cond}, m_block{&block} {}
 

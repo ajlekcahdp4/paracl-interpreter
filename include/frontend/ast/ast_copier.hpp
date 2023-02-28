@@ -44,6 +44,7 @@ public:
   return_statement &copy(const return_statement &);
   function_call &copy(const function_call &);
   function_definition_to_ptr_conv &copy(const function_definition_to_ptr_conv &);
+
   EZVIS_VISIT_INVOKER(copy);
 
   template <typename T>

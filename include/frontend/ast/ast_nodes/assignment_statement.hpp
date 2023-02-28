@@ -23,9 +23,9 @@ private:
   std::vector<variable_expression> m_lefts;
   i_expression *m_right;
 
-public:
   EZVIS_VISITABLE();
 
+public:
   assignment_statement(variable_expression left, i_expression &right, location l) : i_expression{l}, m_right{&right} {
     m_lefts.push_back(left);
   }

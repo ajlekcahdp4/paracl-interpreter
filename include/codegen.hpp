@@ -57,9 +57,9 @@ private:
       frontend::ast::while_statement>;
 
 public:
-  codegen_visitor() = default;
-
   EZVIS_VISIT_CT(to_visit);
+
+  codegen_visitor() = default;
 
   void generate(frontend::ast::assignment_statement &);
   void generate(frontend::ast::binary_expression &);

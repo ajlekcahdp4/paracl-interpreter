@@ -59,9 +59,9 @@ class binary_expression final : public i_expression {
   binary_operation m_operation_type;
   i_expression *m_left, *m_right;
 
-public:
   EZVIS_VISITABLE();
 
+public:
   binary_expression(binary_operation op_type, i_expression &left, i_expression &right, location l)
       : i_expression{l}, m_operation_type{op_type}, m_left{&left}, m_right{&right} {}
 

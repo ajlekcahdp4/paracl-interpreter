@@ -36,6 +36,7 @@ private:
 public:
   scanner(parser_driver &driver, std::string *filename = nullptr) : m_driver{driver}, m_pos{filename} {}
   paracl::frontend::parser::symbol_type get_next_token();
+
   location update_loc() {
     auto old_pos = m_pos;
     auto new_pos = (m_pos += symbol_length());

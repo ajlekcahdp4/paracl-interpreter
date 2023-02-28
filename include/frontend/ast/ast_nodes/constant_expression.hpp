@@ -18,8 +18,9 @@ class constant_expression final : public i_expression { // Inherit from i_expres
                                                         // by shared ptr. Should fix in the future
   int m_val;
 
-public:
   EZVIS_VISITABLE();
+
+public:
   constant_expression(int p_val, location l) : i_expression{l}, m_val{p_val} {}
   int value() const { return m_val; }
 };

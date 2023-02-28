@@ -42,9 +42,9 @@ private:
   unary_operation m_operation_type;
   i_expression *m_expr;
 
-public:
   EZVIS_VISITABLE();
 
+public:
   unary_expression(unary_operation op_type, i_expression &p_expr, location l)
       : i_expression{l}, m_operation_type{op_type}, m_expr{&p_expr} {}
 

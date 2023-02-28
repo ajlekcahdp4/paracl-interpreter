@@ -21,8 +21,9 @@ class error_node final : public i_expression {
 private:
   std::string m_error_message;
 
-public:
   EZVIS_VISITABLE();
+
+public:
   error_node(const std::string &msg, location l) : i_expression{l}, m_error_message{msg} {};
   std::string error_msg() { return m_error_message; }
 };

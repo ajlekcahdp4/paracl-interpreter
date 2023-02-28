@@ -65,7 +65,6 @@ public:
   }
 
   auto void_type_ptr() { return m_ast.void_type_ptr(); }
-
   auto int_type_ptr() { return m_ast.int_type_ptr(); }
 
   void set_ast_root_ptr(ast::i_ast_node *ptr) { // nullptr is possible
