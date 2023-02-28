@@ -55,6 +55,7 @@ public:
   i_ast_node &body() const { return *m_block; }
 
   bool named() const { return m_name.has_value(); }
+
   std::optional<std::string> name() const {
     if (!m_name) return std::nullopt;
     return m_name;

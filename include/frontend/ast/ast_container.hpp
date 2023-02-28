@@ -31,6 +31,7 @@ private:
   std::vector<i_ast_node_uptr> m_nodes;
   i_ast_node *m_root = nullptr;
   std::unordered_map<std::string, i_ast_node *> m_function_table;
+  std::vector<i_ast_node *> m_anonymous_functions;
   types::builtin_types m_types;
 
   template <typename T, typename... Ts> T &emplace_back(Ts &&...args) {
@@ -84,10 +85,12 @@ public:
     return found->second;
   }
 
-  std::pair<i_ast_node *, bool> declare_function(std::string_view name, i_ast_node *defenition) {
-    auto [iter, inserted] = m_function_table.emplace(std::make_pair(std::string{name}, defenition));
+  std::pair<i_ast_node *, bool> add_named_function(std::string_view name, i_ast_node *definition) {
+    auto [iter, inserted] = m_function_table.emplace(std::make_pair(std::string{name}, definition));
     return std::make_pair(iter->second, inserted);
   }
+
+  void add_anonymous_function(i_ast_node *definition) { m_anonymous_functions.push_back(definition); }
 };
 
 } // namespace paracl::frontend::ast

@@ -27,6 +27,7 @@ private:
   symtab_stack m_scopes;
   std::vector<error_kind> *m_error_queue = nullptr;
   types::builtin_types *m_types = nullptr;
+  ast::ast_container *m_ast = nullptr;
 
   enum class semantic_analysis_state {
     E_LVALUE,
@@ -73,14 +74,17 @@ public:
   void analyze_node(ast::while_statement &);
   void analyze_node(ast::error_node &);
 
+  void analyze_node(ast::function_definition &);
+
   EZVIS_VISIT_INVOKER(analyze_node);
 
   bool analyze(ast::ast_container &ast, std::vector<error_kind> &errors) {
     errors.clear();
     m_error_queue = &errors;
-    m_types = &ast.builtin_types();
+    m_ast = &ast;
+    m_types = &m_ast->builtin_types();
 
-    apply(*ast.get_root_ptr());
+    apply(*m_ast->get_root_ptr());
     return errors.empty();
   }
 };
