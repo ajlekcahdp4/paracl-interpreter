@@ -120,7 +120,8 @@ void ast_dumper::dump(const while_statement &ref) {
 
 void ast_dumper::dump(const function_definition_to_ptr_conv &ref) {
   print_declare_node(m_os, ref, "<function def to ptr implicit conversion>");
-  dump(ref.definition());
+  print_bind_node(m_os, ref, ref.definition());
+  apply(ref.definition());
 }
 
 void ast_dumper::dump(const function_definition &ref) {
