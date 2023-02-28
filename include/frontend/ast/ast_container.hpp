@@ -11,10 +11,14 @@
 #pragma once
 
 #include "ast_copier.hpp"
+#include "frontend/types/types.hpp"
 
 #include <cassert>
 #include <memory>
+#include <string>
+#include <string_view>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -26,6 +30,8 @@ class ast_container final {
 private:
   std::vector<i_ast_node_uptr> m_nodes;
   i_ast_node *m_root = nullptr;
+  std::unordered_map<std::string, i_ast_node *> m_function_table;
+  types::builtin_types m_types;
 
   template <typename T, typename... Ts> T &emplace_back(Ts &&...args) {
     auto uptr = std::make_unique<T>(std::forward<Ts>(args)...);
@@ -64,6 +70,23 @@ public:
     requires std::is_base_of_v<i_ast_node, t_node_type>
   {
     return emplace_back<t_node_type>(std::forward<t_args>(args)...);
+  }
+
+  auto void_type_ptr() { return m_types.m_void; }
+
+  auto int_type_ptr() { return m_types.m_int; }
+
+  types::builtin_types &builtin_types() & { return m_types; }
+
+  i_ast_node *lookup_function(const std::string &name) {
+    auto found = m_function_table.find(name);
+    if (found == m_function_table.end()) return nullptr;
+    return found->second;
+  }
+
+  std::pair<i_ast_node *, bool> declare_function(std::string_view name, i_ast_node *defenition) {
+    auto [iter, inserted] = m_function_table.emplace(std::make_pair(std::string{name}, defenition));
+    return std::make_pair(iter->second, inserted);
   }
 };
 

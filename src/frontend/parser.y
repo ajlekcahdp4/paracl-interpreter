@@ -313,11 +313,9 @@ typed_identifier:     type IDENTIFIER { $$ = driver.make_ast_node<ast::variable_
 // Custom error reporting function
 /* void paracl::frontend::parser::report_syntax_error(const context& ctx) const {
   location loc = ctx.location();
-
   std::stringstream error_message;
   const auto &lookahead = ctx.lookahead();
   error_message << "Syntax error: Unexpected " << lookahead.name();
-
   driver.report_error(error_message.str(), loc);
 } */
 

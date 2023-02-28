@@ -11,6 +11,7 @@
 #pragma once
 
 #include "ezvis/ezvis.hpp"
+#include "frontend/ast/ast_container.hpp"
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
 #include "frontend/error.hpp"
 #include "frontend/symtab.hpp"
@@ -74,12 +75,12 @@ public:
 
   EZVIS_VISIT_INVOKER(analyze_node);
 
-  bool analyze(ast::i_ast_node &root, std::vector<error_kind> &errors, types::builtin_types &builtin_types) {
+  bool analyze(ast::ast_container &ast, std::vector<error_kind> &errors) {
     errors.clear();
     m_error_queue = &errors;
-    m_types = &builtin_types;
+    m_types = &ast.builtin_types();
 
-    apply(root);
+    apply(*ast.get_root_ptr());
     return errors.empty();
   }
 };

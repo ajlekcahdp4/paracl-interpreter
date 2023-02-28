@@ -42,8 +42,6 @@ private:
   std::optional<error_kind> m_current_error;
   ast::ast_container m_ast;
 
-  types::builtin_types &m_types;
-
   friend class parser;
   friend class scanner;
 
@@ -57,8 +55,7 @@ private:
   }
 
 public:
-  parser_driver(std::string *filename, types::builtin_types &types)
-      : m_scanner{*this, filename}, m_parser{m_scanner, *this}, m_types{types} {}
+  parser_driver(std::string *filename) : m_scanner{*this, filename}, m_parser{m_scanner, *this} {}
 
   bool parse() { return m_parser.parse(); }
   void switch_input_stream(std::istream *is) { m_scanner.switch_streams(is, nullptr); }
@@ -67,8 +64,9 @@ public:
     return &m_ast.make_node<t_node_type>(std::forward<t_args>(args)...);
   }
 
-  types::shared_type void_type_ptr() & { return m_types.m_void; }
-  types::shared_type int_type_ptr() & { return m_types.m_int; }
+  auto void_type_ptr() { return m_ast.void_type_ptr(); }
+
+  auto int_type_ptr() { return m_ast.int_type_ptr(); }
 
   void set_ast_root_ptr(ast::i_ast_node *ptr) { // nullptr is possible
     m_ast.set_root_ptr(ptr);
@@ -119,7 +117,6 @@ private:
   source_input m_source;
   std::unique_ptr<std::istringstream> m_iss;
 
-  std::unique_ptr<types::builtin_types> m_types;
   std::unique_ptr<parser_driver> m_parsing_driver;
   semantic_analyzer m_semantic_analyzer;
 
@@ -171,13 +168,13 @@ private:
   }
 
 private:
-  types::shared_type void_type_ptr() & { return m_types->m_void; }
-  types::shared_type int_type_ptr() & { return m_types->m_int; }
+  auto void_type_ptr() { return m_parsing_driver->void_type_ptr(); }
+  auto int_type_ptr() { return m_parsing_driver->int_type_ptr(); }
 
 public:
   frontend_driver(std::filesystem::path input_path)
-      : m_source{input_path}, m_iss{m_source.iss()}, m_types{std::make_unique<types::builtin_types>()},
-        m_parsing_driver{std::make_unique<parser_driver>(m_source.filename(), *m_types)}, m_semantic_analyzer{} {
+      : m_source{input_path}, m_iss{m_source.iss()},
+        m_parsing_driver{std::make_unique<parser_driver>(m_source.filename())}, m_semantic_analyzer{} {
     m_parsing_driver->switch_input_stream(m_iss.get());
   }
 
@@ -189,7 +186,7 @@ public:
     if (!ast.get_root_ptr()) return true;
 
     std::vector<paracl::frontend::error_kind> errors;
-    bool valid = m_semantic_analyzer.analyze(*ast.get_root_ptr(), errors, *m_types);
+    bool valid = m_semantic_analyzer.analyze(ast, errors);
 
     for (const auto &e : errors) {
       report_pretty_error(e);
