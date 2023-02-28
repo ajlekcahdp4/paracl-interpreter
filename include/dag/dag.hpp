@@ -37,7 +37,7 @@ public:
   }
 
   void insert_edge(const value_type &vert1, const value_type &vert2) {
-    if (!m_adj_list.find(vert2)) insert_vertex(vert2);
+    if (!m_adj_list.contains(vert2)) insert_vertex(vert2);
     auto &&list1 = m_adj_list[vert1];
     if (std::find(list1, vert2) != list1.end()) throw std::logic_error{"Attempt to insert existing edge into a dag"};
     list1.push_back(vert2);
@@ -47,6 +47,24 @@ public:
   size_type number_of_edges() const { return m_edge_n; }
 
   size_type number_of_vertices() const { return m_adj_list.size(); }
+
+  bool empty() const { return number_of_vertices(); }
+
+  bool vertex_exists(const value_type &val) const { return m_adj_list.contains(val); }
+
+  bool edge_exists(const value_type &first, const value_type &second) const {
+    if (!m_adj_list.constains(first) || !m_adj_list.contains(second)) return false;
+    auto &&list = m_adj_list.at(first);
+    if (std::find(list, second) == list.end()) return false;
+    return true;
+  }
+
+  auto begin() { return m_adj_list.begin(); }
+  auto end() { return m_adj_list.end(); }
+  auto begin() const { return m_adj_list.cbegin(); }
+  auto end() const { return m_adj_list.cend(); }
+  auto cbegin() { return m_adj_list.cbegin(); }
+  auto cend() { return m_adj_list.cend(); }
 };
 
 } // namespace paracl::containers
