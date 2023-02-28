@@ -64,8 +64,8 @@ void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
 
 void semantic_analyzer::analyze_node(ast::binary_expression &ref) {
   set_state(semantic_analysis_state::E_RVALUE);
-
   apply(ref.right());
+  set_state(semantic_analysis_state::E_RVALUE);
   apply(ref.left());
   expect_type_eq(ref.right(), *m_types->m_int);
   expect_type_eq(ref.left(), *m_types->m_int);

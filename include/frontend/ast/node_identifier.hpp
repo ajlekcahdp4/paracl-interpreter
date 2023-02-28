@@ -68,6 +68,18 @@ template <typename... t_nodes> struct identify_helper<std::tuple<t_nodes...>> {
 
 } // namespace detail
 
+constexpr auto ast_expression_types = std::array{
+    ast_node_type::E_ASSIGNMENT_STATEMENT,
+    ast_node_type::E_STATEMENT_BLOCK,
+    ast_node_type::E_BINARY_EXPRESSION,
+    ast_node_type::E_CONSTANT_EXPRESSION,
+    ast_node_type::E_UNARY_EXPRESSION,
+    ast_node_type::E_VARIABLE_EXPRESSION,
+    ast_node_type::E_FUNCTION_DEFINITION_TO_PTR_CONV,
+    ast_node_type::E_READ_EXPRESSION,
+    ast_node_type::E_FUNCTION_CALL,
+};
+
 inline ast_node_type identify_node(const i_ast_node &base) {
   return detail::identify_helper<ast::tuple_all_nodes>::identify(base);
 }
