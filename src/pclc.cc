@@ -98,5 +98,5 @@ int main(int argc, char *argv[]) try {
     return 1;
   }
 } catch (std::exception &e) {
-  std::cout << "Error: " << e.what() << "\n";
+  std::cerr << "Error: " << e.what() << "\n";
 }

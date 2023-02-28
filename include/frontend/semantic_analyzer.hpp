@@ -38,7 +38,7 @@ private:
   using to_visit = std::tuple<
       ast::assignment_statement, ast::binary_expression, ast::constant_expression, ast::if_statement, ast::error_node,
       ast::print_statement, ast::read_expression, ast::statement_block, ast::unary_expression, ast::variable_expression,
-      ast::while_statement>;
+      ast::while_statement, ast::function_definition, ast::function_definition_to_ptr_conv>;
 
   void set_state(semantic_analysis_state s) { current_state = s; }
   void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
@@ -75,6 +75,7 @@ public:
   void analyze_node(ast::error_node &);
 
   void analyze_node(ast::function_definition &);
+  void analyze_node(ast::function_definition_to_ptr_conv &);
 
   EZVIS_VISIT_INVOKER(analyze_node);
 

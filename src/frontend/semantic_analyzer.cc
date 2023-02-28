@@ -174,4 +174,8 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
   } else m_ast->add_anonymous_function(&ref);
 }
 
+void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) {
+  analyze_node(ref.definition());
+}
+
 } // namespace paracl::frontend
