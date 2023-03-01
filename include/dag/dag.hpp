@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <list>
 #include <stdexcept>
 #include <unordered_map>
@@ -36,10 +37,12 @@ public:
     if (!inserted) throw std::logic_error{"Attempt to insert existing vertex into a dag"};
   }
 
+  // inserts vertices if they are not already at the DAG
   void insert_edge(const value_type &vert1, const value_type &vert2) {
     if (!m_adj_list.contains(vert2)) insert_vertex(vert2);
     auto &&list1 = m_adj_list[vert1];
-    if (std::find(list1, vert2) != list1.end()) throw std::logic_error{"Attempt to insert existing edge into a dag"};
+    if (std::find(list1.begin(), list1.end(), vert2) != list1.end())
+      throw std::logic_error{"Attempt to insert existing edge into a dag"};
     list1.push_back(vert2);
     ++m_edge_n;
   }
@@ -55,7 +58,7 @@ public:
   bool edge_exists(const value_type &first, const value_type &second) const {
     if (!m_adj_list.constains(first) || !m_adj_list.contains(second)) return false;
     auto &&list = m_adj_list.at(first);
-    if (std::find(list, second) == list.end()) return false;
+    if (std::find(list.begin(), list.end(), second) == list.end()) return false;
     return true;
   }
 
