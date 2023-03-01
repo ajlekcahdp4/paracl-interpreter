@@ -12,7 +12,7 @@
 
 #include <gtest/gtest.h>
 
-using dag = paracl::containers::colored_distanced_dag<int>;
+using dag = paracl::containers::basic_dag<int>;
 
 TEST(test_dag, insert_vertex) {
   dag A;
