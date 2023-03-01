@@ -21,16 +21,32 @@ namespace paracl::containers {
 
 namespace detail {
 
-template <typename T> class dag_node_base {
+template <typename T> class dag_node_base : private std::vector<T> {
   T m_val;
+
+  using vector = std::vector<T>;
 
 public:
   using value_type = T;
   virtual ~dag_node_base() {}
 
-  dag_node_base(const value_type &val) : m_val{val} {}
+  dag_node_base(const value_type val) : vector{}, m_val{std::move(val)} {}
 
   operator value_type() { return m_val; }
+
+  void add_adj(const value_type &val) {
+    if (std::find(begin(), end(), val) != end()) throw std::logic_error{"Attempt to add existing edge into a DAG"};
+    vector::push_back(val);
+  }
+
+  using vector::begin;
+  using vector::end;
+
+  using vector::cbegin;
+  using vector::cend;
+
+  using vector::empty;
+  using vector::size;
 };
 
 template <typename T> class colored_dag_node : public dag_node_base<T> {
@@ -39,15 +55,24 @@ public:
 
   enum class node_color {
     E_WHITE,
-    E_GRAY
+    E_GRAY,
+    E_BLACK
   };
 
-private:
   node_color m_color = node_color::E_WHITE;
 
+  colored_dag_node(const value_type val = value_type{}, const node_color color = node_color::E_WHITE)
+      : dag_node_base<value_type>{std::move(val)}, m_color{color} {}
+};
+
+template <typename T> class colored_distanced_dag_node : public colored_dag_node<T> {
 public:
-  colored_dag_node(const value_type &val, const node_color color = node_color::E_WHITE)
-      : dag_node_base<value_type>{val}, m_color{color} {}
+  using typename colored_dag_node<T>::value_type;
+  using size_type = std::size_t;
+
+  size_type m_distance = 0;
+
+  colored_distanced_dag_node(const value_type val = value_type{}) : colored_dag_node<value_type>{std::move(val)} {}
 };
 
 template <typename node_t> class dag_base {
@@ -56,7 +81,7 @@ public:
   using value_type = typename node_t::value_type;
 
 private:
-  std::unordered_map<value_type, std::vector<node_t>> m_adj_list;
+  std::unordered_map<value_type, node_t> m_adj_list;
   size_type m_edge_n = 0;
 
 public:
@@ -65,17 +90,15 @@ public:
   virtual ~dag_base() {}
 
   void insert_vertex(const value_type &val) {
-    auto &&[iter, inserted] = m_adj_list.insert({val, {}});
+    auto &&[iter, inserted] = m_adj_list.insert({val, {val}});
     if (!inserted) throw std::logic_error{"Attempt to insert existing vertex into a dag"};
   }
 
   // inserts vertices if they are not already at the DAG
   void insert_edge(const value_type &vert1, const value_type &vert2) {
     if (!m_adj_list.contains(vert2)) insert_vertex(vert2);
-    auto &&list1 = m_adj_list[vert1];
-    if (std::find(list1.begin(), list1.end(), vert2) != list1.end())
-      throw std::logic_error{"Attempt to insert existing edge into a dag"};
-    list1.push_back(node_t{vert2});
+    auto &&node1 = m_adj_list[vert1];
+    node1.add_adj(vert2);
     ++m_edge_n;
   }
 
@@ -109,6 +132,6 @@ public:
 
 } // namespace detail
 
-template <typename T> using colored_dag = typename detail::dag_base<detail::colored_dag_node<T>>;
+template <typename T> using colored_distanced_dag = typename detail::dag_base<detail::colored_distanced_dag_node<T>>;
 
 } // namespace paracl::containers
