@@ -137,7 +137,7 @@ endif()
 set(UNIT_TEST_SOURCES
   unit_tests/main.cc 
   unit_tests/ezvis.cc
-  unit_tests/dag.cc
+  unit_tests/oriented_graph.cc
 )
 
 if(ENABLE_GTEST AND NOT PARACL_NO_TESTING__)

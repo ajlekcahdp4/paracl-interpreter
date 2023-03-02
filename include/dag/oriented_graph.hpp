@@ -21,16 +21,16 @@
 
 namespace paracl::containers {
 
-template <typename T> class i_dag_node : private std::vector<T> {
+template <typename T> class i_oriented_graph_node : private std::vector<T> {
   T m_val;
 
   using vector = std::vector<T>;
 
 public:
   using value_type = T;
-  virtual ~i_dag_node() {}
+  virtual ~i_oriented_graph_node() {}
 
-  i_dag_node(const value_type val = value_type{}) : m_val{std::move(val)} {}
+  i_oriented_graph_node(const value_type val = value_type{}) : m_val{std::move(val)} {}
 
   operator value_type() { return m_val; }
 
@@ -52,8 +52,8 @@ public:
 };
 
 template <typename node_t>
-  requires std::derived_from<node_t, i_dag_node<typename node_t::value_type>>
-class i_dag {
+  requires std::derived_from<node_t, i_oriented_graph_node<typename node_t::value_type>>
+class i_oriented_graph {
 public:
   using size_type = std::size_t;
   using value_type = typename node_t::value_type;
@@ -64,9 +64,9 @@ private:
   size_type m_edge_n = 0;
 
 public:
-  i_dag(){};
+  i_oriented_graph(){};
 
-  virtual ~i_dag() {}
+  virtual ~i_oriented_graph() {}
 
   virtual void insert_vertex(const value_type &val) {
     auto &&[iter, inserted] = m_adj_list.insert({val, {val}});
@@ -111,9 +111,9 @@ public:
   auto cend() { return m_adj_list.cend(); }
 };
 
-template <typename T> using basic_dag = i_dag<i_dag_node<T>>;
+template <typename T> using basic_oriented_graph = i_oriented_graph<i_oriented_graph_node<T>>;
 
-template <typename T> std::vector<T> breadth_first_schedule(basic_dag<T> &dag, const T &root_val) {
+template <typename T> std::vector<T> breadth_first_schedule(basic_oriented_graph<T> &dag, const T &root_val) {
 
   enum class color_t {
     E_WHITE,
@@ -121,12 +121,12 @@ template <typename T> std::vector<T> breadth_first_schedule(basic_dag<T> &dag, c
     E_BLACK
   };
 
-  struct bfs_node : public basic_dag<T>::node_type {
+  struct bfs_node : public basic_oriented_graph<T>::node_type {
     int m_dist = -1;
     color_t m_color = color_t::E_WHITE;
     bfs_node *m_prev = nullptr;
 
-    bfs_node(const T &val) : basic_dag<T>::node_type{val} {}
+    bfs_node(const T &val) : basic_oriented_graph<T>::node_type{val} {}
   };
 
   std::vector<T> scheduled;
@@ -145,7 +145,7 @@ template <typename T> std::vector<T> breadth_first_schedule(basic_dag<T> &dag, c
   std::deque<T> que;
   que.push_back(root_val);
   while (!que.empty()) {
-    auto curr = que.front(); // curr : T
+    auto &&curr = que.front(); // curr : T
     que.pop_front();
     auto &&curr_node = (*(nodes.insert({curr, curr}).first)).second;
     auto &&curr_dag_node = (*dag.find(curr)).second;

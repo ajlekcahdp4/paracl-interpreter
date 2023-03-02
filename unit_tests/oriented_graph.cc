@@ -8,14 +8,14 @@
  * ----------------------------------------------------------------------------
  */
 
-#include "dag/dag.hpp"
+#include "dag/oriented_graph.hpp"
 
 #include <gtest/gtest.h>
 
-using dag = paracl::containers::basic_dag<int>;
+using oriented_graph = paracl::containers::basic_oriented_graph<int>;
 
-TEST(test_dag, insert_vertex) {
-  dag A;
+TEST(test_oriented_graph, insert_vertex) {
+  oriented_graph A;
   EXPECT_EQ(A.number_of_vertices(), 0);
   EXPECT_NO_THROW(A.insert_vertex(1));
   EXPECT_NO_THROW(A.insert_vertex(2));
@@ -26,8 +26,8 @@ TEST(test_dag, insert_vertex) {
   EXPECT_FALSE(A.vertex_exists(4));
 }
 
-TEST(test_dag, insert_edge) {
-  dag A;
+TEST(test_oriented_graph, insert_edge) {
+  oriented_graph A;
   EXPECT_NO_THROW(A.insert_edge(1, 2));
   EXPECT_NO_THROW(A.insert_edge(1, 3));
   EXPECT_NO_THROW(A.insert_edge(3, 2));
@@ -44,8 +44,8 @@ TEST(test_dag, insert_edge) {
   EXPECT_TRUE(A.edge_exists(3, 3));
 }
 
-TEST(test_dag, test_BFS) {
-  dag A;
+TEST(test_oriented_graph, test_BFS) {
+  oriented_graph A;
   A.insert_edge(3, 6);
   A.insert_edge(3, 5);
   A.insert_edge(5, 4);
