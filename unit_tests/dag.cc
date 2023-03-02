@@ -38,4 +38,23 @@ TEST(test_dag, insert_edge) {
   EXPECT_TRUE(A.vertex_exists(1));
   EXPECT_TRUE(A.vertex_exists(2));
   EXPECT_TRUE(A.vertex_exists(3));
+  EXPECT_TRUE(A.edge_exists(1, 2));
+  EXPECT_TRUE(A.edge_exists(1, 3));
+  EXPECT_TRUE(A.edge_exists(3, 2));
+  EXPECT_TRUE(A.edge_exists(3, 3));
+}
+
+TEST(test_dag, test_BFS) {
+  dag A;
+  A.insert_edge(3, 6);
+  A.insert_edge(3, 5);
+  A.insert_edge(5, 4);
+  A.insert_edge(4, 2);
+  A.insert_edge(2, 5);
+  A.insert_edge(1, 2);
+  A.insert_edge(1, 4);
+  auto &&scheduled = paracl::containers::breadth_first_schedule(A, 3);
+  std::vector<int> res{3, 6, 5, 4, 2};
+
+  EXPECT_EQ(res, scheduled);
 }

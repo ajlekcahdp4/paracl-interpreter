@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <concepts>
+#include <deque>
 #include <list>
 #include <memory>
 #include <stdexcept>
@@ -32,6 +33,8 @@ public:
   i_dag_node(const value_type val = value_type{}) : m_val{std::move(val)} {}
 
   operator value_type() { return m_val; }
+
+  value_type value() const { return m_val; }
 
   void add_adj(const value_type &val) {
     if (std::find(begin(), end(), val) != end()) throw std::logic_error{"Attempt to add existing edge into a DAG"};
@@ -54,6 +57,7 @@ class i_dag {
 public:
   using size_type = std::size_t;
   using value_type = typename node_t::value_type;
+  using node_type = node_t;
 
 private:
   std::unordered_map<value_type, node_t> m_adj_list;
@@ -72,7 +76,7 @@ public:
   // inserts vertices if they are not already at the DAG
   virtual void insert_edge(const value_type &vert1, const value_type &vert2) {
     if (!m_adj_list.contains(vert2)) insert_vertex(vert2);
-    auto &&node1 = m_adj_list[vert1];
+    auto &&node1 = (*(m_adj_list.insert({vert1, vert1}).first)).second;
     node1.add_adj(vert2);
     ++m_edge_n;
   }
@@ -86,7 +90,7 @@ public:
   bool vertex_exists(const value_type &val) const { return m_adj_list.contains(val); }
 
   bool edge_exists(const value_type &first, const value_type &second) const {
-    if (!m_adj_list.constains(first) || !m_adj_list.contains(second)) return false;
+    if (!m_adj_list.contains(first) || !m_adj_list.contains(second)) return false;
     auto &&list = m_adj_list.at(first);
     if (std::find(list.begin(), list.end(), second) == list.end()) return false;
     return true;
@@ -109,10 +113,55 @@ public:
 
 template <typename T> using basic_dag = i_dag<i_dag_node<T>>;
 
-template <typename T> std::vector<T> breadth_first_schedule(i_dag<T> &dag, const T &val) {
+template <typename T> std::vector<T> breadth_first_schedule(basic_dag<T> &dag, const T &root_val) {
+
+  enum class color_t {
+    E_WHITE,
+    E_GRAY,
+    E_BLACK
+  };
+
+  struct bfs_node : public basic_dag<T>::node_type {
+    int m_dist = -1;
+    color_t m_color = color_t::E_WHITE;
+    bfs_node *m_prev = nullptr;
+
+    bfs_node(const T &val) : basic_dag<T>::node_type{val} {}
+  };
+
   std::vector<T> scheduled;
-  auto &&root = dag.find(val);
+  std::unordered_map<T, bfs_node> nodes;
+
+  auto &&root = dag.find(root_val);
   if (root == dag.end()) throw std::logic_error{"Non-existing vertex root in BFS"};
+
+  scheduled.push_back(root_val);
+  bfs_node node{root_val};
+  node.m_color = color_t::E_GRAY;
+  node.m_dist = 0;
+  node.m_prev = nullptr;
+  nodes.insert({root_val, node});
+
+  std::deque<T> que;
+  que.push_back(root_val);
+  while (!que.empty()) {
+    auto curr = que.front(); // curr : T
+    que.pop_front();
+    auto &&curr_node = (*(nodes.insert({curr, curr}).first)).second;
+    auto &&curr_dag_node = (*dag.find(curr)).second;
+    for (auto &&adj : curr_dag_node) { // adj : T
+      auto &&adj_node = (*(nodes.insert({adj, adj}).first)).second;
+      if (adj_node.m_color == color_t::E_WHITE) {
+        scheduled.push_back(adj);
+        adj_node.m_color = color_t::E_GRAY;
+        adj_node.m_dist = curr_node.m_dist + 1;
+        adj_node.m_prev = &curr_node;
+        que.push_back(adj);
+      }
+    }
+    curr_node.m_color = color_t::E_BLACK;
+  }
+  return scheduled;
 }
 
 } // namespace paracl::containers
