@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <concepts>
 #include <deque>
+#include <functional>
 #include <list>
 #include <memory>
 #include <stdexcept>
@@ -188,6 +189,57 @@ breadth_first_schedule(graph_t &graph, const typename graph_t::value_type &root_
     curr_node.m_color = color_t::E_BLACK;
   }
   return scheduled;
+}
+
+template <typename graph_t>
+  requires std::derived_from<graph_t, i_directed_graph<typename graph_t::node_type>>
+std::vector<typename graph_t::value_type>
+recursive_topo_sort(graph_t &graph, const typename graph_t::value_type &root_val) {
+  using value_type = typename graph_t::value_type;
+  enum class color_t {
+    E_WHITE,
+    E_GRAY,
+    E_BLACK
+  };
+
+  struct bfs_node : public graph_t::node_type {
+    int m_start = -1, m_finish = -1;
+    color_t m_color = color_t::E_WHITE;
+    bfs_node *m_prev = nullptr;
+
+    bfs_node(const value_type &val) : graph_t::node_type{val} {}
+  };
+
+  int time = 0;
+  std::vector<value_type> scheduled;
+  std::unordered_map<value_type, bfs_node> nodes;
+
+  for (auto &&val : graph)
+    nodes.insert({val.first, val.first});
+
+  std::function<void(value_type)> dfs_visit = [&time, &nodes, &dfs_visit, &graph, &scheduled](const value_type &val) {
+    ++time;
+    auto &&cur_node = nodes.at(val);
+    cur_node.m_start = time;
+    cur_node.m_color = color_t::E_GRAY;
+    auto &&graph_node = graph.find(val)->second;
+    for (auto &&adj : graph_node) {
+      auto &&adj_node = nodes.at(adj);
+      if (adj_node.m_color == color_t::E_WHITE) {
+        adj_node.m_prev = &cur_node;
+        dfs_visit(adj);
+      }
+    }
+    cur_node.m_color = color_t::E_BLACK;
+    scheduled.push_back(val);
+    ++time;
+    cur_node.m_finish = time;
+  };
+
+  for (auto &&val : graph) {
+    if (nodes.at(val.first).m_color == color_t::E_WHITE) dfs_visit(val.first);
+  }
+  return std::vector(scheduled.rbegin(), scheduled.rend());
 }
 
 } // namespace paracl::containers

@@ -93,3 +93,24 @@ TEST(test_directed_graph, test_BFS) {
 
   EXPECT_EQ(res, scheduled);
 }
+
+TEST(test_directed_graph, test_topological_sort) {
+  directed_graph A;
+  A.insert_edge(1, 2);
+  A.insert_edge(1, 5);
+  A.insert_edge(3, 2);
+  A.insert_vertex(4);
+  A.insert_edge(5, 6);
+  A.insert_edge(7, 6);
+  A.insert_edge(7, 8);
+  A.insert_edge(6, 9);
+  A.insert_edge(8, 9);
+
+  auto &&scheduled = paracl::containers::recursive_topo_sort(A, 1);
+
+  for (auto &&a : scheduled)
+    std::cerr << a << " ";
+  std::cerr << "\n";
+
+  EXPECT_TRUE(false);
+}
