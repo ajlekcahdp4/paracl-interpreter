@@ -138,6 +138,7 @@ set(UNIT_TEST_SOURCES
   unit_tests/main.cc 
   unit_tests/ezvis.cc
   unit_tests/directed_graph.cc
+  unit_tests/dag.cc
 )
 
 if(ENABLE_GTEST AND NOT PARACL_NO_TESTING__)

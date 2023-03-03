@@ -56,6 +56,14 @@ public:
 
 template <typename node_t>
   requires std::derived_from<node_t, i_graph_node<typename node_t::value_type>>
+class i_directed_graph;
+
+template <typename graph_t>
+  requires std::derived_from<graph_t, i_directed_graph<typename graph_t::node_type>>
+class breadth_first_search;
+
+template <typename node_t>
+  requires std::derived_from<node_t, i_graph_node<typename node_t::value_type>>
 class i_directed_graph {
 public:
   using size_type = std::size_t;
@@ -73,7 +81,11 @@ public:
 
   virtual void insert_vertex(const value_type &val) { insert_vertex_base(val); }
 
-  virtual void insert_edge(const value_type &first, const value_type &second) { insert_edge_base(first, second); }
+  virtual void insert_edge(const value_type &first, const value_type &second) {
+    if (!vertex_exists(first)) insert_vertex(first);
+    if (!vertex_exists(second)) insert_vertex(second);
+    insert_edge_base(first, second);
+  }
 
   bool vertex_exists(const value_type &val) const { return m_adj_list.contains(val); }
 
@@ -96,19 +108,20 @@ public:
   }
 
   // returns true if first is directly connected to second
-  bool is_connected(const value_type &first, const value_type &second) {
+  bool is_connected(const value_type &first, const value_type &second) const {
     if (!(m_adj_list.contains(first) && m_adj_list.contains(second)))
       throw std::logic_error{"Attempt to check for connection with non-existent vertex"};
-    auto &&found = std::find(m_adj_list[first].begin(), m_adj_list[first].end(), second);
-    if (found == m_adj_list[first].end()) return false;
+
+    auto &&first_node = m_adj_list.at(first);
+    auto &&found = std::find(first_node.begin(), first_node.end(), second);
+    if (found == first_node.end()) return false;
     return true;
   }
 
   // returns true if second is reachable from the first
-  bool is_reachable(const value_type &first, const value_type &second) {
-    auto &&vec = breadth_first_schedule(*this, first);
-    if (std::find(vec.begin(), vec.end(), second) == vec.end()) return false;
-    return true;
+  bool is_reachable(const value_type &first, const value_type &second) const {
+    breadth_first_search search{*this};
+    return search(first, second);
   }
 
   auto find(const value_type &val) const { return m_adj_list.find(val); }
@@ -129,9 +142,9 @@ protected:
 
   // inserts vertices if they are not already at the DG
   void insert_edge_base(const value_type &vert1, const value_type &vert2) {
-    if (!m_adj_list.contains(vert2)) insert_vertex(vert2);
-    auto &&node1 = (*(m_adj_list.insert({vert1, vert1}).first)).second;
-    node1.add_adj(vert2);
+    if (!(m_adj_list.contains(vert1) && m_adj_list.contains(vert2)))
+      throw std::logic_error{"Attempt to insert edge from or to non-existent node"};
+    m_adj_list.at(vert1).add_adj(vert2);
     ++m_edge_n;
   }
 };
@@ -181,12 +194,12 @@ public:
     std::deque<value_type> que;
     que.push_back(root_val);
     while (!que.empty()) {
-      auto &&curr = que.front(); // curr : T
+      auto &&curr = que.front();
       if (curr == target) return true;
       que.pop_front();
       auto &&curr_node = nodes.insert({curr, {}}).first->second;
       auto &&curr_graph_node = m_graph.find(curr)->second;
-      for (auto &&adj : curr_graph_node) { // adj : T
+      for (auto &&adj : curr_graph_node) {
         auto &&adj_node = nodes.insert({adj, {}}).first->second;
         if (adj_node.m_color == color_t::E_WHITE) {
           adj_node.m_color = color_t::E_GRAY;
@@ -200,61 +213,6 @@ public:
     return false;
   }
 };
-
-template <typename graph_t>
-  requires std::derived_from<graph_t, i_directed_graph<typename graph_t::node_type>>
-std::vector<typename graph_t::value_type>
-breadth_first_schedule(graph_t &graph, const typename graph_t::value_type &root_val) {
-
-  using value_type = typename graph_t::value_type;
-  enum class color_t {
-    E_WHITE,
-    E_GRAY,
-    E_BLACK
-  };
-
-  struct bfs_node : public graph_t::node_type {
-    int m_dist = -1;
-    color_t m_color = color_t::E_WHITE;
-    bfs_node *m_prev = nullptr;
-
-    bfs_node(const value_type &val) : graph_t::node_type{val} {}
-  };
-
-  std::vector<value_type> scheduled;
-  std::unordered_map<value_type, bfs_node> nodes;
-
-  auto &&root = graph.find(root_val);
-  if (root == graph.end()) throw std::logic_error{"Non-existing vertex root in BFS"};
-
-  scheduled.push_back(root_val);
-  bfs_node node{root_val};
-  node.m_color = color_t::E_GRAY;
-  node.m_dist = 0;
-  node.m_prev = nullptr;
-  nodes.insert({root_val, node});
-
-  std::deque<value_type> que;
-  que.push_back(root_val);
-  while (!que.empty()) {
-    auto &&curr = que.front(); // curr : T
-    que.pop_front();
-    auto &&curr_node = nodes.insert({curr, curr}).first->second;
-    auto &&curr_graph_node = (*graph.find(curr)).second;
-    for (auto &&adj : curr_graph_node) { // adj : T
-      auto &&adj_node = nodes.insert({adj, adj}).first->second;
-      if (adj_node.m_color == color_t::E_WHITE) {
-        scheduled.push_back(adj);
-        adj_node.m_color = color_t::E_GRAY;
-        adj_node.m_dist = curr_node.m_dist + 1;
-        adj_node.m_prev = &curr_node;
-        que.push_back(adj);
-      }
-    }
-    curr_node.m_color = color_t::E_BLACK;
-  }
-  return scheduled;
-}
 
 template <typename graph_t>
   requires std::derived_from<graph_t, i_directed_graph<typename graph_t::node_type>>

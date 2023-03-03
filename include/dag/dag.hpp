@@ -9,10 +9,24 @@
  */
 #pragma once
 
-#include "oriented_graph.hpp"
+#include "directed_graph.hpp"
 
 namespace paracl::containers {
 
-template <typename T> class i_dag : public i_oriented_graph_node<i_graph_node> {};
+template <typename T> struct dag : public i_directed_graph<i_graph_node<T>> {
+  using base = i_directed_graph<i_graph_node<T>>;
+  using base::insert_edge;
+  using base::insert_vertex;
+  using base::vertex_exists;
+  using typename base::value_type;
+  void insert_edge(const value_type &first, const value_type &second) override {
+    if (!vertex_exists(first)) insert_vertex(first);
+    if (!vertex_exists(second)) insert_vertex(second);
+    breadth_first_search search{*this};
+    auto &&cycle_possible = search(second, first);
+    if (cycle_possible) throw std::logic_error{"Attempt to create cycle in DAG"};
+    base::insert_edge_base(first, second);
+  }
+};
 
 } // namespace paracl::containers
