@@ -23,16 +23,15 @@
 
 namespace paracl::containers {
 
-template <typename T> class i_graph_node : private std::vector<T> {
+template <typename T> class graph_node final : private std::vector<T> {
   T m_val;
 
   using vector = std::vector<T>;
 
 public:
   using value_type = T;
-  virtual ~i_graph_node() {}
 
-  i_graph_node(const value_type val = value_type{}) : m_val{std::move(val)} {}
+  graph_node(const value_type val = value_type{}) : m_val{std::move(val)} {}
 
   operator value_type() { return m_val; }
 
@@ -55,16 +54,16 @@ public:
 };
 
 template <typename node_t>
-  requires std::derived_from<node_t, i_graph_node<typename node_t::value_type>>
-class i_directed_graph;
+  requires std::derived_from<node_t, graph_node<typename node_t::value_type>>
+class directed_graph;
 
 template <typename graph_t>
-  requires std::derived_from<graph_t, i_directed_graph<typename graph_t::node_type>>
+  requires std::derived_from<graph_t, directed_graph<typename graph_t::node_type>>
 class breadth_first_search;
 
 template <typename node_t>
-  requires std::derived_from<node_t, i_graph_node<typename node_t::value_type>>
-class i_directed_graph {
+  requires std::derived_from<node_t, graph_node<typename node_t::value_type>>
+class directed_graph {
 public:
   using size_type = std::size_t;
   using value_type = typename node_t::value_type;
@@ -75,9 +74,9 @@ private:
   size_type m_edge_n = 0;
 
 public:
-  i_directed_graph(){};
+  directed_graph(){};
 
-  virtual ~i_directed_graph() {}
+  virtual ~directed_graph() {}
 
   virtual void insert_vertex(const value_type &val) { insert_vertex_base(val); }
 
@@ -149,23 +148,13 @@ protected:
   }
 };
 
-template <typename T> using basic_directed_graph = i_directed_graph<i_graph_node<T>>;
-
-template <typename graph_t> struct i_graph_searcher {
-  const graph_t &m_graph;
-  i_graph_searcher(const graph_t &graph) : m_graph{graph} {}
-  using value_type = typename graph_t::value_type;
-  virtual ~i_graph_searcher() {}
-  bool search(const value_type &root_val, const value_type &target) const { return operator()(root_val, target); }
-  virtual bool operator()(const value_type &root_val, const value_type &target) const = 0;
-};
+template <typename T> using basic_directed_graph = directed_graph<graph_node<T>>;
 
 template <typename graph_t>
-  requires std::derived_from<graph_t, i_directed_graph<typename graph_t::node_type>>
-class breadth_first_search : public i_graph_searcher<graph_t> {
-  using base = i_graph_searcher<graph_t>;
-  using base::m_graph;
-  using typename base::value_type;
+  requires std::derived_from<graph_t, directed_graph<typename graph_t::node_type>>
+class breadth_first_search final {
+  const graph_t &m_graph;
+  using value_type = typename graph_t::value_type;
 
   enum class color_t {
     E_WHITE,
@@ -180,9 +169,9 @@ class breadth_first_search : public i_graph_searcher<graph_t> {
   };
 
 public:
-  breadth_first_search(const graph_t &graph) : base{graph} {}
+  breadth_first_search(const graph_t &graph) : m_graph{graph} {}
 
-  bool operator()(const value_type &root_val, const value_type &target) const override {
+  bool operator()(const value_type &root_val, const value_type &target) const {
     if (!m_graph.contains(root_val)) throw std::logic_error{"Non-existing vertex root in BFS"};
     if (!m_graph.contains(target)) return false;
 
@@ -215,7 +204,7 @@ public:
 };
 
 template <typename graph_t>
-  requires std::derived_from<graph_t, i_directed_graph<typename graph_t::node_type>>
+  requires std::derived_from<graph_t, directed_graph<typename graph_t::node_type>>
 std::vector<typename graph_t::value_type>
 recursive_topo_sort(graph_t &graph, const typename graph_t::value_type &root_val) {
   using value_type = typename graph_t::value_type;

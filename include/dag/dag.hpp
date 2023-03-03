@@ -13,8 +13,8 @@
 
 namespace paracl::containers {
 
-template <typename T> struct dag : public i_directed_graph<i_graph_node<T>> {
-  using base = i_directed_graph<i_graph_node<T>>;
+template <typename T> struct dag : public directed_graph<graph_node<T>> {
+  using base = directed_graph<graph_node<T>>;
   using base::insert_edge;
   using base::insert_vertex;
   using base::vertex_exists;
