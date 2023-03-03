@@ -8,14 +8,14 @@
  * ----------------------------------------------------------------------------
  */
 
-#include "dag/oriented_graph.hpp"
+#include "dag/directed_graph.hpp"
 
 #include <gtest/gtest.h>
 
-using oriented_graph = paracl::containers::basic_oriented_graph<int>;
+using directed_graph = paracl::containers::basic_directed_graph<int>;
 
-TEST(test_oriented_graph, insert_vertex) {
-  oriented_graph A;
+TEST(test_directed_graph, insert_vertex) {
+  directed_graph A;
   EXPECT_EQ(A.number_of_vertices(), 0);
   EXPECT_NO_THROW(A.insert_vertex(1));
   EXPECT_NO_THROW(A.insert_vertex(2));
@@ -26,8 +26,8 @@ TEST(test_oriented_graph, insert_vertex) {
   EXPECT_FALSE(A.vertex_exists(4));
 }
 
-TEST(test_oriented_graph, insert_edge) {
-  oriented_graph A;
+TEST(test_directed_graph, insert_edge) {
+  directed_graph A;
   EXPECT_NO_THROW(A.insert_edge(1, 2));
   EXPECT_NO_THROW(A.insert_edge(1, 3));
   EXPECT_NO_THROW(A.insert_edge(3, 2));
@@ -44,8 +44,43 @@ TEST(test_oriented_graph, insert_edge) {
   EXPECT_TRUE(A.edge_exists(3, 3));
 }
 
-TEST(test_oriented_graph, test_BFS) {
-  oriented_graph A;
+TEST(test_directed_graph, test_is_connected) {
+  directed_graph A;
+  A.insert_edge(3, 6);
+  A.insert_edge(3, 5);
+  A.insert_edge(5, 4);
+  A.insert_edge(4, 2);
+  A.insert_edge(2, 5);
+  A.insert_edge(1, 2);
+  A.insert_edge(1, 4);
+  A.insert_edge(1, 1);
+
+  EXPECT_TRUE(A.is_connected(3, 5));
+  EXPECT_TRUE(A.is_connected(1, 2));
+  EXPECT_TRUE(A.is_connected(1, 1));
+  EXPECT_FALSE(A.is_connected(1, 6));
+  EXPECT_FALSE(A.is_connected(1, 3));
+  EXPECT_FALSE(A.is_connected(5, 3));
+}
+
+TEST(test_directed_graph, test_is_reachable) {
+  directed_graph A;
+  A.insert_edge(3, 6);
+  A.insert_edge(3, 5);
+  A.insert_edge(5, 4);
+  A.insert_edge(4, 2);
+  A.insert_edge(2, 5);
+  A.insert_edge(1, 2);
+  A.insert_edge(1, 4);
+  A.insert_edge(1, 1);
+
+  EXPECT_TRUE(A.is_reachable(3, 6));
+  EXPECT_TRUE(A.is_reachable(3, 2));
+  EXPECT_FALSE(A.is_reachable(3, 1));
+}
+
+TEST(test_directed_graph, test_BFS) {
+  directed_graph A;
   A.insert_edge(3, 6);
   A.insert_edge(3, 5);
   A.insert_edge(5, 4);

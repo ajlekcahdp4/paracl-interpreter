@@ -21,23 +21,24 @@
 
 namespace paracl::containers {
 
-template <typename T> class i_oriented_graph_node : private std::vector<T> {
+template <typename T> class i_graph_node : private std::vector<T> {
   T m_val;
 
   using vector = std::vector<T>;
 
 public:
   using value_type = T;
-  virtual ~i_oriented_graph_node() {}
+  virtual ~i_graph_node() {}
 
-  i_oriented_graph_node(const value_type val = value_type{}) : m_val{std::move(val)} {}
+  i_graph_node(const value_type val = value_type{}) : m_val{std::move(val)} {}
 
   operator value_type() { return m_val; }
 
   value_type value() const { return m_val; }
 
   void add_adj(const value_type &val) {
-    if (std::find(begin(), end(), val) != end()) throw std::logic_error{"Attempt to add existing edge into a DAG"};
+    if (std::find(begin(), end(), val) != end())
+      throw std::logic_error{"Attempt to add existing edge into a oriented graph"};
     vector::push_back(val);
   }
 
@@ -52,8 +53,8 @@ public:
 };
 
 template <typename node_t>
-  requires std::derived_from<node_t, i_oriented_graph_node<typename node_t::value_type>>
-class i_oriented_graph {
+  requires std::derived_from<node_t, i_graph_node<typename node_t::value_type>>
+class i_directed_graph {
 public:
   using size_type = std::size_t;
   using value_type = typename node_t::value_type;
@@ -64,41 +65,48 @@ private:
   size_type m_edge_n = 0;
 
 public:
-  i_oriented_graph(){};
+  i_directed_graph(){};
 
-  virtual ~i_oriented_graph() {}
+  virtual ~i_directed_graph() {}
 
-  virtual void insert_vertex(const value_type &val) {
-    auto &&[iter, inserted] = m_adj_list.insert({val, {val}});
-    if (!inserted) throw std::logic_error{"Attempt to insert existing vertex into a dag"};
-  }
+  virtual void insert_vertex(const value_type &val) { insert_vertex_base(val); }
 
-  // inserts vertices if they are not already at the DAG
-  virtual void insert_edge(const value_type &vert1, const value_type &vert2) {
-    if (!m_adj_list.contains(vert2)) insert_vertex(vert2);
-    auto &&node1 = (*(m_adj_list.insert({vert1, vert1}).first)).second;
-    node1.add_adj(vert2);
-    ++m_edge_n;
+  virtual void insert_edge(const value_type &first, const value_type &second) { insert_edge_base(first, second); }
+
+  bool vertex_exists(const value_type &val) const { return m_adj_list.contains(val); }
+
+  bool edge_exists(const value_type &first, const value_type &second) const {
+    if (!(m_adj_list.contains(first) && m_adj_list.contains(second))) return false;
+    auto &&list = m_adj_list.at(first);
+    if (std::find(list.begin(), list.end(), second) == list.end()) return false;
+    return true;
   }
 
   size_type number_of_edges() const { return m_edge_n; }
 
   size_type number_of_vertices() const { return m_adj_list.size(); }
 
-  bool empty() const { return number_of_vertices(); }
-
-  bool vertex_exists(const value_type &val) const { return m_adj_list.contains(val); }
-
-  bool edge_exists(const value_type &first, const value_type &second) const {
-    if (!m_adj_list.contains(first) || !m_adj_list.contains(second)) return false;
-    auto &&list = m_adj_list.at(first);
-    if (std::find(list.begin(), list.end(), second) == list.end()) return false;
-    return true;
-  }
+  bool empty() const { return !number_of_vertices(); }
 
   size_type number_of_successors(const value_type &val) const {
     if (!m_adj_list.contains(val)) throw std::logic_error{"Attempt to get number of successors of non-existent vertex"};
     return m_adj_list[val].size();
+  }
+
+  // returns true if first is directly connected to second
+  bool is_connected(const value_type &first, const value_type &second) {
+    if (!(m_adj_list.contains(first) && m_adj_list.contains(second)))
+      throw std::logic_error{"Attempt to check for connection with non-existent vertex"};
+    auto &&found = std::find(m_adj_list[first].begin(), m_adj_list[first].end(), second);
+    if (found == m_adj_list[first].end()) return false;
+    return true;
+  }
+
+  // returns true if second is reachable from the first
+  bool is_reachable(const value_type &first, const value_type &second) {
+    auto &&vec = breadth_first_schedule(*this, first);
+    if (std::find(vec.begin(), vec.end(), second) == vec.end()) return false;
+    return true;
   }
 
   auto find(const value_type &val) { return m_adj_list.find(val); }
@@ -109,28 +117,46 @@ public:
   auto end() const { return m_adj_list.cend(); }
   auto cbegin() { return m_adj_list.cbegin(); }
   auto cend() { return m_adj_list.cend(); }
+
+protected:
+  void insert_vertex_base(const value_type &val) {
+    auto &&[iter, inserted] = m_adj_list.insert({val, {val}});
+    if (!inserted) throw std::logic_error{"Attempt to insert existing vertex into a dag"};
+  }
+
+  // inserts vertices if they are not already at the DG
+  void insert_edge_base(const value_type &vert1, const value_type &vert2) {
+    if (!m_adj_list.contains(vert2)) insert_vertex(vert2);
+    auto &&node1 = (*(m_adj_list.insert({vert1, vert1}).first)).second;
+    node1.add_adj(vert2);
+    ++m_edge_n;
+  }
 };
 
-template <typename T> using basic_oriented_graph = i_oriented_graph<i_oriented_graph_node<T>>;
+template <typename T> using basic_directed_graph = i_directed_graph<i_graph_node<T>>;
 
-template <typename T> std::vector<T> breadth_first_schedule(basic_oriented_graph<T> &dag, const T &root_val) {
+template <typename graph_t>
+  requires std::derived_from<graph_t, i_directed_graph<typename graph_t::node_type>>
+std::vector<typename graph_t::value_type>
+breadth_first_schedule(graph_t &dag, const typename graph_t::value_type &root_val) {
 
+  using value_type = typename graph_t::value_type;
   enum class color_t {
     E_WHITE,
     E_GRAY,
     E_BLACK
   };
 
-  struct bfs_node : public basic_oriented_graph<T>::node_type {
+  struct bfs_node : public graph_t::node_type {
     int m_dist = -1;
     color_t m_color = color_t::E_WHITE;
     bfs_node *m_prev = nullptr;
 
-    bfs_node(const T &val) : basic_oriented_graph<T>::node_type{val} {}
+    bfs_node(const value_type &val) : graph_t::node_type{val} {}
   };
 
-  std::vector<T> scheduled;
-  std::unordered_map<T, bfs_node> nodes;
+  std::vector<value_type> scheduled;
+  std::unordered_map<value_type, bfs_node> nodes;
 
   auto &&root = dag.find(root_val);
   if (root == dag.end()) throw std::logic_error{"Non-existing vertex root in BFS"};
@@ -142,7 +168,7 @@ template <typename T> std::vector<T> breadth_first_schedule(basic_oriented_graph
   node.m_prev = nullptr;
   nodes.insert({root_val, node});
 
-  std::deque<T> que;
+  std::deque<value_type> que;
   que.push_back(root_val);
   while (!que.empty()) {
     auto &&curr = que.front(); // curr : T
