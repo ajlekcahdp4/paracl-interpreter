@@ -121,7 +121,7 @@ public:
 protected:
   void insert_vertex_base(const value_type &val) {
     auto &&[iter, inserted] = m_adj_list.insert({val, {val}});
-    if (!inserted) throw std::logic_error{"Attempt to insert existing vertex into a dag"};
+    if (!inserted) throw std::logic_error{"Attempt to insert existing vertex into a graph"};
   }
 
   // inserts vertices if they are not already at the DG
@@ -138,7 +138,7 @@ template <typename T> using basic_directed_graph = i_directed_graph<i_graph_node
 template <typename graph_t>
   requires std::derived_from<graph_t, i_directed_graph<typename graph_t::node_type>>
 std::vector<typename graph_t::value_type>
-breadth_first_schedule(graph_t &dag, const typename graph_t::value_type &root_val) {
+breadth_first_schedule(graph_t &graph, const typename graph_t::value_type &root_val) {
 
   using value_type = typename graph_t::value_type;
   enum class color_t {
@@ -158,8 +158,8 @@ breadth_first_schedule(graph_t &dag, const typename graph_t::value_type &root_va
   std::vector<value_type> scheduled;
   std::unordered_map<value_type, bfs_node> nodes;
 
-  auto &&root = dag.find(root_val);
-  if (root == dag.end()) throw std::logic_error{"Non-existing vertex root in BFS"};
+  auto &&root = graph.find(root_val);
+  if (root == graph.end()) throw std::logic_error{"Non-existing vertex root in BFS"};
 
   scheduled.push_back(root_val);
   bfs_node node{root_val};
@@ -174,8 +174,8 @@ breadth_first_schedule(graph_t &dag, const typename graph_t::value_type &root_va
     auto &&curr = que.front(); // curr : T
     que.pop_front();
     auto &&curr_node = (*(nodes.insert({curr, curr}).first)).second;
-    auto &&curr_dag_node = (*dag.find(curr)).second;
-    for (auto &&adj : curr_dag_node) { // adj : T
+    auto &&curr_graph_node = (*graph.find(curr)).second;
+    for (auto &&adj : curr_graph_node) { // adj : T
       auto &&adj_node = (*(nodes.insert({adj, adj}).first)).second;
       if (adj_node.m_color == color_t::E_WHITE) {
         scheduled.push_back(adj);
