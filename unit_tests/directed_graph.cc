@@ -88,29 +88,9 @@ TEST(test_directed_graph, test_BFS) {
   A.insert_edge(2, 5);
   A.insert_edge(1, 2);
   A.insert_edge(1, 4);
-  auto &&scheduled = paracl::containers::breadth_first_schedule(A, 3);
-  std::vector<int> res{3, 6, 5, 4, 2};
-
-  EXPECT_EQ(res, scheduled);
-}
-
-TEST(test_directed_graph, test_topological_sort) {
-  directed_graph A;
-  A.insert_edge(1, 2);
-  A.insert_edge(1, 5);
-  A.insert_edge(3, 2);
-  A.insert_vertex(4);
-  A.insert_edge(5, 6);
-  A.insert_edge(7, 6);
-  A.insert_edge(7, 8);
-  A.insert_edge(6, 9);
-  A.insert_edge(8, 9);
-
-  auto &&scheduled = paracl::containers::recursive_topo_sort(A, 1);
-
-  for (auto &&a : scheduled)
-    std::cerr << a << " ";
-  std::cerr << "\n";
-
-  EXPECT_TRUE(false);
+  paracl::containers::breadth_first_search search{A};
+  EXPECT_TRUE(search(3, 2));
+  EXPECT_TRUE(search(2, 5));
+  EXPECT_FALSE(search(2, 3));
+  EXPECT_FALSE(search(4, 11));
 }

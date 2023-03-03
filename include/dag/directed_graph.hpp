@@ -16,6 +16,7 @@
 #include <functional>
 #include <list>
 #include <memory>
+#include <numeric>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
@@ -110,14 +111,15 @@ public:
     return true;
   }
 
-  auto find(const value_type &val) { return m_adj_list.find(val); }
+  auto find(const value_type &val) const { return m_adj_list.find(val); }
+  auto contains(const value_type &val) const { return m_adj_list.contains(val); }
 
   auto begin() { return m_adj_list.begin(); }
   auto end() { return m_adj_list.end(); }
   auto begin() const { return m_adj_list.cbegin(); }
   auto end() const { return m_adj_list.cend(); }
-  auto cbegin() { return m_adj_list.cbegin(); }
-  auto cend() { return m_adj_list.cend(); }
+  auto cbegin() const { return m_adj_list.cbegin(); }
+  auto cend() const { return m_adj_list.cend(); }
 
 protected:
   void insert_vertex_base(const value_type &val) {
@@ -135,6 +137,69 @@ protected:
 };
 
 template <typename T> using basic_directed_graph = i_directed_graph<i_graph_node<T>>;
+
+template <typename graph_t> struct i_graph_searcher {
+  const graph_t &m_graph;
+  i_graph_searcher(const graph_t &graph) : m_graph{graph} {}
+  using value_type = typename graph_t::value_type;
+  virtual ~i_graph_searcher() {}
+  bool search(const value_type &root_val, const value_type &target) const { return operator()(root_val, target); }
+  virtual bool operator()(const value_type &root_val, const value_type &target) const = 0;
+};
+
+template <typename graph_t>
+  requires std::derived_from<graph_t, i_directed_graph<typename graph_t::node_type>>
+class breadth_first_search : public i_graph_searcher<graph_t> {
+  using base = i_graph_searcher<graph_t>;
+  using base::m_graph;
+  using typename base::value_type;
+
+  enum class color_t {
+    E_WHITE,
+    E_GRAY,
+    E_BLACK
+  };
+
+  struct bfs_node {
+    unsigned m_dist = std::numeric_limits<unsigned>::max();
+    color_t m_color = color_t::E_WHITE;
+    bfs_node *m_prev = nullptr;
+  };
+
+public:
+  breadth_first_search(const graph_t &graph) : base{graph} {}
+
+  bool operator()(const value_type &root_val, const value_type &target) const override {
+    if (!m_graph.contains(root_val)) throw std::logic_error{"Non-existing vertex root in BFS"};
+    if (!m_graph.contains(target)) return false;
+
+    std::unordered_map<value_type, bfs_node> nodes;
+    auto &&root_node = nodes.insert({root_val, {}}).first->second;
+    root_node.m_color = color_t::E_GRAY;
+    root_node.m_dist = 0;
+
+    std::deque<value_type> que;
+    que.push_back(root_val);
+    while (!que.empty()) {
+      auto &&curr = que.front(); // curr : T
+      if (curr == target) return true;
+      que.pop_front();
+      auto &&curr_node = nodes.insert({curr, {}}).first->second;
+      auto &&curr_graph_node = m_graph.find(curr)->second;
+      for (auto &&adj : curr_graph_node) { // adj : T
+        auto &&adj_node = nodes.insert({adj, {}}).first->second;
+        if (adj_node.m_color == color_t::E_WHITE) {
+          adj_node.m_color = color_t::E_GRAY;
+          adj_node.m_dist = curr_node.m_dist + 1;
+          adj_node.m_prev = &curr_node;
+          que.push_back(adj);
+        }
+      }
+      curr_node.m_color = color_t::E_BLACK;
+    }
+    return false;
+  }
+};
 
 template <typename graph_t>
   requires std::derived_from<graph_t, i_directed_graph<typename graph_t::node_type>>
@@ -174,10 +239,10 @@ breadth_first_schedule(graph_t &graph, const typename graph_t::value_type &root_
   while (!que.empty()) {
     auto &&curr = que.front(); // curr : T
     que.pop_front();
-    auto &&curr_node = (*(nodes.insert({curr, curr}).first)).second;
+    auto &&curr_node = nodes.insert({curr, curr}).first->second;
     auto &&curr_graph_node = (*graph.find(curr)).second;
     for (auto &&adj : curr_graph_node) { // adj : T
-      auto &&adj_node = (*(nodes.insert({adj, adj}).first)).second;
+      auto &&adj_node = nodes.insert({adj, adj}).first->second;
       if (adj_node.m_color == color_t::E_WHITE) {
         scheduled.push_back(adj);
         adj_node.m_color = color_t::E_GRAY;
