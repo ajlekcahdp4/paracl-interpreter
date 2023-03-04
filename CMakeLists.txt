@@ -134,7 +134,12 @@ if(BASH_PROGRAM)
                    ${CMAKE_CURRENT_SOURCE_DIR}/test/functions)
 endif()
 
-set(UNIT_TEST_SOURCES unit_tests/main.cc unit_tests/ezvis.cc)
+set(UNIT_TEST_SOURCES
+  unit_tests/main.cc 
+  unit_tests/ezvis.cc
+  unit_tests/directed_graph.cc
+  unit_tests/dag.cc
+)
 
 if(ENABLE_GTEST AND NOT PARACL_NO_TESTING__)
   add_executable(unit_tests ${UNIT_TEST_SOURCES})
