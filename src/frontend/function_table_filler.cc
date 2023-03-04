@@ -78,12 +78,4 @@ void ftable_filler::fill_ftable(ast::function_call &ref) {
     apply(*param);
 }
 
-void ftable_filler::fill_ftable(ast::error_node &ref) {}
-
-void ftable_filler::fill_ftable(ast::read_expression &ref) {}
-
-void ftable_filler::fill_ftable(ast::constant_expression &ref) {}
-
-void ftable_filler::fill_ftable(ast::variable_expression &ref) {}
-
 } // namespace paracl::frontend
