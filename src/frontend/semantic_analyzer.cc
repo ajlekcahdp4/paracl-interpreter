@@ -159,20 +159,7 @@ bool semantic_analyzer::analyze_node(ast::variable_expression &ref) {
   return true;
 }
 
-void semantic_analyzer::analyze_node(ast::function_definition &ref) {
-  auto &&name = ref.name();
-  if (name.has_value()) {
-    auto [ptr, inserted] = m_ast->add_named_function(name.value(), &ref);
-    if (!inserted) {
-      std::stringstream ss;
-      ss << "Redefinition of function "
-         << "\"" << name.value() << "\""; // add information about previously declared function (in that case 'ptr' will
-                                          // be a pointer to already declared function)
-      report_error(ss.str(), ref.loc());
-      return;
-    }
-  } else m_ast->add_anonymous_function(&ref);
-}
+void semantic_analyzer::analyze_node(ast::function_definition &ref) {}
 
 void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) {
   analyze_node(ref.definition());

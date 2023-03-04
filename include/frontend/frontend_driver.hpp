@@ -16,6 +16,7 @@
 #include "frontend/scanner.hpp"
 #include "frontend/semantic_analyzer.hpp"
 #include "frontend/types/types.hpp"
+#include "function_table_filler.hpp"
 #include "scanner.hpp"
 #include "semantic_analyzer.hpp"
 
@@ -117,7 +118,9 @@ private:
   std::unique_ptr<std::istringstream> m_iss;
 
   std::unique_ptr<parser_driver> m_parsing_driver;
-  semantic_analyzer m_semantic_analyzer;
+
+  semantic_analyzer m_semantic_analyzer{};
+  ftable_filler m_ftable_filler{};
 
 private:
   void report_pretty_error(error_kind err) {
@@ -186,6 +189,20 @@ public:
 
     std::vector<paracl::frontend::error_kind> errors;
     bool valid = m_semantic_analyzer.analyze(ast, errors);
+
+    for (const auto &e : errors) {
+      report_pretty_error(e);
+    }
+
+    return valid;
+  }
+
+  bool fill_ftable() {
+    auto &&ast = m_parsing_driver->ast();
+    if (!ast.get_root_ptr()) return true;
+
+    std::vector<paracl::frontend::error_kind> errors;
+    bool valid = m_ftable_filler.fill(ast, errors);
 
     for (const auto &e : errors) {
       report_pretty_error(e);
