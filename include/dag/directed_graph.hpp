@@ -229,7 +229,7 @@ recursive_topo_sort(graph_t &graph, const typename graph_t::value_type &root_val
   for (auto &&val : graph)
     nodes.insert({val.first, val.first});
 
-  std::function<void(value_type)> dfs_visit = [&time, &nodes, &dfs_visit, &graph, &scheduled](const value_type &val) {
+  const auto dfs_visit = [&time, &nodes, &graph, &scheduled](const value_type &val, auto &&dfs_visit) -> void {
     ++time;
     auto &&cur_node = nodes.at(val);
     cur_node.m_start = time;
@@ -239,7 +239,7 @@ recursive_topo_sort(graph_t &graph, const typename graph_t::value_type &root_val
       auto &&adj_node = nodes.at(adj);
       if (adj_node.m_color == color_t::E_WHITE) {
         adj_node.m_prev = &cur_node;
-        dfs_visit(adj);
+        dfs_visit(adj, dfs_visit);
       }
     }
     cur_node.m_color = color_t::E_BLACK;
@@ -249,7 +249,7 @@ recursive_topo_sort(graph_t &graph, const typename graph_t::value_type &root_val
   };
 
   for (auto &&val : graph) {
-    if (nodes.at(val.first).m_color == color_t::E_WHITE) dfs_visit(val.first);
+    if (nodes.at(val.first).m_color == color_t::E_WHITE) dfs_visit(val.first, dfs_visit);
   }
   return std::vector(scheduled.rbegin(), scheduled.rend());
 }
