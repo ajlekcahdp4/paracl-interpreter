@@ -12,83 +12,83 @@
 
 #include <gtest/gtest.h>
 
-using directed_graph = paracl::containers::basic_directed_graph<int>;
+using directed_graph = paracl::graphs::basic_directed_graph<int>;
 
-TEST(test_directed_graph, insert_vertex) {
+TEST(test_directed_graph, test_insert_vertex) {
   directed_graph A;
-  EXPECT_EQ(A.number_of_vertices(), 0);
-  EXPECT_NO_THROW(A.insert_vertex(1));
-  EXPECT_NO_THROW(A.insert_vertex(2));
-  EXPECT_THROW(A.insert_vertex(1), std::logic_error);
-  EXPECT_EQ(A.number_of_vertices(), 2);
-  EXPECT_TRUE(A.vertex_exists(1));
-  EXPECT_TRUE(A.vertex_exists(2));
-  EXPECT_FALSE(A.vertex_exists(4));
+  EXPECT_EQ(A.vertices(), 0);
+  EXPECT_NO_THROW(A.insert(1));
+  EXPECT_NO_THROW(A.insert(2));
+  EXPECT_THROW(A.insert(1), std::logic_error);
+  EXPECT_EQ(A.vertices(), 2);
+  EXPECT_TRUE(A.contains(1));
+  EXPECT_TRUE(A.contains(2));
+  EXPECT_FALSE(A.contains(4));
 }
 
-TEST(test_directed_graph, insert_edge) {
+TEST(test_directed_graph, test_insert_edge) {
   directed_graph A;
-  EXPECT_NO_THROW(A.insert_edge(1, 2));
-  EXPECT_NO_THROW(A.insert_edge(1, 3));
-  EXPECT_NO_THROW(A.insert_edge(3, 2));
-  EXPECT_NO_THROW(A.insert_edge(3, 3));
-  EXPECT_THROW(A.insert_edge(1, 2), std::logic_error);
-  EXPECT_EQ(A.number_of_edges(), 4);
-  EXPECT_EQ(A.number_of_vertices(), 3);
-  EXPECT_TRUE(A.vertex_exists(1));
-  EXPECT_TRUE(A.vertex_exists(2));
-  EXPECT_TRUE(A.vertex_exists(3));
-  EXPECT_TRUE(A.edge_exists(1, 2));
-  EXPECT_TRUE(A.edge_exists(1, 3));
-  EXPECT_TRUE(A.edge_exists(3, 2));
-  EXPECT_TRUE(A.edge_exists(3, 3));
+  EXPECT_NO_THROW(A.insert(1, 2));
+  EXPECT_NO_THROW(A.insert(1, 3));
+  EXPECT_NO_THROW(A.insert(3, 2));
+  EXPECT_NO_THROW(A.insert(3, 3));
+  EXPECT_THROW(A.insert(1, 2), std::logic_error);
+  EXPECT_EQ(A.edges(), 4);
+  EXPECT_EQ(A.vertices(), 3);
+  EXPECT_TRUE(A.contains(1));
+  EXPECT_TRUE(A.contains(2));
+  EXPECT_TRUE(A.contains(3));
+  EXPECT_TRUE(A.contains(1, 2));
+  EXPECT_TRUE(A.contains(1, 3));
+  EXPECT_TRUE(A.contains(3, 2));
+  EXPECT_TRUE(A.contains(3, 3));
 }
 
-TEST(test_directed_graph, test_is_connected) {
+TEST(test_directed_graph, test_connected) {
   directed_graph A;
-  A.insert_edge(3, 6);
-  A.insert_edge(3, 5);
-  A.insert_edge(5, 4);
-  A.insert_edge(4, 2);
-  A.insert_edge(2, 5);
-  A.insert_edge(1, 2);
-  A.insert_edge(1, 4);
-  A.insert_edge(1, 1);
+  A.insert(3, 6);
+  A.insert(3, 5);
+  A.insert(5, 4);
+  A.insert(4, 2);
+  A.insert(2, 5);
+  A.insert(1, 2);
+  A.insert(1, 4);
+  A.insert(1, 1);
 
-  EXPECT_TRUE(A.is_connected(3, 5));
-  EXPECT_TRUE(A.is_connected(1, 2));
-  EXPECT_TRUE(A.is_connected(1, 1));
-  EXPECT_FALSE(A.is_connected(1, 6));
-  EXPECT_FALSE(A.is_connected(1, 3));
-  EXPECT_FALSE(A.is_connected(5, 3));
+  EXPECT_TRUE(A.connected(3, 5));
+  EXPECT_TRUE(A.connected(1, 2));
+  EXPECT_TRUE(A.connected(1, 1));
+  EXPECT_FALSE(A.connected(1, 6));
+  EXPECT_FALSE(A.connected(1, 3));
+  EXPECT_FALSE(A.connected(5, 3));
 }
 
-TEST(test_directed_graph, test_is_reachable) {
+TEST(test_directed_graph, test_reachable) {
   directed_graph A;
-  A.insert_edge(3, 6);
-  A.insert_edge(3, 5);
-  A.insert_edge(5, 4);
-  A.insert_edge(4, 2);
-  A.insert_edge(2, 5);
-  A.insert_edge(1, 2);
-  A.insert_edge(1, 4);
-  A.insert_edge(1, 1);
+  A.insert(3, 6);
+  A.insert(3, 5);
+  A.insert(5, 4);
+  A.insert(4, 2);
+  A.insert(2, 5);
+  A.insert(1, 2);
+  A.insert(1, 4);
+  A.insert(1, 1);
 
-  EXPECT_TRUE(A.is_reachable(3, 6));
-  EXPECT_TRUE(A.is_reachable(3, 2));
-  EXPECT_FALSE(A.is_reachable(3, 1));
+  EXPECT_TRUE(A.reachable(3, 6));
+  EXPECT_TRUE(A.reachable(3, 2));
+  EXPECT_FALSE(A.reachable(3, 1));
 }
 
 TEST(test_directed_graph, test_BFS) {
   directed_graph A;
-  A.insert_edge(3, 6);
-  A.insert_edge(3, 5);
-  A.insert_edge(5, 4);
-  A.insert_edge(4, 2);
-  A.insert_edge(2, 5);
-  A.insert_edge(1, 2);
-  A.insert_edge(1, 4);
-  paracl::containers::breadth_first_search search{A};
+  A.insert(3, 6);
+  A.insert(3, 5);
+  A.insert(5, 4);
+  A.insert(4, 2);
+  A.insert(2, 5);
+  A.insert(1, 2);
+  A.insert(1, 4);
+  paracl::graphs::breadth_first_search search{A};
   EXPECT_TRUE(search(3, 2));
   EXPECT_TRUE(search(2, 5));
   EXPECT_FALSE(search(2, 3));

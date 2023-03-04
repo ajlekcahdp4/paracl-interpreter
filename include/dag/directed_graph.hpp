@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace paracl::containers {
+namespace paracl::graphs {
 
 template <typename T> class graph_node final : private std::vector<T> {
   T m_val;
@@ -78,36 +78,40 @@ public:
 
   virtual ~directed_graph() {}
 
-  virtual void insert_vertex(const value_type &val) { insert_vertex_base(val); }
+  // inserts vertex
+  virtual void insert(const value_type &val) { insert_base(val); }
 
-  virtual void insert_edge(const value_type &first, const value_type &second) {
-    if (!vertex_exists(first)) insert_vertex(first);
-    if (!vertex_exists(second)) insert_vertex(second);
-    insert_edge_base(first, second);
+  // inserts edge from first to second
+  virtual void insert(const value_type &first, const value_type &second) {
+    if (!contains(first)) insert(first);
+    if (!contains(second)) insert(second);
+    insert_base(first, second);
   }
 
-  bool vertex_exists(const value_type &val) const { return m_adj_list.contains(val); }
-
-  bool edge_exists(const value_type &first, const value_type &second) const {
+  // checks if edge from first to second exists
+  bool contains(const value_type &first, const value_type &second) const {
     if (!(m_adj_list.contains(first) && m_adj_list.contains(second))) return false;
     auto &&list = m_adj_list.at(first);
     if (std::find(list.begin(), list.end(), second) == list.end()) return false;
     return true;
   }
 
-  size_type number_of_edges() const { return m_edge_n; }
+  // checks if vertex exists
+  auto contains(const value_type &val) const { return m_adj_list.contains(val); }
 
-  size_type number_of_vertices() const { return m_adj_list.size(); }
+  size_type edges() const { return m_edge_n; }
 
-  bool empty() const { return !number_of_vertices(); }
+  size_type vertices() const { return m_adj_list.size(); }
 
-  size_type number_of_successors(const value_type &val) const {
+  bool empty() const { return !vertices(); }
+
+  size_type successors(const value_type &val) const {
     if (!m_adj_list.contains(val)) throw std::logic_error{"Attempt to get number of successors of non-existent vertex"};
     return m_adj_list[val].size();
   }
 
   // returns true if first is directly connected to second
-  bool is_connected(const value_type &first, const value_type &second) const {
+  bool connected(const value_type &first, const value_type &second) const {
     if (!(m_adj_list.contains(first) && m_adj_list.contains(second)))
       throw std::logic_error{"Attempt to check for connection with non-existent vertex"};
 
@@ -118,13 +122,12 @@ public:
   }
 
   // returns true if second is reachable from the first
-  bool is_reachable(const value_type &first, const value_type &second) const {
+  bool reachable(const value_type &first, const value_type &second) const {
     breadth_first_search search{*this};
     return search(first, second);
   }
 
   auto find(const value_type &val) const { return m_adj_list.find(val); }
-  auto contains(const value_type &val) const { return m_adj_list.contains(val); }
 
   auto begin() { return m_adj_list.begin(); }
   auto end() { return m_adj_list.end(); }
@@ -134,13 +137,13 @@ public:
   auto cend() const { return m_adj_list.cend(); }
 
 protected:
-  void insert_vertex_base(const value_type &val) {
+  void insert_base(const value_type &val) {
     auto &&[iter, inserted] = m_adj_list.insert({val, {val}});
     if (!inserted) throw std::logic_error{"Attempt to insert existing vertex into a graph"};
   }
 
   // inserts vertices if they are not already at the DG
-  void insert_edge_base(const value_type &vert1, const value_type &vert2) {
+  void insert_base(const value_type &vert1, const value_type &vert2) {
     if (!(m_adj_list.contains(vert1) && m_adj_list.contains(vert2)))
       throw std::logic_error{"Attempt to insert edge from or to non-existent node"};
     m_adj_list.at(vert1).add_adj(vert2);
@@ -254,4 +257,4 @@ recursive_topo_sort(graph_t &graph, const typename graph_t::value_type &root_val
   return std::vector(scheduled.rbegin(), scheduled.rend());
 }
 
-} // namespace paracl::containers
+} // namespace paracl::graphs

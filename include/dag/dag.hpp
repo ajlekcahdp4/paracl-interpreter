@@ -11,22 +11,21 @@
 
 #include "directed_graph.hpp"
 
-namespace paracl::containers {
+namespace paracl::graphs {
 
 template <typename T> struct dag : public directed_graph<graph_node<T>> {
   using base = directed_graph<graph_node<T>>;
-  using base::insert_edge;
-  using base::insert_vertex;
-  using base::vertex_exists;
+  using base::contains;
+  using base::insert;
   using typename base::value_type;
-  void insert_edge(const value_type &first, const value_type &second) override {
-    if (!vertex_exists(first)) insert_vertex(first);
-    if (!vertex_exists(second)) insert_vertex(second);
+  void insert(const value_type &first, const value_type &second) override {
+    if (!contains(first)) insert(first);
+    if (!contains(second)) insert(second);
     breadth_first_search search{*this};
     auto &&cycle_possible = search(second, first);
     if (cycle_possible) throw std::logic_error{"Attempt to create cycle in DAG"};
-    base::insert_edge_base(first, second);
+    base::insert_base(first, second);
   }
 };
 
-} // namespace paracl::containers
+} // namespace paracl::graphs
