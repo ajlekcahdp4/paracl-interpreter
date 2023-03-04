@@ -24,9 +24,7 @@ namespace paracl::frontend {
 
 class ftable_filler final : public ezvis::visitor_base<ast::i_ast_node, ftable_filler, void> {
 private:
-  symtab_stack m_scopes;
   std::vector<error_kind> *m_error_queue = nullptr;
-  types::builtin_types *m_types = nullptr;
   ast::ast_container *m_ast = nullptr;
 
   using to_visit = std::tuple<
@@ -57,7 +55,6 @@ public:
     errors.clear();
     m_error_queue = &errors;
     m_ast = &ast;
-    m_types = &m_ast->builtin_types();
 
     apply(*m_ast->get_root_ptr());
     return errors.empty();
