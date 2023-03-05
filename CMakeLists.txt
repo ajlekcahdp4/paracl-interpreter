@@ -107,9 +107,10 @@ add_flex_bison_dependency(scanner parser)
 set(PARACL_COMPILER_SOURCES
     src/frontend/dumper.cc
     src/frontend/function_table_filler.cc
+    src/frontend/call_collector.cc
     src/frontend/semantic_analyzer.cc
     src/frontend/ast_copier.cc
-     src/codegen.cc
+    src/codegen.cc
 )
 
 add_library(

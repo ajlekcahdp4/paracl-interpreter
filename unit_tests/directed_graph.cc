@@ -17,9 +17,9 @@ using directed_graph = paracl::graphs::basic_directed_graph<int>;
 TEST(test_directed_graph, test_insert_vertex) {
   directed_graph A;
   EXPECT_EQ(A.vertices(), 0);
-  EXPECT_NO_THROW(A.insert(1));
-  EXPECT_NO_THROW(A.insert(2));
-  EXPECT_THROW(A.insert(1), std::logic_error);
+  EXPECT_TRUE(A.insert(1));
+  EXPECT_TRUE(A.insert(2));
+  EXPECT_FALSE(A.insert(1));
   EXPECT_EQ(A.vertices(), 2);
   EXPECT_TRUE(A.contains(1));
   EXPECT_TRUE(A.contains(2));
@@ -28,11 +28,11 @@ TEST(test_directed_graph, test_insert_vertex) {
 
 TEST(test_directed_graph, test_insert_edge) {
   directed_graph A;
-  EXPECT_NO_THROW(A.insert(1, 2));
-  EXPECT_NO_THROW(A.insert(1, 3));
-  EXPECT_NO_THROW(A.insert(3, 2));
-  EXPECT_NO_THROW(A.insert(3, 3));
-  EXPECT_THROW(A.insert(1, 2), std::logic_error);
+  EXPECT_TRUE(A.insert(1, 2));
+  EXPECT_TRUE(A.insert(1, 3));
+  EXPECT_TRUE(A.insert(3, 2));
+  EXPECT_TRUE(A.insert(3, 3));
+  EXPECT_FALSE(A.insert(1, 2));
   EXPECT_EQ(A.edges(), 4);
   EXPECT_EQ(A.vertices(), 3);
   EXPECT_TRUE(A.contains(1));

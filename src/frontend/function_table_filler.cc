@@ -67,6 +67,7 @@ void ftable_filler::fill_ftable(ast::function_definition &ref) {
       return;
     }
   } else m_ast->add_anonymous_function(&ref);
+  apply(ref.body());
 }
 
 void ftable_filler::fill_ftable(ast::function_definition_to_ptr_conv &ref) {
@@ -76,6 +77,10 @@ void ftable_filler::fill_ftable(ast::function_definition_to_ptr_conv &ref) {
 void ftable_filler::fill_ftable(ast::function_call &ref) {
   for (auto *param : ref)
     apply(*param);
+}
+
+void ftable_filler::fill_ftable(ast::return_statement &ref) {
+  apply(ref.expr());
 }
 
 } // namespace paracl::frontend

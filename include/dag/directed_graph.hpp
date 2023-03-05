@@ -37,10 +37,10 @@ public:
 
   value_type value() const { return m_val; }
 
-  void add_adj(const value_type &val) {
-    if (std::find(begin(), end(), val) != end())
-      throw std::logic_error{"Attempt to add existing edge into a oriented graph"};
+  bool add_adj(const value_type &val) {
+    if (std::find(begin(), end(), val) != end()) return false;
     vector::push_back(val);
+    return true;
   }
 
   using vector::begin;
@@ -79,13 +79,13 @@ public:
   virtual ~directed_graph() {}
 
   // inserts vertex
-  virtual void insert(const value_type &val) { insert_base(val); }
+  virtual bool insert(const value_type &val) { return insert_base(val); }
 
   // inserts edge from first to second
-  virtual void insert(const value_type &first, const value_type &second) {
+  virtual bool insert(const value_type &first, const value_type &second) {
     if (!contains(first)) insert(first);
     if (!contains(second)) insert(second);
-    insert_base(first, second);
+    return insert_base(first, second);
   }
 
   // checks if edge from first to second exists
@@ -137,17 +137,19 @@ public:
   auto cend() const { return m_adj_list.cend(); }
 
 protected:
-  void insert_base(const value_type &val) {
+  bool insert_base(const value_type &val) {
     auto &&[iter, inserted] = m_adj_list.insert({val, {val}});
-    if (!inserted) throw std::logic_error{"Attempt to insert existing vertex into a graph"};
+    if (!inserted) return false;
+    return true;
   }
 
   // inserts vertices if they are not already at the DG
-  void insert_base(const value_type &vert1, const value_type &vert2) {
-    if (!(m_adj_list.contains(vert1) && m_adj_list.contains(vert2)))
-      throw std::logic_error{"Attempt to insert edge from or to non-existent node"};
-    m_adj_list.at(vert1).add_adj(vert2);
+  bool insert_base(const value_type &vert1, const value_type &vert2) {
+    if (!(m_adj_list.contains(vert1) && m_adj_list.contains(vert2))) return false;
+    auto &&inserted = m_adj_list.at(vert1).add_adj(vert2);
+    if (!inserted) return false;
     ++m_edge_n;
+    return true;
   }
 };
 

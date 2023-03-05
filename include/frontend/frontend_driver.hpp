@@ -11,6 +11,7 @@
 #pragma once
 
 #include "bison_paracl_parser.hpp"
+#include "callgraph.hpp"
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/error.hpp"
 #include "frontend/scanner.hpp"
@@ -209,6 +210,12 @@ public:
     }
 
     return valid;
+  }
+
+  bool deduce_function_types() {
+    auto &&ftable = m_parsing_driver->ast().named_ftable();
+    callgraph callgr{&ftable};
+    return true;
   }
 };
 

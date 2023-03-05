@@ -85,6 +85,8 @@ public:
   }
 
   void add_anonymous_function(i_ast_node *definition) { m_anonymous_functions.define_function(definition); }
+
+  named_function_table &named_ftable() { return m_function_table; }
 };
 
 } // namespace paracl::frontend::ast

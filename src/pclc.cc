@@ -61,6 +61,9 @@ int main(int argc, char *argv[]) try {
   auto valid = drv.fill_ftable();
   if (!valid) return 1;
 
+  valid = drv.deduce_function_types();
+  if (!valid) return 1;
+
   valid = drv.analyze();
   if (!valid) {
     return 1;

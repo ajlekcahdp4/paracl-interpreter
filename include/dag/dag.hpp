@@ -18,13 +18,13 @@ template <typename T> struct dag : public directed_graph<graph_node<T>> {
   using base::contains;
   using base::insert;
   using typename base::value_type;
-  void insert(const value_type &first, const value_type &second) override {
+  bool insert(const value_type &first, const value_type &second) override {
     if (!contains(first)) insert(first);
     if (!contains(second)) insert(second);
     breadth_first_search search{*this};
     auto &&cycle_possible = search(second, first);
-    if (cycle_possible) throw std::logic_error{"Attempt to create cycle in DAG"};
-    base::insert_base(first, second);
+    if (cycle_possible) return false;
+    return base::insert_base(first, second);
   }
 };
 

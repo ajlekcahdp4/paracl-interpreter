@@ -34,6 +34,8 @@ public:
     return std::make_pair(iter->second, inserted);
   }
 
+  auto begin() { return m_table.begin(); }
+  auto end() { return m_table.end(); }
   auto begin() const { return m_table.cbegin(); }
   auto end() const { return m_table.cend(); }
   auto size() const { return m_table.size(); }

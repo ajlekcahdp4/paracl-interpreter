@@ -30,7 +30,7 @@ private:
   using to_visit = std::tuple<
       ast::assignment_statement, ast::binary_expression, ast::if_statement, ast::print_statement, ast::statement_block,
       ast::unary_expression, ast::while_statement, ast::function_definition, ast::function_definition_to_ptr_conv,
-      ast::function_call, ast::i_ast_node>;
+      ast::function_call, ast::return_statement, ast::i_ast_node>;
 
   void report_error(std::string msg, location loc) { m_error_queue->push_back(error_kind{msg, loc}); }
 
@@ -47,6 +47,7 @@ public:
   void fill_ftable(ast::function_definition &);
   void fill_ftable(ast::function_definition_to_ptr_conv &);
   void fill_ftable(ast::function_call &);
+  void fill_ftable(ast::return_statement &);
   void fill_ftable(ast::i_ast_node &) {}
 
   EZVIS_VISIT_INVOKER(fill_ftable);

@@ -16,13 +16,13 @@ using dag = paracl::graphs::dag<int>;
 
 TEST(test_dag, test_insert) {
   dag A;
-  EXPECT_NO_THROW(A.insert(1, 2));
-  EXPECT_NO_THROW(A.insert(1, 3));
-  EXPECT_NO_THROW(A.insert(1, 4));
-  EXPECT_NO_THROW(A.insert(2, 4));
-  EXPECT_NO_THROW(A.insert(4, 3));
-  EXPECT_THROW(A.insert(1, 2), std::logic_error); // already exist
-  EXPECT_THROW(A.insert(3, 2), std::logic_error); // creates cycle
+  EXPECT_TRUE(A.insert(1, 2));
+  EXPECT_TRUE(A.insert(1, 3));
+  EXPECT_TRUE(A.insert(1, 4));
+  EXPECT_TRUE(A.insert(2, 4));
+  EXPECT_TRUE(A.insert(4, 3));
+  EXPECT_FALSE(A.insert(1, 2)); // already exist
+  EXPECT_FALSE(A.insert(3, 2)); // creates cycle
 
   EXPECT_EQ(A.edges(), 5);
   EXPECT_EQ(A.vertices(), 4);
