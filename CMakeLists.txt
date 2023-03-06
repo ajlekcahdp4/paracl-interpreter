@@ -85,6 +85,9 @@ set(PCLDIS_SOURCES src/pcldis.cc)
 add_library(popl INTERFACE)
 target_include_directories(popl INTERFACE 3rd-party/popl)
 
+add_library(graphs INTERFACE)
+target_include_directories(graphs INTERFACE 3rd-party/graphs)
+
 add_executable(pcldis ${PCLDIS_SOURCES})
 target_link_libraries(pcldis popl bytecode_vm)
 
@@ -118,7 +121,7 @@ add_library(
                          ${FLEX_scanner_OUTPUTS})
 target_include_directories(paracl_compiler PUBLIC include
                                                   ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(paracl_compiler ezvis)
+target_link_libraries(paracl_compiler ezvis graphs)
 
 add_executable(pclc src/pclc.cc)
 target_link_libraries(pclc PUBLIC popl paracl_compiler bytecode_vm)
@@ -142,8 +145,6 @@ endif()
 set(UNIT_TEST_SOURCES
   unit_tests/main.cc 
   unit_tests/ezvis.cc
-  unit_tests/directed_graph.cc
-  unit_tests/dag.cc
 )
 
 if(ENABLE_GTEST AND NOT PARACL_NO_TESTING__)

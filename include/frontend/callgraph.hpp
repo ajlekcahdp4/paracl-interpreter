@@ -13,7 +13,7 @@
 #include "ast/ast_nodes.hpp"
 #include "ast/function_table.hpp"
 #include "call_collector.hpp"
-#include "dag/dag.hpp"
+#include "graphs/dag.hpp"
 
 #include <iostream>
 #include <string>

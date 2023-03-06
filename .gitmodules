@@ -1,3 +1,6 @@
 [submodule "3rd-party/ctti"]
 	path = 3rd-party/ctti
 	url = https://github.com/Manu343726/ctti.git
+[submodule "3rd-party/graphs"]
+	path = 3rd-party/graphs
+	url = git@github.com:ajlekcahdp4/graphs.git
