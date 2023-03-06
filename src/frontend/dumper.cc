@@ -11,6 +11,9 @@
 #include "frontend/dumper.hpp"
 #include "frontend/ast/ast_nodes.hpp"
 
+#include "ezvis/ezvis.hpp"
+#include <fmt/core.h>
+
 #include <cassert>
 #include <iostream>
 #include <sstream>
@@ -18,153 +21,198 @@
 
 namespace paracl::frontend::ast {
 
-void ast_dumper::dump(const error_node &ref) {
-  print_declare_node(m_os, ref, "<error>");
-}
+class ast_dumper : public ezvis::visitor_base<const i_ast_node, ast_dumper, void> {
+private:
+  using to_visit = tuple_all_nodes;
 
-void ast_dumper::dump(const read_expression &ref) {
-  print_declare_node(m_os, ref, "<read> ?");
-}
+public:
+  std::vector<const i_ast_node *> m_queue;
+  using oput_iter = std::back_insert_iterator<std::string>;
+  oput_iter *m_iter = nullptr;
 
-void ast_dumper::dump(const variable_expression &ref) {
-  std::stringstream ss;
-  ss << "<identifier> " << ref.name() << "\n"
-     << "<type> " << ref.type_str();
-  print_declare_node(m_os, ref, ss.str());
-}
-
-void ast_dumper::dump(const constant_expression &ref) {
-  std::stringstream ss;
-  ss << "<integer constant> " << std::dec << ref.value();
-  print_declare_node(m_os, ref, ss.str());
-}
-
-void ast_dumper::dump(const binary_expression &ref) {
-  std::stringstream ss;
-  ss << "<binary_expression> " << ast::binary_operation_to_string(ref.op_type());
-  print_declare_node(m_os, ref, ss.str());
-
-  print_bind_node(m_os, ref, ref.left());
-  print_bind_node(m_os, ref, ref.right());
-
-  apply(ref.left());
-  apply(ref.right());
-}
-
-void ast_dumper::dump(const unary_expression &ref) {
-  std::stringstream ss;
-  ss << "<binary_expression> " << ast::unary_operation_to_string(ref.op_type());
-
-  print_declare_node(m_os, ref, ss.str());
-  print_bind_node(m_os, ref, ref.expr());
-
-  apply(ref.expr());
-}
-
-void ast_dumper::dump(const assignment_statement &ref) {
-  print_declare_node(m_os, ref, "<assignment>");
-  const i_ast_node *prev = &ref;
-
-  for (auto start = ref.begin(), finish = ref.end(); start != finish; ++start) {
-    const auto curr_ptr = &(*start);
-
-    apply(*curr_ptr);
-    print_bind_node(m_os, *prev, *curr_ptr);
-
-    prev = curr_ptr;
+private:
+  void print_declare_node(const i_ast_node &ref, std::string_view label) {
+    assert(m_iter);
+    fmt::format_to(*m_iter, "\tnode_{:x} [label = \"{}\"];\n", utils::pointer_to_uintptr(&ref), label);
   }
 
-  print_bind_node(m_os, ref, ref.right());
-  apply(ref.right());
-}
-
-void ast_dumper::dump(const if_statement &ref) {
-  print_declare_node(m_os, ref, "<if>");
-
-  print_bind_node(m_os, ref, ref.cond(), "<condition>");
-  print_bind_node(m_os, ref, ref.true_block(), "<then>");
-
-  apply(ref.cond());
-  apply(ref.true_block());
-
-  if (ref.else_block()) {
-    print_bind_node(m_os, ref, *ref.else_block(), "<else>");
-    apply(*ref.else_block());
-  }
-}
-
-void ast_dumper::dump(const print_statement &ref) {
-  print_declare_node(m_os, ref, "<print_statement>");
-  print_bind_node(m_os, ref, ref.expr());
-  apply(ref.expr());
-}
-
-void ast_dumper::dump(const statement_block &ref) {
-  print_declare_node(m_os, ref, "<statement_block>");
-
-  for (const auto &v : ref) {
-    print_bind_node(m_os, ref, *v);
-    apply(*v);
-  }
-}
-
-void ast_dumper::dump(const while_statement &ref) {
-  print_declare_node(m_os, ref, "<while>");
-
-  print_bind_node(m_os, ref, ref.cond(), "<condition>");
-  print_bind_node(m_os, ref, ref.block(), "<body>");
-
-  apply(ref.cond());
-  apply(ref.block());
-}
-
-void ast_dumper::dump(const function_definition_to_ptr_conv &ref) {
-  print_declare_node(m_os, ref, "<function def to ptr implicit conversion>");
-  print_bind_node(m_os, ref, ref.definition());
-  apply(ref.definition());
-}
-
-void ast_dumper::dump(const function_definition &ref) {
-  std::stringstream ss;
-  ss << "<function definition>: ";
-
-  if (auto opt = ref.name(); opt) ss << opt.value() << "\n";
-  else ss << "anonymous\n";
-  ss << " <arg count>: " << ref.size() << "\n";
-  ss << "<type> " << ref.type_str();
-
-  print_declare_node(m_os, ref, ss.str());
-  for (unsigned i = 0; const auto &v : ref) {
-    ss.str("");
-    ss << "arg " << i;
-    print_bind_node(m_os, ref, v, ss.str());
-    apply(v);
-    ++i;
+  void print_bind_node(const i_ast_node &parent, const i_ast_node &child, std::string_view label = "") {
+    assert(m_iter);
+    fmt::format_to(
+        *m_iter, "\tnode_{:x} -> node_{:x} [label = \"{}\"]\n", utils::pointer_to_uintptr(&parent),
+        utils::pointer_to_uintptr(&child), label
+    );
   }
 
-  print_bind_node(m_os, ref, ref.body());
-  apply(ref.body());
-}
+public:
+  ast_dumper() = default;
 
-void ast_dumper::dump(const return_statement &ref) {
-  print_declare_node(m_os, ref, "<return statement>");
-  print_bind_node(m_os, ref, ref.expr(), "<expression>");
-  apply(ref.expr());
-}
+  EZVIS_VISIT_CT(to_visit);
+  EZVIS_VISIT_INVOKER(dump_node);
 
-void ast_dumper::dump(const function_call &ref) {
-  std::stringstream ss;
-  ss << "<function call>: " << ref.name();
-  print_declare_node(m_os, ref, ss.str());
-  ss << " <param count>: " << ref.size();
+  void dump_node(const assignment_statement &ref) {
+    print_declare_node(ref, "<assignment>");
+    const i_ast_node *prev = &ref;
 
-  for (unsigned i = 0; const auto &v : ref) {
-    ss.str("");
-    ss << "param " << i;
-    print_bind_node(m_os, ref, *v, ss.str());
-    apply(*v);
-    ++i;
+    for (auto start = ref.begin(), finish = ref.end(); start != finish; ++start) {
+      const auto curr_ptr = &(*start);
+
+      add_next(*curr_ptr);
+      print_bind_node(*prev, *curr_ptr);
+
+      prev = curr_ptr;
+    }
+
+    print_bind_node(ref, ref.right());
+    add_next(ref.right());
   }
+
+  void dump_node(const binary_expression &ref) {
+    print_declare_node(ref, fmt::format("<binary expression>: {}", ast::binary_operation_to_string(ref.op_type())));
+
+    print_bind_node(ref, ref.left());
+    print_bind_node(ref, ref.right());
+
+    add_next(ref.left());
+    add_next(ref.right());
+  }
+
+  void dump_node(const if_statement &ref) {
+    print_declare_node(ref, "<if>");
+
+    print_bind_node(ref, ref.cond(), "<condition>");
+    print_bind_node(ref, ref.true_block(), "<then>");
+
+    add_next(ref.cond());
+    add_next(ref.true_block());
+
+    if (ref.else_block()) {
+      print_bind_node(ref, *ref.else_block(), "<else>");
+      add_next(*ref.else_block());
+    }
+  }
+
+  void dump_node(const print_statement &ref) {
+    print_declare_node(ref, "<print_statement>");
+    print_bind_node(ref, ref.expr());
+    add_next(ref.expr());
+  }
+
+  void dump_node(const statement_block &ref) {
+    print_declare_node(ref, "<statement_block>");
+
+    for (const auto &v : ref) {
+      print_bind_node(ref, *v);
+      add_next(*v);
+    }
+  }
+
+  void dump_node(const unary_expression &ref) {
+    print_declare_node(ref, fmt::format("<binary expression> {}", ast::unary_operation_to_string(ref.op_type())));
+    print_bind_node(ref, ref.expr());
+    add_next(ref.expr());
+  }
+
+  void dump_node(const while_statement &ref) {
+    print_declare_node(ref, "<while>");
+
+    print_bind_node(ref, ref.cond(), "<condition>");
+    print_bind_node(ref, ref.block(), "<body>");
+
+    add_next(ref.cond());
+    add_next(ref.block());
+  }
+
+  // clang-format off
+  void dump_node(const read_expression &ref) { 
+    print_declare_node(ref, "<read> ?"); 
+  }
+
+  void dump_node(const error_node &ref) {
+    print_declare_node(ref, "<error>"); 
+  }
+
+  void dump_node(const variable_expression &ref) {
+    print_declare_node(ref, fmt::format("<identifier> {}\n<type> {}", ref.name(), ref.type_str()));
+  }
+
+  void dump_node(const constant_expression &ref) {
+    print_declare_node(ref, fmt::format("<integer constant> {:d}", ref.value()));
+  }
+  // clang-format on
+
+  void dump_node(const function_definition &ref) {
+    std::string label;
+    auto iter = std::back_inserter(label);
+
+    fmt::format_to(
+        iter, "<function definition>: {}\n<arg count>: {}\n<type>: {}", ref.name().value_or("anonymous"), ref.size(),
+        ref.type_str()
+    );
+
+    print_declare_node(ref, label);
+    for (unsigned i = 0; const auto &v : ref) {
+      print_bind_node(ref, v, fmt::format("arg {}", i++));
+      add_next(v);
+    }
+
+    print_bind_node(ref, ref.body());
+    add_next(ref.body());
+  }
+
+  void dump_node(const return_statement &ref) {
+    print_declare_node(ref, "<return statement>");
+    print_bind_node(ref, ref.expr(), "<expression>");
+    add_next(ref.expr());
+  }
+
+  void dump_node(const function_call &ref) {
+    print_declare_node(ref, fmt::format("<function call>: {}\n<param count>: {}", ref.name(), ref.size()));
+
+    for (unsigned i = 0; const auto &v : ref) {
+      print_bind_node(ref, *v, fmt::format("param {}", i++));
+      add_next(*v);
+    }
+  }
+
+  void dump_node(const function_definition_to_ptr_conv &ref) {
+    print_declare_node(ref, "<function def to ptr implicit conversion>");
+    print_bind_node(ref, ref.definition());
+    add_next(ref.definition());
+  }
+
+private:
+  void add_next(const i_ast_node &node) { m_queue.push_back(&node); }
+
+  const i_ast_node *take_next() {
+    if (m_queue.empty()) return nullptr;
+    auto ptr = m_queue.back();
+    m_queue.pop_back();
+    return ptr;
+  }
+
+public:
+  std::string ast_dump(const i_ast_node &root) {
+    std::string output;
+    auto iterator = std::back_inserter(output);
+
+    m_iter = &iterator;
+    m_queue.clear();
+    add_next(root);
+
+    fmt::format_to(iterator, "digraph abstract_syntax_tree {{\n");
+    while (auto ptr = take_next()) {
+      apply(*ptr);
+    }
+    fmt::format_to(iterator, "}}\n");
+
+    return output;
+  }
+};
+
+std::string ast_dump_str(const i_ast_node &node) {
+  ast_dumper dumper;
+  return dumper.ast_dump(node);
 }
 
 } // namespace paracl::frontend::ast
