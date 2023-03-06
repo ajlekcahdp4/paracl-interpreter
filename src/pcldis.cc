@@ -4,7 +4,7 @@
 #include "bytecode_vm/opcodes.hpp"
 #include "bytecode_vm/virtual_machine.hpp"
 
-#include "popl.hpp"
+#include "popl/popl.hpp"
 
 #include <filesystem>
 #include <fstream>

@@ -10,7 +10,7 @@
 #include "frontend/frontend_driver.hpp"
 #include "frontend/semantic_analyzer.hpp"
 
-#include "popl.hpp"
+#include "popl/popl.hpp"
 
 #include <filesystem>
 #include <fstream>

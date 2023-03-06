@@ -1,10 +1,7 @@
-current_folder=${2:-./}
-base_folder="resources"
-passed=true
+#!/bin/sh
 
-red=`tput setaf 1`
-green=`tput setaf 2`
-reset=`tput sgr0`
+current_folder=${2:-./}
+passed=0
 
 tmpfile=$(mktemp /tmp/paracl-temp.tmp.XXXXXX)
 
@@ -20,14 +17,8 @@ for file in $current_folder/*.pcl; do
     echo "${green}Passed${reset}"
   else
     echo "${red}Failed${reset}"
-    passed=false
+    passed=1
   fi
 done
 
-if ${passed}
-then
-  exit 0
-else
-  # Exit with the best number for an exit code
-  exit 666
-fi
+exit $passed
