@@ -9,9 +9,9 @@
  */
 
 #include "frontend/dumper.hpp"
-#include "frontend/ast/ast_nodes.hpp"
-
 #include "ezvis/ezvis.hpp"
+#include "frontend/ast/ast_nodes.hpp"
+#include "utils/serialization.hpp"
 #include <fmt/core.h>
 
 #include <cassert>
