@@ -25,7 +25,7 @@ namespace paracl::frontend {
 class semantic_analyzer final : public ezvis::visitor_base<ast::i_ast_node, semantic_analyzer, void> {
 private:
   symtab_stack m_scopes;
-  std::vector<error_kind> *m_error_queue = nullptr;
+  std::vector<error_report> *m_error_queue = nullptr;
   types::builtin_types *m_types = nullptr;
   ast::ast_container *m_ast = nullptr;
 
@@ -42,7 +42,14 @@ private:
 
   void set_state(semantic_analysis_state s) { current_state = s; }
   void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
-  void report_error(std::string msg, location loc) { m_error_queue->push_back(error_kind{msg, loc}); }
+
+  void report_error(std::string msg, location loc) {
+    m_error_queue->push_back({
+        error_kind{msg, loc}
+    });
+  }
+
+  void report_error(error_report report) { m_error_queue->push_back(std::move(report)); }
 
   bool expect_type_eq(ast::i_expression &ref, types::i_type &rhs) {
     auto &&type = ref.m_type;
@@ -80,7 +87,7 @@ public:
 
   EZVIS_VISIT_INVOKER(analyze_node);
 
-  bool analyze(ast::ast_container &ast, std::vector<error_kind> &errors) {
+  bool analyze(ast::ast_container &ast, std::vector<error_report> &errors) {
     errors.clear();
     m_error_queue = &errors;
     m_ast = &ast;

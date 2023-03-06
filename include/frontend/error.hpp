@@ -13,12 +13,26 @@
 #include "location.hpp"
 
 #include <string>
+#include <vector>
 
 namespace paracl::frontend {
 
 struct error_kind final {
   std::string error_message;
   location loc;
+};
+
+struct error_attachment final {
+  std::string info_message;
+  location loc;
+};
+
+struct error_report final {
+  error_kind primary_error;
+  std::vector<error_attachment> attachments;
+
+public:
+  void add_attachment(error_attachment attach) { attachments.push_back(std::move(attach)); }
 };
 
 } // namespace paracl::frontend

@@ -124,16 +124,7 @@ private:
   ftable_filler m_ftable_filler{};
 
 private:
-  void report_pretty_error(error_kind err) {
-    auto [msg, loc] = err;
-
-    const std::string bison_syntax = "syntax error";
-    if (err.error_message.starts_with(bison_syntax)) {
-      auto &str =
-          err.error_message; // Hacky workaround to capitalize bison syntax error. Should rework later. TODO[Sergei]
-      str.replace(str.find(bison_syntax), bison_syntax.length(), "Syntax error");
-    }
-
+  void print_message_location(std::string_view msg, location loc) {
     const auto make_squigly_line = [](int column) {
       constexpr int max_squigly_width = 4;
       int squigly_width = std::min(max_squigly_width, column - 1);
@@ -156,17 +147,41 @@ private:
       return ss.str();
     };
 
-    std::cout << loc << ": " << err.error_message << "\n";
+    std::cout << loc << ": " << msg << "\n";
     if (loc.begin.line == loc.end.line) {
       std::cout << loc.begin.line << "\t| " << m_source.getline(loc.begin.line) << "\n";
       std::cout << "\t  " << make_squigly_line(loc.begin.column) << "\n";
       return;
     }
 
+    constexpr int c_max_lines = 4;
+    auto last_line = std::min(loc.end.line, loc.begin.line + c_max_lines);
+
     // Here we handle multiline errors
     std::cout << "\t" << loc.begin.line << " | " << m_source.getline(loc.begin.line) << "\n";
-    for (auto start = loc.begin.line + 1, finish = loc.end.line; start <= finish; ++start) {
-      std::cout << "\t" << m_source.getline(loc.begin.line) << "\n";
+    for (auto start = loc.begin.line + 1, finish = last_line; start <= finish; ++start) {
+      std::cout << "\t" << m_source.getline(start) << "\n";
+    }
+  }
+
+  void report_pretty_error(error_kind err) {
+    auto [msg, loc] = err;
+
+    const std::string bison_syntax = "syntax error";
+    if (err.error_message.starts_with(bison_syntax)) {
+      auto &str =
+          err.error_message; // Hacky workaround to capitalize bison syntax error. Should rework later. TODO[Sergei]
+      str.replace(str.find(bison_syntax), bison_syntax.length(), "Syntax error");
+    }
+
+    print_message_location(err.error_message, err.loc);
+  }
+
+  void report_pretty_error(error_report report) {
+    report_pretty_error(report.primary_error);
+    for (const auto &attach : report.attachments) {
+      std::cout << "\n";
+      print_message_location(attach.info_message, attach.loc);
     }
   }
 
@@ -188,7 +203,7 @@ public:
     auto &ast = m_parsing_driver->ast();
     if (!ast.get_root_ptr()) return true;
 
-    std::vector<paracl::frontend::error_kind> errors;
+    std::vector<paracl::frontend::error_report> errors;
     bool valid = m_semantic_analyzer.analyze(ast, errors);
 
     for (const auto &e : errors) {
