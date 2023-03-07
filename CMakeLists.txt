@@ -86,6 +86,7 @@ add_executable(pclc src/pclc.cc)
 target_compile_features(pclc PRIVATE cxx_std_20)
 target_link_libraries(pclc PRIVATE ezvis popl paracl_compiler bytecode_vm)
 
+enable_testing()
 set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
 find_program(BASH_PROGRAM bash)
 if(BASH_PROGRAM)
