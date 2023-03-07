@@ -4,7 +4,7 @@
 [submodule "3rd-party/graphs"]
 	path = 3rd-party/graphs
 	url = https://github.com/ajlekcahdp4/graphs.git
-	branch = build
+	branch = main
 [submodule "3rd-party/fmt"]
 	path = 3rd-party/fmt
 	url = https://github.com/fmtlib/fmt.git
