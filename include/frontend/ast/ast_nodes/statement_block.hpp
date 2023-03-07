@@ -40,15 +40,14 @@ public:
   }
 
   using vector::back;
+  using vector::begin;
   using vector::cbegin;
   using vector::cend;
   using vector::crbegin;
   using vector::crend;
+  using vector::end;
   using vector::front;
   using vector::size;
-
-  auto begin() const { return vector::begin(); }
-  auto end() const { return vector::end(); }
 
   symtab *symbol_table() { return &m_symtab; }
 };

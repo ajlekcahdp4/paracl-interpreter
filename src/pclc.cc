@@ -60,12 +60,13 @@ int main(int argc, char *argv[]) try {
     return k_exit_success;
   }
 
+  auto valid = drv.analyze();
+
   if (ast_dump_option->is_set()) {
     paracl::frontend::ast::ast_dump(*parse_tree.get_root_ptr(), std::cout);
     return k_exit_success;
   }
 
-  auto valid = drv.analyze();
   if (!valid) {
     return k_exit_failure;
   }

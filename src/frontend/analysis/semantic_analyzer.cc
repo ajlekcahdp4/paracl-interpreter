@@ -15,6 +15,8 @@
 
 #include "utils/misc.hpp"
 
+#include <fmt/core.h>
+
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -69,6 +71,7 @@ void semantic_analyzer::analyze_node(ast::binary_expression &ref) {
   apply(ref.right());
   set_state(semantic_analysis_state::E_RVALUE);
   apply(ref.left());
+
   expect_type_eq(ref.right(), *m_types->m_int);
   expect_type_eq(ref.left(), *m_types->m_int);
   ref.set_type(m_types->m_int);
@@ -90,8 +93,9 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
 
   bool is_rvalue = (current_state == semantic_analysis_state::E_RVALUE);
   // Save state, because it will get mangled by subsequent apply calls.
-  for (auto &statement : ref) {
+  for (auto &&statement : ref) {
     assert(statement);
+    current_state = semantic_analysis_state::E_LVALUE;
     apply(*statement);
   }
 
@@ -161,32 +165,170 @@ bool semantic_analyzer::analyze_node(ast::variable_expression &ref) {
   return true;
 }
 
-#if 0
+using expressions_and_return = std::tuple<
+    ast::assignment_statement, ast::binary_expression, ast::constant_expression, ast::read_expression,
+    ast::statement_block, ast::unary_expression, ast::variable_expression, ast::function_call,
+    ast::function_definition_to_ptr_conv, ast::return_statement, ast::i_ast_node>;
+
 void semantic_analyzer::analyze_node(ast::function_definition &ref) {
-  apply(ref.body());
+  if (m_in_function_body) return;
+
+  m_in_function_body = true; // Set flag
+
+  auto param_symtab = ref.param_symtab();
+  assert(param_symtab && "Broken param symtab pointer");
+  for (auto &def : ref) {
+    param_symtab->declare(def.name(), &def);
+  }
+  m_scopes.begin_scope(param_symtab);
+
+  auto &&body = ref.body();
+  auto body_type = ast::identify_node(body);
+
+  assert(
+      body_type == ast::ast_node_type::E_ERROR_NODE ||
+      body_type == ast::ast_node_type::E_STATEMENT_BLOCK && "Broken statement block pointer"
+  );
+
+  if (body_type == ast::ast_node_type::E_ERROR_NODE) {
+    apply(body);                // Visit error node
+    m_in_function_body = false; // Exit
+    m_scopes.end_scope();
+    return;
+  }
+
+  std::vector<types::shared_type> m_arg_type_vec;
+  for (const auto &v : ref) {
+    m_arg_type_vec.push_back(v.m_type);
+  }
+
+  // The only other possibility for the reference is statement block.
+  auto &&st_block = static_cast<ast::statement_block &>(body);
+  m_scopes.begin_scope(st_block.symbol_table());
+
+  const auto get_return_statement_type = [&](ast::return_statement &ref) {
+    return ref.empty() || !ref.expr().is_type_set() ? m_types->m_void : ref.expr().get_type();
+  };
+
+  std::vector<ast::return_statement *> return_statements;
+  for (auto start = st_block.begin(), finish = st_block.end(); start != finish; ++start) {
+    auto last = std::prev(finish);
+    bool is_last = (start == last);
+    auto &&st = *start;
+
+    current_state = semantic_analysis_state::E_LVALUE;
+    apply(*st);
+
+    assert(st && "Encountered nullptr in a statement block");
+    auto st_type = ast::identify_node(st);
+
+    if (st_type == ast::ast_node_type::E_RETURN_STATEMENT) {
+      return_statements.push_back(static_cast<ast::return_statement *>(st));
+    }
+
+    if (is_last && return_statements.empty()) {
+      auto type = ezvis::visit_tuple<types::shared_type, expressions_and_return>(
+          paracl::utils::visitors{
+              [](ast::i_expression &expr) { return expr.get_type(); }, get_return_statement_type,
+              [&](ast::i_ast_node &) { return m_types->m_void; }},
+          *st
+      );
+      ref.m_type->m_return_type = type;
+    }
+  }
+
+  if (return_statements.size()) {
+    auto &&first_type = get_return_statement_type(*return_statements.front());
+    auto &func_ret_type = ref.m_type->m_return_type;
+
+    if (!func_ret_type.get()) {
+      func_ret_type = first_type;
+    }
+
+    for (const auto &ret : return_statements) {
+      if (get_return_statement_type(*ret)->is_equal(*func_ret_type)) continue;
+
+      error_report error = {
+          {fmt::format("Return type deduction failed, found mismatch"), ref.loc()}
+      };
+
+      report_error(error);
+    }
+  }
+
+  m_scopes.end_scope();
+  m_scopes.end_scope();
+
+  m_in_function_body = false; // Exit
 }
 
 void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) {
-  analyze_node(ref.definition());
+  ref.m_type = ref.definition().m_type;
 }
-#endif
 
 void semantic_analyzer::analyze_node(ast::function_call &ref) {
-#if 0
-  auto &&function_found = m_ast->lookup_function(std::string{ref.name()});
-  auto &&attr = m_scopes.lookup_symbol(ref.name());
-  if (function_found) {
-    if (attr) {
-      std::stringstream ss;
-      ss << "Ambiguity in function call: \"" << ref.name() << "\"";
-      report_error(ss.str(), ref.loc());
+  auto &&name = ref.name();
+
+  auto &&function_found = m_functions->m_named.lookup(std::string{name});
+  auto &&attr = m_scopes.lookup_symbol(name);
+
+  const auto report = [&](auto &&loc) {
+    error_report error = {
+        {fmt::format("Call parameter mismatch", name), ref.loc()}
+    };
+
+    error.add_attachment({fmt::format("Defined here", name), loc});
+    report_error(error);
+  };
+
+  const auto check_parameter_list = [&](auto &&type, auto &&loc) {
+    bool size_match = ref.size() == type.size();
+
+    if (!size_match) {
+      report(loc);
     }
-  } else if (!attr) {
-    std::stringstream ss;
-    ss << "Call of undefined identifier: \"" << ref.name() << "\"";
-    report_error(ss.str(), ref.loc());
+  };
+
+  if (function_found && attr) {
+    error_report report = {
+        {fmt::format("Ambiguous call of `{}`", name), ref.loc()}
+    };
+
+    report.add_attachment({fmt::format("[Info] Have variable `{}`", name), attr->m_definition->loc()});
+    report.add_attachment({fmt::format("[Info] Have function `{}`", name), function_found->loc()});
+
+    report_error(report);
+    return;
   }
-#endif
+
+  else if (function_found && !attr) {
+    check_parameter_list(*function_found, function_found->loc());
+    ref.m_type = function_found->m_type->return_type();
+    return;
+  }
+
+  else if (!function_found && attr) {
+    // Basically the same
+    auto *def = attr->m_definition;
+    auto &&type = def->m_type;
+
+    if (type->get_type() != types::type_class::E_COMPOSITE_FUNCTION) {
+      report(def->loc());
+      return;
+    }
+
+    auto &&cast_type = static_cast<types::type_composite_function &>(*def->m_type);
+    check_parameter_list(cast_type, def->loc());
+    ref.m_type = cast_type.return_type();
+
+    return;
+  }
+
+  error_report error = {
+      {fmt::format("Unknown function to call `{}`", name), ref.loc()}
+  };
+
+  report_error(error);
 }
 
 } // namespace paracl::frontend

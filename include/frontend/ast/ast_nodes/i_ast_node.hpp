@@ -44,6 +44,7 @@ public:
   }
 
   void set_type(types::shared_type type) { m_type = type; }
+  bool is_type_set() const { return m_type.get(); }
 };
 
 // Expresssions

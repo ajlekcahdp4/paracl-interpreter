@@ -72,8 +72,7 @@ public:
   }
 
   void explore(ast::function_definition &);
-
-  void explore(const ast::function_definition_to_ptr_conv &ref) { apply(ref.definition()); }
+  void explore(const ast::function_definition_to_ptr_conv &ref);
   void explore(const ast::return_statement &ref) { apply(ref.expr()); }
 
   void explore(const ast::function_call &);

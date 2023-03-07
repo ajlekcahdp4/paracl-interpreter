@@ -67,4 +67,8 @@ void function_explorer::explore(const ast::function_call &ref) {
   }
 }
 
+void function_explorer::explore(const ast::function_definition_to_ptr_conv &ref) {
+  apply(ref.definition());
+}
+
 } // namespace paracl::frontend

@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include "frontend/symtab.hpp"
 #include "frontend/types/types.hpp"
+
 #include "i_ast_node.hpp"
 #include "variable_expression.hpp"
 
@@ -25,36 +27,42 @@ class function_definition final : public i_ast_node, private std::vector<variabl
 private:
   // An optional function name. Those functions that don't have a name will be called anonymous functions
   std::optional<std::string> m_name;
+
+  symtab m_symtab;
   i_ast_node *m_block;
-  types::shared_type m_type;
 
 public:
+  using shared_func_type = types::shared_func_type;
+  shared_func_type m_type;
+
   EZVIS_VISITABLE();
 
   function_definition(
-      std::optional<std::string> name, i_ast_node &body, location l, std::vector<variable_expression> vars = {}
+      std::optional<std::string> name, i_ast_node &body, location l, std::vector<variable_expression> vars = {},
+      shared_func_type return_type = nullptr
   )
-      : i_ast_node{l}, vector{std::move(vars)}, m_name{name}, m_block{&body} {}
+      : i_ast_node{l}, vector{std::move(vars)}, m_name{name}, m_block{&body} {
+    std::vector<types::shared_type> arg_types;
 
-  function_definition(
-      std::optional<std::string> name, types::shared_type type, i_ast_node &body, location l,
-      std::vector<variable_expression> vars = {}
-  )
-      : i_ast_node{l}, vector{std::move(vars)}, m_name{name}, m_block{&body}, m_type{type} {}
+    for (const auto &v : vars) {
+      assert(v.m_type);
+      arg_types.push_back(v.m_type);
+    }
 
-  using vector::size;
+    m_type = std::make_shared<types::type_composite_function>(arg_types, return_type);
+  }
 
-  auto begin() const { return vector::begin(); }
-  auto end() const { return vector::end(); }
-
+  using vector::begin;
   using vector::cbegin;
   using vector::cend;
   using vector::crbegin;
   using vector::crend;
+  using vector::end;
+  using vector::size;
+
+  symtab *param_symtab() { return &m_symtab; }
 
   i_ast_node &body() const { return *m_block; }
-  bool named() const { return m_name.has_value(); }
-
   std::optional<std::string> name() const { return m_name; }
 
   std::string type_str() const {

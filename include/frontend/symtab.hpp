@@ -26,14 +26,14 @@ class symtab final {
 public:
   struct attributes {
     uint32_t m_loc;
-    ast::i_ast_node *m_definition;
+    ast::variable_expression *m_definition;
   };
 
 private:
   std::unordered_map<std::string, attributes> m_table;
 
 public:
-  void declare(std::string_view name, ast::i_ast_node *def) {
+  void declare(std::string_view name, ast::variable_expression *def) {
     auto size = m_table.size();
     m_table.emplace(name, attributes{static_cast<uint32_t>(size), def});
   }
@@ -99,7 +99,7 @@ public:
   }
 
   bool declared(std::string_view name) const { return (lookup_symbol(name) ? true : false); }
-  void declare(std::string_view name, ast::i_ast_node *def) { m_stack.back()->declare(name, def); }
+  void declare(std::string_view name, ast::variable_expression *def) { m_stack.back()->declare(name, def); }
 };
 
 } // namespace paracl::frontend

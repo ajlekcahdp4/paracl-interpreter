@@ -84,4 +84,9 @@ inline ast_node_type identify_node(const i_ast_node &base) {
   return detail::identify_helper<ast::tuple_all_nodes>::identify(base);
 }
 
+inline ast_node_type identify_node(const i_ast_node *base) {
+  assert(base);
+  return detail::identify_helper<ast::tuple_all_nodes>::identify(*base);
+}
+
 } // namespace paracl::frontend::ast

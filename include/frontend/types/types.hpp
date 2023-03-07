@@ -84,16 +84,14 @@ public:
 };
 
 class type_composite_function : public i_type, private std::vector<shared_type> {
-private:
+public:
   shared_type m_return_type;
 
 public:
   EZVIS_VISITABLE();
 
   type_composite_function(std::vector<shared_type> arg_types, shared_type return_type)
-      : i_type{type_class::E_COMPOSITE_FUNCTION}, vector{std::move(arg_types)}, m_return_type{return_type} {
-    assert(return_type.get() && "Return type can't be a nullptr");
-  }
+      : i_type{type_class::E_COMPOSITE_FUNCTION}, vector{std::move(arg_types)}, m_return_type{return_type} {}
 
   bool is_equal(const i_type &rhs) const override {
     if (m_type_tag != rhs.get_type()) return false;
@@ -131,7 +129,7 @@ public:
     return std::make_unique<type_composite_function>(std::move(args), m_return_type->clone());
   }
 
-  const i_type &return_type() const & { return *m_return_type; }
+  shared_type return_type() & { return m_return_type; }
 
   using vector::cbegin;
   using vector::cend;
@@ -140,6 +138,8 @@ public:
   using vector::empty;
   using vector::size;
 };
+
+using shared_func_type = std::shared_ptr<type_composite_function>;
 
 struct builtin_types {
   types::shared_type m_void = std::make_shared<types::type_builtin>(types::builtin_type_class::E_BUILTIN_VOID);

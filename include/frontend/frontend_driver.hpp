@@ -87,7 +87,7 @@ private:
   std::unique_ptr<parser_driver> m_parsing_driver;
 
   semantic_analyzer m_semantic_analyzer;
-  functions_analytics m_functions_analytics;
+  functions_analytics m_functions;
 
 private:
   auto void_type_ptr() { return m_parsing_driver->void_type_ptr(); }
@@ -109,14 +109,15 @@ public:
 
     function_explorer explorer;
     std::vector<paracl::frontend::error_report> errors;
-    auto &&valid = explorer.explore(ast, m_functions_analytics, errors);
+    auto &&valid = explorer.explore(ast, m_functions, errors);
 
-    auto &&scheduled = graphs::recursive_topo_sort(m_functions_analytics.m_callgraph);
+    auto &&scheduled = graphs::recursive_topo_sort(m_functions.m_callgraph);
     for (auto &&definition : scheduled) {
-      if (definition.m_definition) valid = valid && m_semantic_analyzer.analyze(ast, definition.m_definition, errors);
+      if (!definition.m_definition) continue;
+      valid = valid && m_semantic_analyzer.analyze(ast, m_functions, *definition.m_definition, errors);
     }
 
-    valid = valid && m_semantic_analyzer.analyze(ast, ast.get_root_ptr(), errors);
+    valid = valid && m_semantic_analyzer.analyze(ast, m_functions, *ast.get_root_ptr(), errors);
 
     for (const auto &e : errors) {
       m_reporter.report_pretty_error(e);

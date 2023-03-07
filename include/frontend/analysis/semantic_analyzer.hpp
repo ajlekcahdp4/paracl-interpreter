@@ -13,6 +13,7 @@
 #include "ezvis/ezvis.hpp"
 #include "location.hpp"
 
+#include "frontend/analysis/augmented_ast.hpp"
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/ast/ast_nodes.hpp"
 
@@ -28,17 +29,20 @@ namespace paracl::frontend {
 class semantic_analyzer final : public ezvis::visitor_base<ast::i_ast_node, semantic_analyzer, void> {
 private:
   symtab_stack m_scopes;
-  std::vector<error_report> *m_error_queue = nullptr;
-  ast::ast_container *m_ast = nullptr;
-  const types::builtin_types *m_types = nullptr;
 
+  ast::ast_container *m_ast;
+  functions_analytics *m_functions;
+
+  const types::builtin_types *m_types;
+  std::vector<error_report> *m_error_queue;
+
+private:
   enum class semantic_analysis_state {
     E_LVALUE,
     E_RVALUE,
     E_DEFAULT,
   } current_state = semantic_analysis_state::E_DEFAULT;
-
-  using to_visit = ast::tuple_all_nodes;
+  bool m_in_function_body = false;
 
   void set_state(semantic_analysis_state s) { current_state = s; }
   void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
@@ -53,13 +57,20 @@ private:
 
   bool expect_type_eq(ast::i_expression &ref, types::i_type &rhs) {
     auto &&type = ref.m_type;
-    if (!type || !(type->is_equal(*m_types->m_int))) {
+    if (!type || !(type->is_equal(rhs))) {
       report_error("Expression is not of type '" + rhs.to_string() + "'", ref.loc());
       return false;
     }
 
     return true;
   }
+
+  bool expect_type_eq(ast::i_expression &ref, types::i_type *rhs) {
+    if (!rhs) return false;
+    return expect_type_eq(ref, *rhs);
+  }
+
+  using to_visit = ast::tuple_all_nodes;
 
 public:
   EZVIS_VISIT_CT(to_visit);
@@ -81,20 +92,29 @@ public:
   void analyze_node(ast::while_statement &);
   void analyze_node(ast::error_node &);
   void analyze_node(ast::function_call &);
-  void analyze_node(ast::function_definition &) {}
-  void analyze_node(ast::function_definition_to_ptr_conv &) {}
+  void analyze_node(ast::function_definition &);
+  void analyze_node(ast::function_definition_to_ptr_conv &);
   void analyze_node(ast::return_statement &) {}
 
   EZVIS_VISIT_INVOKER(analyze_node);
 
-  bool analyze(ast::ast_container &ast, ast::i_ast_node *start, std::vector<error_report> &errors) {
+  bool analyze(
+      ast::ast_container &ast, functions_analytics &functions, ast::i_ast_node &start,
+      std::vector<error_report> &errors, bool in_main = false
+  ) {
     errors.clear();
 
+    // Set pointers to resources
     m_error_queue = &errors;
     m_ast = &ast;
+    m_functions = &functions;
     m_types = &m_ast->builtin_types();
 
-    apply(*start);
+    // If we should visit the main scope, then we won't enter a function_definition node and set this flag ourselves.
+    // This flag prevents the analyzer to go lower than 1 layer of functions;
+    m_in_function_body = !in_main;
+
+    apply(start);
     return errors.empty();
   }
 };

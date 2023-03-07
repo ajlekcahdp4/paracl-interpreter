@@ -289,7 +289,7 @@ param_list:        param_list COMMA expression { $$ = std::move($1); $$.push_bac
 param_list_or_empty:  param_list  { $$ = std::move($1); }
                     | %empty      { }
 
-function_call:    IDENTIFIER LPAREN param_list_or_empty RPAREN { $$ = driver.make_ast_node<ast::function_call>($1, @3, $3); } 
+function_call:    IDENTIFIER LPAREN param_list_or_empty RPAREN { $$ = driver.make_ast_node<ast::function_call>($1, @$, $3); } 
 
 builtin_type:     INT       { $$ = driver.int_type_ptr(); }
                   | VOID    { $$ = driver.void_type_ptr(); }
