@@ -75,6 +75,7 @@ void function_explorer::explore(ast::function_definition &ref) {
     m_function_stack.push_back({ss.str(), &ref});
   }
   apply(ref.body());
+  m_function_stack.pop_back();
 }
 
 void function_explorer::explore(ast::function_definition_to_ptr_conv &ref) {
