@@ -64,15 +64,20 @@ void function_explorer::explore(ast::function_definition &ref) {
       ss << "Redefinition of function "
          << "\"" << name_v << "\""; // add information about previously declared function (in that case 'ptr' will
                                     // be a pointer to already declared function)
-      report_error(ss.str(), ref.loc());
+      report_error(error_report{
+          {ss.str(), ref.loc()},
+          {}
+      });
       return;
     }
     m_function_stack.push_back({name_v, &ref});
+    m_analytics->m_callgraph.insert(callgraph_value_type{std::string{name_v}, &ref});
   } else {
     m_analytics->m_anonymous.define_function(&ref);
     std::stringstream ss;
     ss << "anonymous-" << m_analytics->m_anonymous.size();
     m_function_stack.push_back({ss.str(), &ref});
+    m_analytics->m_callgraph.insert(callgraph_value_type{ss.str(), &ref});
   }
   apply(ref.body());
   m_function_stack.pop_back();
@@ -83,9 +88,11 @@ void function_explorer::explore(ast::function_definition_to_ptr_conv &ref) {
 }
 
 void function_explorer::explore(ast::function_call &ref) {
-  auto &&curr_func = m_function_stack.back();
-  auto *found = m_analytics->m_named.lookup(ref.name());
-  m_analytics->m_callgraph.insert(curr_func, callgraph_value_type{std::string{ref.name()}, found});
+  if (!m_function_stack.empty()) {
+    auto &&curr_func = m_function_stack.back();
+    auto *found = m_analytics->m_named.lookup(ref.name());
+    m_analytics->m_callgraph.insert(curr_func, callgraph_value_type{std::string{ref.name()}, found});
+  }
   for (auto *param : ref)
     apply(*param);
 }

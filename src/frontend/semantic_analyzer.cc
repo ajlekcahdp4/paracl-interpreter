@@ -159,6 +159,7 @@ bool semantic_analyzer::analyze_node(ast::variable_expression &ref) {
   return true;
 }
 
+#if 0
 void semantic_analyzer::analyze_node(ast::function_definition &ref) {
   apply(ref.body());
 }
@@ -166,6 +167,7 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
 void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) {
   analyze_node(ref.definition());
 }
+#endif
 
 void semantic_analyzer::analyze_node(ast::function_call &ref) {
 #if 0

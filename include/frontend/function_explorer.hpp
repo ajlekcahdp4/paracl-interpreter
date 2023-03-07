@@ -29,7 +29,7 @@ namespace paracl::frontend {
 class function_explorer final : public ezvis::visitor_base<ast::i_ast_node, function_explorer, void> {
 private:
   std::vector<callgraph_value_type> m_function_stack;
-  std::vector<error_kind> *m_error_queue = nullptr;
+  std::vector<error_report> *m_error_queue = nullptr;
   functions_analytics *m_analytics = nullptr;
   ast::ast_container *m_ast = nullptr;
 
@@ -38,7 +38,7 @@ private:
       ast::unary_expression, ast::while_statement, ast::function_definition, ast::function_definition_to_ptr_conv,
       ast::function_call, ast::return_statement, ast::i_ast_node>;
 
-  void report_error(std::string msg, location loc) { m_error_queue->push_back(error_kind{msg, loc}); }
+  void report_error(error_report report) { m_error_queue->push_back(std::move(report)); }
 
 public:
   EZVIS_VISIT_CT(to_visit);
@@ -58,7 +58,7 @@ public:
 
   EZVIS_VISIT_INVOKER(explore);
 
-  bool explore(ast::ast_container &ast, std::vector<error_kind> &errors, functions_analytics &analytics) {
+  bool explore(ast::ast_container &ast, std::vector<error_report> &errors, functions_analytics &analytics) {
     errors.clear();
     m_function_stack.clear();
     m_ast = &ast;

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "ast/ast_nodes.hpp"
-#include "graphs/dag.hpp"
+#include <graphs/dag.hpp>
 
 #include <iostream>
 #include <string>

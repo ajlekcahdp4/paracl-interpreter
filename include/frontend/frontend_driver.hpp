@@ -21,6 +21,8 @@
 #include "scanner.hpp"
 #include "semantic_analyzer.hpp"
 
+#include <graphs/directed_graph.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <filesystem>
@@ -200,25 +202,18 @@ public:
   void parse() { m_parsing_driver->parse(); }
 
   bool analyze() {
-    auto &ast = m_parsing_driver->ast();
-    if (!ast.get_root_ptr()) return true;
-
-    std::vector<paracl::frontend::error_report> errors;
-    bool valid = m_semantic_analyzer.analyze(ast, errors);
-
-    for (const auto &e : errors) {
-      report_pretty_error(e);
-    }
-
-    return valid;
-  }
-
-  bool analyze_functions() {
     auto &&ast = m_parsing_driver->ast();
     if (!ast.get_root_ptr()) return true;
     function_explorer explorer;
-    std::vector<paracl::frontend::error_kind> errors;
+    std::vector<paracl::frontend::error_report> errors;
     auto &&valid = explorer.explore(ast, errors, m_functions_analytics);
+
+    auto &&scheduled = graphs::recursive_topo_sort(m_functions_analytics.m_callgraph);
+    for (auto &&definition : scheduled) {
+      if (definition.m_definition) valid = valid && m_semantic_analyzer.analyze(ast, definition.m_definition, errors);
+    }
+    valid = valid && m_semantic_analyzer.analyze(ast, ast.get_root_ptr(), errors);
+
     for (const auto &e : errors)
       report_pretty_error(e);
     return valid;

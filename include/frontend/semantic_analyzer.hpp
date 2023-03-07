@@ -12,13 +12,14 @@
 
 #include "ezvis/ezvis.hpp"
 #include "frontend/ast/ast_container.hpp"
-#include "frontend/ast/ast_nodes/i_ast_node.hpp"
+#include "frontend/ast/ast_nodes.hpp"
 #include "frontend/error.hpp"
 #include "frontend/symtab.hpp"
 #include "frontend/types/types.hpp"
 #include "location.hpp"
 
 #include <iostream>
+#include <string_view>
 
 namespace paracl::frontend {
 
@@ -80,20 +81,18 @@ public:
   bool analyze_node(ast::variable_expression &);
   void analyze_node(ast::while_statement &);
   void analyze_node(ast::error_node &);
-
-  void analyze_node(ast::function_definition &);
-  void analyze_node(ast::function_definition_to_ptr_conv &);
   void analyze_node(ast::function_call &);
+  void analyze_node(ast::i_ast_node &) {}
 
   EZVIS_VISIT_INVOKER(analyze_node);
 
-  bool analyze(ast::ast_container &ast, std::vector<error_report> &errors) {
+  bool analyze(ast::ast_container &ast, ast::i_ast_node *start, std::vector<error_report> &errors) {
     errors.clear();
     m_error_queue = &errors;
     m_ast = &ast;
     m_types = &m_ast->builtin_types();
 
-    apply(*m_ast->get_root_ptr());
+    apply(*start);
     return errors.empty();
   }
 };

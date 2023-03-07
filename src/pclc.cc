@@ -58,10 +58,7 @@ int main(int argc, char *argv[]) try {
     return 0;
   }
 
-  auto valid = drv.analyze_functions();
-  if (!valid) return 1;
-
-  valid = drv.analyze();
+  auto valid = drv.analyze();
   if (!valid) {
     return 1;
   }
