@@ -168,6 +168,7 @@ void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) 
 }
 
 void semantic_analyzer::analyze_node(ast::function_call &ref) {
+#if 0
   auto &&function_found = m_ast->lookup_function(std::string{ref.name()});
   auto &&attr = m_scopes.lookup_symbol(ref.name());
   if (function_found) {
@@ -181,6 +182,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
     ss << "Call of undefined identifier: \"" << ref.name() << "\"";
     report_error(ss.str(), ref.loc());
   }
+#endif
 }
 
 } // namespace paracl::frontend

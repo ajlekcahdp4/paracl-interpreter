@@ -10,26 +10,27 @@
 
 #pragma once
 
-#include "ast_nodes.hpp"
+#include "ast/ast_nodes.hpp"
 
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
 
-namespace paracl::frontend::ast {
+namespace paracl::frontend {
 
 class named_function_table final {
-  std::unordered_map<std::string, i_ast_node *> m_table;
+  std::unordered_map<std::string, ast::function_definition *> m_table;
 
 public:
-  i_ast_node *lookup(const std::string_view &name) {
+  ast::function_definition *lookup(const std::string_view &name) {
     auto found = m_table.find(std::string{name});
     if (found == m_table.end()) return nullptr;
     return found->second;
   }
 
-  std::pair<i_ast_node *, bool> define_function(std::string_view name, i_ast_node *definition) {
+  std::pair<ast::function_definition *, bool>
+  define_function(std::string_view name, ast::function_definition *definition) {
     auto [iter, inserted] = m_table.emplace(std::make_pair(std::string{name}, definition));
     return std::make_pair(iter->second, inserted);
   }
@@ -41,14 +42,14 @@ public:
   auto size() const { return m_table.size(); }
 };
 
-class anonymous_function_table final : private std::vector<i_ast_node *> {
+class anonymous_function_table final : private std::vector<ast::function_definition *> {
 public:
-  void define_function(i_ast_node *definition) { vector::push_back(definition); }
+  void define_function(ast::function_definition *definition) { vector::push_back(definition); }
 
   using vector::begin;
   using vector::end;
   using vector::operator[];
+  using vector::empty;
   using vector::size;
 };
-
-} // namespace paracl::frontend::ast
+} // namespace paracl::frontend

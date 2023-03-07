@@ -11,13 +11,13 @@
 #pragma once
 
 #include "bison_paracl_parser.hpp"
-#include "callgraph.hpp"
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/error.hpp"
 #include "frontend/scanner.hpp"
 #include "frontend/semantic_analyzer.hpp"
 #include "frontend/types/types.hpp"
-#include "function_table_filler.hpp"
+#include "function_explorer.hpp"
+#include "functions_analytics.hpp"
 #include "scanner.hpp"
 #include "semantic_analyzer.hpp"
 
@@ -121,7 +121,7 @@ private:
   std::unique_ptr<parser_driver> m_parsing_driver;
 
   semantic_analyzer m_semantic_analyzer{};
-  ftable_filler m_ftable_filler{};
+  functions_analytics m_functions_analytics;
 
 private:
   void print_message_location(std::string_view msg, location loc) {
@@ -191,8 +191,8 @@ private:
 
 public:
   frontend_driver(std::filesystem::path input_path)
-      : m_source{input_path}, m_iss{m_source.iss()},
-        m_parsing_driver{std::make_unique<parser_driver>(m_source.filename())}, m_semantic_analyzer{} {
+      : m_source{input_path}, m_iss{m_source.iss()}, m_parsing_driver{
+                                                         std::make_unique<parser_driver>(m_source.filename())} {
     m_parsing_driver->switch_input_stream(m_iss.get());
   }
 
@@ -213,24 +213,15 @@ public:
     return valid;
   }
 
-  bool fill_ftable() {
+  bool analyze_functions() {
     auto &&ast = m_parsing_driver->ast();
     if (!ast.get_root_ptr()) return true;
-
+    function_explorer explorer;
     std::vector<paracl::frontend::error_kind> errors;
-    bool valid = m_ftable_filler.fill(ast, errors);
-
-    for (const auto &e : errors) {
+    auto &&valid = explorer.explore(ast, errors, m_functions_analytics);
+    for (const auto &e : errors)
       report_pretty_error(e);
-    }
-
     return valid;
-  }
-
-  bool deduce_function_types() {
-    auto &&ftable = m_parsing_driver->ast().named_ftable();
-    callgraph callgr{&ftable};
-    return true;
   }
 };
 

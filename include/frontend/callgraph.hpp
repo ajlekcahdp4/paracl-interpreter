@@ -11,23 +11,42 @@
 #pragma once
 
 #include "ast/ast_nodes.hpp"
-#include "ast/function_table.hpp"
-#include "call_collector.hpp"
 #include "graphs/dag.hpp"
 
 #include <iostream>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace paracl::frontend {
 
-class callgraph : public graphs::dag<std::string> {
-  ast::named_function_table *m_functions = nullptr;
+struct callgraph_value_type final {
+  std::string m_name;
+  ast::function_definition *m_definition;
+};
+
+inline bool operator==(const callgraph_value_type &lhs, const callgraph_value_type &rhs) {
+  return lhs.m_name == rhs.m_name;
+}
+} // namespace paracl::frontend
+
+namespace std {
+template <> struct hash<paracl::frontend::callgraph_value_type> {
+  size_t operator()(paracl::frontend::callgraph_value_type x) const { return std::hash<std::string>{}(x.m_name); }
+};
+
+} // namespace std
+
+namespace paracl::frontend {
+
+class callgraph : public graphs::dag<callgraph_value_type> {
 
 public:
-  callgraph() = delete;
+  callgraph() = default;
+#if 0
+  callgraph(ast::named_function_table *named_table) : m_named_functions{named_table} {
 
-  callgraph(ast::named_function_table *table) : m_functions{table} {
-    auto &&ftable = *m_functions;
+    auto &&ftable = *m_named_functions;
     call_collector collector;
     std::vector<ast::i_ast_node *> calls;
 
@@ -44,6 +63,7 @@ public:
       }
     }
   }
+#endif
 };
 
 } // namespace paracl::frontend

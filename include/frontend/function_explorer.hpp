@@ -10,21 +10,27 @@
 
 #pragma once
 
+#include "callgraph.hpp"
 #include "ezvis/ezvis.hpp"
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
 #include "frontend/error.hpp"
 #include "frontend/symtab.hpp"
 #include "frontend/types/types.hpp"
+#include "function_table.hpp"
+#include "functions_analytics.hpp"
 #include "location.hpp"
 
 #include <iostream>
+#include <string_view>
 
 namespace paracl::frontend {
 
-class ftable_filler final : public ezvis::visitor_base<ast::i_ast_node, ftable_filler, void> {
+class function_explorer final : public ezvis::visitor_base<ast::i_ast_node, function_explorer, void> {
 private:
+  std::vector<callgraph_value_type> m_function_stack;
   std::vector<error_kind> *m_error_queue = nullptr;
+  functions_analytics *m_analytics = nullptr;
   ast::ast_container *m_ast = nullptr;
 
   using to_visit = std::tuple<
@@ -37,26 +43,27 @@ private:
 public:
   EZVIS_VISIT_CT(to_visit);
 
-  void fill_ftable(ast::assignment_statement &);
-  void fill_ftable(ast::binary_expression &);
-  void fill_ftable(ast::if_statement &);
-  void fill_ftable(ast::print_statement &);
-  void fill_ftable(ast::statement_block &);
-  void fill_ftable(ast::unary_expression &);
-  void fill_ftable(ast::while_statement &);
-  void fill_ftable(ast::function_definition &);
-  void fill_ftable(ast::function_definition_to_ptr_conv &);
-  void fill_ftable(ast::function_call &);
-  void fill_ftable(ast::return_statement &);
-  void fill_ftable(ast::i_ast_node &) {}
+  void explore(ast::assignment_statement &);
+  void explore(ast::binary_expression &);
+  void explore(ast::if_statement &);
+  void explore(ast::print_statement &);
+  void explore(ast::statement_block &);
+  void explore(ast::unary_expression &);
+  void explore(ast::while_statement &);
+  void explore(ast::function_definition &);
+  void explore(ast::function_definition_to_ptr_conv &);
+  void explore(ast::function_call &);
+  void explore(ast::return_statement &);
+  void explore(ast::i_ast_node &) {}
 
-  EZVIS_VISIT_INVOKER(fill_ftable);
+  EZVIS_VISIT_INVOKER(explore);
 
-  bool fill(ast::ast_container &ast, std::vector<error_kind> &errors) {
+  bool explore(ast::ast_container &ast, std::vector<error_kind> &errors, functions_analytics &analytics) {
     errors.clear();
-    m_error_queue = &errors;
+    m_function_stack.clear();
     m_ast = &ast;
-
+    m_error_queue = &errors;
+    m_analytics = &analytics;
     apply(*m_ast->get_root_ptr());
     return errors.empty();
   }

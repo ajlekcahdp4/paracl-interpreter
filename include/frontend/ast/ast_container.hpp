@@ -12,7 +12,6 @@
 
 #include "ast_copier.hpp"
 #include "frontend/types/types.hpp"
-#include "function_table.hpp"
 
 #include <cassert>
 #include <memory>
@@ -31,8 +30,6 @@ class ast_container final {
 private:
   std::vector<i_ast_node_uptr> m_nodes;
   i_ast_node *m_root = nullptr;
-  named_function_table m_function_table;
-  anonymous_function_table m_anonymous_functions;
   types::builtin_types m_types;
 
   template <typename T, typename... Ts> T &emplace_back(Ts &&...args) {
@@ -77,16 +74,6 @@ public:
   auto void_type_ptr() { return m_types.m_void; }
   auto int_type_ptr() { return m_types.m_int; }
   types::builtin_types &builtin_types() & { return m_types; }
-
-  i_ast_node *lookup_function(const std::string &name) { return m_function_table.lookup(name); }
-
-  std::pair<i_ast_node *, bool> add_named_function(std::string_view name, i_ast_node *definition) {
-    return m_function_table.define_function(name, definition);
-  }
-
-  void add_anonymous_function(i_ast_node *definition) { m_anonymous_functions.define_function(definition); }
-
-  named_function_table &named_ftable() { return m_function_table; }
 };
 
 } // namespace paracl::frontend::ast
