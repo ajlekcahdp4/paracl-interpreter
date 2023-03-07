@@ -41,9 +41,9 @@ private:
   bool m_is_currently_statement = false;
 
 private:
-  void set_currently_statement();
-  void reset_currently_statement();
-  bool is_currently_statement() const;
+  void set_currently_statement() { m_is_currently_statement = true; }
+  void reset_currently_statement() { m_is_currently_statement = false; }
+  bool is_currently_statement() const { return m_is_currently_statement; }
 
   void visit_if_no_else(frontend::ast::if_statement &);
   void visit_if_with_else(frontend::ast::if_statement &);

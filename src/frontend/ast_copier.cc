@@ -56,6 +56,20 @@ while_statement &ast_copier::copy(const while_statement &ref) {
   );
 }
 
+function_definition &ast_copier::copy(const function_definition &ref) {
+  std::vector<variable_expression> arguments{ref.begin(), ref.end()};
+  return m_container.make_node<function_definition>(ref.name(), ref.body(), ref.loc(), arguments);
+}
+
+function_definition_to_ptr_conv &ast_copier::copy(const function_definition_to_ptr_conv &ref) {
+  return m_container.make_node<function_definition_to_ptr_conv>(ref.loc(), copy(ref.definition()));
+}
+
+return_statement &ast_copier::copy(const return_statement &ref) {
+  if (!ref.empty()) return m_container.make_node<return_statement>(&copy_expr(ref.expr()), ref.loc());
+  return m_container.make_node<return_statement>(nullptr, ref.loc());
+}
+
 assignment_statement &ast_copier::copy(const assignment_statement &ref) {
   auto &copy = m_container.make_node<assignment_statement>(*ref.rbegin(), copy_expr(ref.right()), ref.loc());
 
@@ -84,20 +98,6 @@ statement_block &ast_copier::copy(const statement_block &ref) {
   }
 
   return copy;
-}
-
-function_definition &ast_copier::copy(const function_definition &ref) {
-  std::vector<variable_expression> arguments{ref.begin(), ref.end()};
-  return m_container.make_node<function_definition>(ref.name(), ref.body(), ref.loc(), arguments);
-}
-
-function_definition_to_ptr_conv &ast_copier::copy(const function_definition_to_ptr_conv &ref) {
-  return m_container.make_node<function_definition_to_ptr_conv>(ref.loc(), copy(ref.definition()));
-}
-
-return_statement &ast_copier::copy(const return_statement &ref) {
-  if (!ref.empty()) return m_container.make_node<return_statement>(&copy_expr(ref.expr()), ref.loc());
-  return m_container.make_node<return_statement>(nullptr, ref.loc());
 }
 
 function_call &ast_copier::copy(const function_call &ref) {

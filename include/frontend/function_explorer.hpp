@@ -33,31 +33,50 @@ private:
   functions_analytics *m_analytics = nullptr;
   ast::ast_container *m_ast = nullptr;
 
-  using to_visit = std::tuple<
-      ast::assignment_statement, ast::binary_expression, ast::if_statement, ast::print_statement, ast::statement_block,
-      ast::unary_expression, ast::while_statement, ast::function_definition, ast::function_definition_to_ptr_conv,
-      ast::function_call, ast::return_statement, ast::i_ast_node>;
-
+  using to_visit = ast::tuple_all_nodes;
   void report_error(error_report report) { m_error_queue->push_back(std::move(report)); }
 
 public:
   EZVIS_VISIT_CT(to_visit);
 
-  void explore(ast::assignment_statement &);
-  void explore(ast::binary_expression &);
-  void explore(ast::if_statement &);
-  void explore(ast::print_statement &);
-  void explore(ast::statement_block &);
-  void explore(ast::unary_expression &);
-  void explore(ast::while_statement &);
+  void explore(const ast::binary_expression &ref) {
+    apply(ref.right());
+    apply(ref.left());
+  }
+
+  void explore(const ast::if_statement &ref) {
+    apply(ref.cond());
+    apply(ref.true_block());
+    if (ref.else_block() != nullptr) apply(*ref.else_block());
+  }
+
+  void explore(const ast::statement_block &ref) {
+    for (auto &statement : ref) {
+      assert(statement);
+      apply(*statement);
+    }
+  }
+
+  void explore(const ast::assignment_statement &ref) { apply(ref.right()); }
+  void explore(const ast::print_statement &ref) { apply(ref.expr()); }
+  void explore(const ast::unary_expression &ref) { apply(ref.expr()); }
+
+  void explore(const ast::while_statement &ref) {
+    apply(ref.cond());
+    apply(ref.block());
+  }
+
   void explore(ast::function_definition &);
-  void explore(ast::function_definition_to_ptr_conv &);
-  void explore(ast::function_call &);
-  void explore(ast::return_statement &);
-  void explore(ast::i_ast_node &) {}
+
+  void explore(const ast::function_definition_to_ptr_conv &ref) { apply(ref.definition()); }
+  void explore(const ast::return_statement &ref) { apply(ref.expr()); }
+
+  void explore(const ast::function_call &);
+  void explore(const ast::i_ast_node &) {}
 
   EZVIS_VISIT_INVOKER(explore);
 
+public:
   bool explore(ast::ast_container &ast, std::vector<error_report> &errors, functions_analytics &analytics) {
     errors.clear();
     m_function_stack.clear();

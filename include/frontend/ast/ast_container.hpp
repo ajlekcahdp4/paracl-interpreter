@@ -73,7 +73,8 @@ public:
 
   auto void_type_ptr() { return m_types.m_void; }
   auto int_type_ptr() { return m_types.m_int; }
-  types::builtin_types &builtin_types() & { return m_types; }
+
+  const types::builtin_types &builtin_types() const & { return m_types; }
 };
 
 } // namespace paracl::frontend::ast

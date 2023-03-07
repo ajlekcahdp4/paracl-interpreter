@@ -27,8 +27,8 @@ class semantic_analyzer final : public ezvis::visitor_base<ast::i_ast_node, sema
 private:
   symtab_stack m_scopes;
   std::vector<error_report> *m_error_queue = nullptr;
-  types::builtin_types *m_types = nullptr;
   ast::ast_container *m_ast = nullptr;
+  const types::builtin_types *m_types = nullptr;
 
   enum class semantic_analysis_state {
     E_LVALUE,
@@ -36,10 +36,7 @@ private:
     E_DEFAULT,
   } current_state = semantic_analysis_state::E_DEFAULT;
 
-  using to_visit = std::tuple<
-      ast::assignment_statement, ast::binary_expression, ast::constant_expression, ast::if_statement, ast::error_node,
-      ast::print_statement, ast::read_expression, ast::statement_block, ast::unary_expression, ast::variable_expression,
-      ast::while_statement, ast::function_definition, ast::function_definition_to_ptr_conv, ast::function_call>;
+  using to_visit = ast::tuple_all_nodes;
 
   void set_state(semantic_analysis_state s) { current_state = s; }
   void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
@@ -82,7 +79,9 @@ public:
   void analyze_node(ast::while_statement &);
   void analyze_node(ast::error_node &);
   void analyze_node(ast::function_call &);
-  void analyze_node(ast::i_ast_node &) {}
+  void analyze_node(ast::function_definition &) {}
+  void analyze_node(ast::function_definition_to_ptr_conv &) {}
+  void analyze_node(ast::return_statement &) {}
 
   EZVIS_VISIT_INVOKER(analyze_node);
 

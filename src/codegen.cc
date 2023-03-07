@@ -241,18 +241,6 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
   }
 }
 
-void codegen_visitor::set_currently_statement() {
-  m_is_currently_statement = true;
-}
-
-void codegen_visitor::reset_currently_statement() {
-  m_is_currently_statement = false;
-}
-
-bool codegen_visitor::is_currently_statement() const {
-  return m_is_currently_statement;
-}
-
 uint32_t codegen_visitor::lookup_or_insert_constant(int constant) {
   auto found = m_constant_map.find(constant);
   uint32_t index;

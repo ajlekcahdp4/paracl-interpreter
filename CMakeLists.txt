@@ -56,21 +56,18 @@ target_compile_features(pclvm PRIVATE cxx_std_20)
 target_link_libraries(pclvm popl bytecode_vm)
 
 bison_target(
-  parser src/frontend/parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.y.cc
+  parser src/frontend/parser/parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.y.cc
   DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/bison_paracl_parser.hpp)
 
-flex_target(scanner src/frontend/scanner.l
+flex_target(scanner src/frontend/parser/scanner.l
             ${CMAKE_CURRENT_BINARY_DIR}/scanner.l.cc)
 
 add_flex_bison_dependency(scanner parser)
 
 set(PARACL_COMPILER_SOURCES
-    src/frontend/dumper.cc
-    src/frontend/function_explorer.cc
-    src/frontend/semantic_analyzer.cc
-    src/frontend/ast_copier.cc
-    src/codegen.cc
-)
+    src/frontend/dumper.cc src/frontend/analysis/function_explorer.cc
+    src/frontend/analysis/semantic_analyzer.cc src/frontend/ast_copier.cc
+    src/codegen.cc)
 
 add_library(
   paracl_compiler STATIC ${PARACL_COMPILER_SOURCES} ${BISON_parser_OUTPUTS}

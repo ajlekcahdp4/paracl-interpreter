@@ -32,6 +32,7 @@ struct error_report final {
   std::vector<error_attachment> attachments;
 
 public:
+  error_report(const error_kind &primary) : primary_error(primary) {}
   void add_attachment(error_attachment attach) { attachments.push_back(std::move(attach)); }
 };
 
