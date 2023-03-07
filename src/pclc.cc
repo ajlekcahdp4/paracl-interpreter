@@ -8,7 +8,6 @@
 #include "frontend/ast/ast_copier.hpp"
 #include "frontend/dumper.hpp"
 #include "frontend/frontend_driver.hpp"
-#include "frontend/semantic_analyzer.hpp"
 
 #include "popl/popl.hpp"
 

@@ -10,7 +10,9 @@
 
 #pragma once
 
-#include "ast/ast_nodes.hpp"
+#include "frontend/ast/ast_nodes/function_call.hpp"
+#include "frontend/ast/ast_nodes/function_decl.hpp"
+
 #include "callgraph.hpp"
 #include "function_table.hpp"
 

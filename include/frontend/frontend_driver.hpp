@@ -11,15 +11,13 @@
 #pragma once
 
 #include "bison_paracl_parser.hpp"
+#include "frontend/analysis/function_explorer.hpp"
+#include "frontend/analysis/functions_analytics.hpp"
+#include "frontend/analysis/semantic_analyzer.hpp"
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/error.hpp"
 #include "frontend/scanner.hpp"
-#include "frontend/semantic_analyzer.hpp"
 #include "frontend/types/types.hpp"
-#include "function_explorer.hpp"
-#include "functions_analytics.hpp"
-#include "scanner.hpp"
-#include "semantic_analyzer.hpp"
 
 #include <graphs/directed_graph.hpp>
 

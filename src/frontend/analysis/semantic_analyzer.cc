@@ -8,9 +8,11 @@
  * ----------------------------------------------------------------------------
  */
 
-#include "frontend/semantic_analyzer.hpp"
+#include "frontend/analysis/semantic_analyzer.hpp"
+
 #include "frontend/ast/ast_nodes.hpp"
 #include "frontend/ast/node_identifier.hpp"
+
 #include "utils/misc.hpp"
 
 #include <iostream>

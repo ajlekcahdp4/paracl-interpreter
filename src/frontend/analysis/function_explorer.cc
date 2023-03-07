@@ -8,9 +8,11 @@
  * ----------------------------------------------------------------------------
  */
 
-#include "frontend/function_explorer.hpp"
+#include "frontend/analysis/function_explorer.hpp"
+
 #include "frontend/ast/ast_nodes.hpp"
 #include "frontend/ast/node_identifier.hpp"
+
 #include "utils/misc.hpp"
 
 #include <iostream>

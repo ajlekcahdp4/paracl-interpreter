@@ -10,15 +10,17 @@
 
 #pragma once
 
-#include "callgraph.hpp"
 #include "ezvis/ezvis.hpp"
+
+#include "frontend/analysis/callgraph.hpp"
+#include "frontend/analysis/function_table.hpp"
+#include "frontend/analysis/functions_analytics.hpp"
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
 #include "frontend/error.hpp"
 #include "frontend/symtab.hpp"
 #include "frontend/types/types.hpp"
-#include "function_table.hpp"
-#include "functions_analytics.hpp"
+
 #include "location.hpp"
 
 #include <iostream>

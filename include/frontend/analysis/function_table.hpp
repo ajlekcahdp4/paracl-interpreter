@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ast/ast_nodes.hpp"
+#include "frontend/ast/ast_nodes.hpp"
 
 #include <string>
 #include <string_view>
