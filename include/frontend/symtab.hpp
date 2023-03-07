@@ -25,8 +25,8 @@ namespace paracl::frontend {
 class symtab final {
 public:
   struct attributes {
-    uint32_t loc;
-    ast::i_ast_node *definition;
+    uint32_t m_loc;
+    ast::i_ast_node *m_definition;
   };
 
 private:
@@ -49,7 +49,7 @@ public:
   std::optional<uint32_t> location(std::string_view name) const {
     auto found = m_table.find(std::string{name});
     if (found == m_table.end()) return std::nullopt;
-    return found->second.loc;
+    return found->second.m_loc;
   }
 
   auto begin() const { return m_table.begin(); }

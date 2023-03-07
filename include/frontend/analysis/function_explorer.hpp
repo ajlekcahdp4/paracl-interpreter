@@ -32,14 +32,16 @@ namespace paracl::frontend {
 class function_explorer final : public ezvis::visitor_base<ast::i_ast_node, function_explorer, void> {
 private:
   std::vector<callgraph_value_type> m_function_stack;
-  std::vector<error_report> *m_error_queue = nullptr;
-  functions_analytics *m_analytics = nullptr;
-  ast::ast_container *m_ast = nullptr;
+  std::vector<error_report> *m_error_queue;
+  functions_analytics *m_analytics;
+  ast::ast_container *m_ast;
 
   using to_visit = ast::tuple_all_nodes;
   void report_error(error_report report) { m_error_queue->push_back(std::move(report)); }
 
 public:
+  function_explorer() = default;
+
   EZVIS_VISIT_CT(to_visit);
 
   void explore(const ast::binary_expression &ref) {

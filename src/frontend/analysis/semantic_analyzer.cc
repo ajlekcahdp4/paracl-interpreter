@@ -154,7 +154,7 @@ bool semantic_analyzer::analyze_node(ast::variable_expression &ref) {
 
   assert(attr->definition && "Broken definition pointer");
   auto type = ezvis::visit<types::shared_type, ast::variable_expression>(
-      [](ast::variable_expression &v) { return v.m_type; }, *attr->definition
+      [](ast::variable_expression &v) { return v.m_type; }, *attr->m_definition
   );
   ref.set_type(type);
 

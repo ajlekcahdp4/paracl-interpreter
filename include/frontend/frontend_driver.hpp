@@ -17,6 +17,7 @@
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/error.hpp"
 #include "frontend/scanner.hpp"
+#include "frontend/source.hpp"
 #include "frontend/types/types.hpp"
 
 #include <graphs/directed_graph.hpp>
@@ -77,45 +78,11 @@ public:
   ast::i_ast_node *get_ast_root_ptr() & { return m_ast.get_root_ptr(); }
 };
 
-class source_input {
-private:
-  std::string m_filename;
-  std::string m_file_source;
-  std::vector<std::string> m_file_lines;
-
-private:
-  void fill_lines() {
-    std::istringstream iss{m_file_source};
-    for (std::string line; std::getline(iss, line);) {
-      m_file_lines.push_back(line);
-    }
-  }
-
-public:
-  source_input(std::filesystem::path input_path) : m_filename{input_path} {
-    std::ifstream ifs;
-    ifs.exceptions(ifs.exceptions() | std::ios::failbit);
-    ifs.open(input_path, std::ios::binary);
-
-    std::stringstream ss;
-    ss << ifs.rdbuf();
-    m_file_source = ss.str();
-
-    fill_lines();
-  }
-
-  std::string_view getline(unsigned i) {
-    assert(i != 0 && "Line number can't be equal to 1");
-    return m_file_lines.at(i - 1); /* Bison lines start with 1, so we have to subtrack */
-  }
-
-  std::string *filename() { return &m_filename; }
-  std::unique_ptr<std::istringstream> iss() const { return std::make_unique<std::istringstream>(m_file_source); }
-};
-
 class frontend_driver {
 private:
   source_input m_source;
+  error_reporter m_reporter;
+
   std::unique_ptr<std::istringstream> m_iss;
   std::unique_ptr<parser_driver> m_parsing_driver;
 
@@ -123,75 +90,13 @@ private:
   functions_analytics m_functions_analytics;
 
 private:
-  void print_message_location(std::string_view msg, location loc) {
-    const auto make_squigly_line = [](int column) {
-      constexpr int max_squigly_width = 4;
-      int squigly_width = std::min(max_squigly_width, column - 1);
-
-      std::stringstream ss;
-      for (int i = 0; i < column - squigly_width - 1; ++i) {
-        ss << " ";
-      }
-
-      const auto make_squigly = [&](auto width) {
-        for (int i = 0; i < width; ++i) {
-          ss << "~";
-        }
-      };
-
-      make_squigly(squigly_width);
-      ss << "^";
-      make_squigly(max_squigly_width);
-
-      return ss.str();
-    };
-
-    std::cout << loc << ": " << msg << "\n";
-    if (loc.begin.line == loc.end.line) {
-      std::cout << loc.begin.line << "\t| " << m_source.getline(loc.begin.line) << "\n";
-      std::cout << "\t  " << make_squigly_line(loc.begin.column) << "\n";
-      return;
-    }
-
-    constexpr int c_max_lines = 4;
-    auto last_line = std::min(loc.end.line, loc.begin.line + c_max_lines);
-
-    // Here we handle multiline errors
-    std::cout << "\t" << loc.begin.line << " | " << m_source.getline(loc.begin.line) << "\n";
-    for (auto start = loc.begin.line + 1, finish = last_line; start <= finish; ++start) {
-      std::cout << "\t" << m_source.getline(start) << "\n";
-    }
-  }
-
-  void report_pretty_error(error_kind err) {
-    auto [msg, loc] = err;
-
-    const std::string bison_syntax = "syntax error";
-    if (err.m_error_message.starts_with(bison_syntax)) {
-      auto &str =
-          err.m_error_message; // Hacky workaround to capitalize bison syntax error. Should rework later. TODO[Sergei]
-      str.replace(str.find(bison_syntax), bison_syntax.length(), "Syntax error");
-    }
-
-    print_message_location(err.m_error_message, err.m_loc);
-  }
-
-  void report_pretty_error(error_report report) {
-    report_pretty_error(report.m_primary_error);
-    for (const auto &attach : report.m_attachments) {
-      std::cout << "\n";
-      print_message_location(attach.m_info_message, attach.m_loc);
-    }
-  }
-
-private:
   auto void_type_ptr() { return m_parsing_driver->void_type_ptr(); }
   auto int_type_ptr() { return m_parsing_driver->int_type_ptr(); }
 
 public:
   frontend_driver(std::filesystem::path input_path)
-      : m_source{input_path}, m_iss{m_source.iss()}, m_parsing_driver{
-                                                         std::make_unique<parser_driver>(m_source.filename())} {
+      : m_source{input_path}, m_reporter{m_source}, m_iss{m_source.iss()},
+        m_parsing_driver{std::make_unique<parser_driver>(m_source.filename())} {
     m_parsing_driver->switch_input_stream(m_iss.get());
   }
 
@@ -214,7 +119,7 @@ public:
     valid = valid && m_semantic_analyzer.analyze(ast, ast.get_root_ptr(), errors);
 
     for (const auto &e : errors) {
-      report_pretty_error(e);
+      m_reporter.report_pretty_error(e);
     }
 
     return valid;
