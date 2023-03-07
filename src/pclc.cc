@@ -17,6 +17,14 @@
 #include <ostream>
 #include <string>
 
+namespace {
+
+constexpr int k_exit_success = 0;
+constexpr int k_exit_failure = 1;
+constexpr int k_exit_error = 2;
+
+} // namespace
+
 int main(int argc, char *argv[]) try {
   std::string input_file_name;
   bool dump_binary = false;
@@ -33,12 +41,12 @@ int main(int argc, char *argv[]) try {
 
   if (help_option->is_set()) {
     std::cout << op << "\n";
-    return 0;
+    return k_exit_success;
   }
 
   if (!input_file_option->is_set()) {
     std::cerr << "File not specified\n";
-    return 1;
+    return k_exit_failure;
   }
 
   dump_binary = disas_option->is_set();
@@ -49,25 +57,27 @@ int main(int argc, char *argv[]) try {
   auto &parse_tree = drv.ast();
 
   if (!parse_tree.get_root_ptr()) {
-    return 0;
+    return k_exit_success;
   }
 
   if (ast_dump_option->is_set()) {
     paracl::frontend::ast::ast_dump(*parse_tree.get_root_ptr(), std::cout);
-    return 0;
+    return k_exit_success;
   }
 
   auto valid = drv.analyze();
   if (!valid) {
-    return 1;
+    return k_exit_failure;
   }
+
+  using paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler;
+  namespace instruction_set = paracl::bytecode_vm::instruction_set;
 
   auto ch = paracl::codegen::generate_code(*parse_tree.get_root_ptr());
   if (dump_binary) {
-    paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler disas{
-        paracl::bytecode_vm::instruction_set::paracl_isa};
+    chunk_complete_disassembler disas{instruction_set::paracl_isa};
     disas(std::cout, ch);
-    return 0;
+    return k_exit_success;
   }
 
   if (output_file_option->is_set()) {
@@ -80,11 +90,11 @@ int main(int argc, char *argv[]) try {
       output_file.open(output_file_name, std::ios::binary);
     } catch (std::exception &e) {
       std::cerr << "Error opening output file: " << e.what() << "\n";
-      return 1;
+      return k_exit_failure;
     }
 
     write_chunk(output_file, ch);
-    return 0;
+    return k_exit_success;
   }
 
   auto vm = paracl::bytecode_vm::create_paracl_vm();
@@ -94,8 +104,10 @@ int main(int argc, char *argv[]) try {
     vm.execute(true);
   } catch (std::exception &e) {
     std::cerr << "Encountered an unrecoverable error: " << e.what() << "\nExiting...\n";
-    return 1;
+    return k_exit_error;
   }
+
 } catch (std::exception &e) {
   std::cerr << "Error: " << e.what() << "\n";
+  return k_exit_error;
 }

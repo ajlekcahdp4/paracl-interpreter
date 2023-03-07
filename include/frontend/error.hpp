@@ -18,22 +18,22 @@
 namespace paracl::frontend {
 
 struct error_kind final {
-  std::string error_message;
-  location loc;
+  std::string m_error_message;
+  location m_loc;
 };
 
 struct error_attachment final {
-  std::string info_message;
-  location loc;
+  std::string m_info_message;
+  location m_loc;
 };
 
 struct error_report final {
-  error_kind primary_error;
-  std::vector<error_attachment> attachments;
+  error_kind m_primary_error;
+  std::vector<error_attachment> m_attachments;
 
 public:
-  error_report(const error_kind &primary) : primary_error(primary) {}
-  void add_attachment(error_attachment attach) { attachments.push_back(std::move(attach)); }
+  error_report(const error_kind &primary) : m_primary_error(primary) {}
+  void add_attachment(error_attachment attach) { m_attachments.push_back(std::move(attach)); }
 };
 
 } // namespace paracl::frontend

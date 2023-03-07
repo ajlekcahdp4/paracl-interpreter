@@ -49,8 +49,10 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler disas{
-      paracl::bytecode_vm::instruction_set::paracl_isa};
+  using paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler;
+  namespace instruction_set = paracl::bytecode_vm::instruction_set;
+
+  chunk_complete_disassembler disas{instruction_set::paracl_isa};
 
   try {
     disas(std::cout, ch.value());

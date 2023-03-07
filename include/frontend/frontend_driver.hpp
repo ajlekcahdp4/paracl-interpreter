@@ -167,20 +167,20 @@ private:
     auto [msg, loc] = err;
 
     const std::string bison_syntax = "syntax error";
-    if (err.error_message.starts_with(bison_syntax)) {
+    if (err.m_error_message.starts_with(bison_syntax)) {
       auto &str =
-          err.error_message; // Hacky workaround to capitalize bison syntax error. Should rework later. TODO[Sergei]
+          err.m_error_message; // Hacky workaround to capitalize bison syntax error. Should rework later. TODO[Sergei]
       str.replace(str.find(bison_syntax), bison_syntax.length(), "Syntax error");
     }
 
-    print_message_location(err.error_message, err.loc);
+    print_message_location(err.m_error_message, err.m_loc);
   }
 
   void report_pretty_error(error_report report) {
-    report_pretty_error(report.primary_error);
-    for (const auto &attach : report.attachments) {
+    report_pretty_error(report.m_primary_error);
+    for (const auto &attach : report.m_attachments) {
       std::cout << "\n";
-      print_message_location(attach.info_message, attach.loc);
+      print_message_location(attach.m_info_message, attach.m_loc);
     }
   }
 

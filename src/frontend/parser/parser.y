@@ -156,7 +156,7 @@ primary_expression: INTEGER_CONSTANT                { $$ = driver.make_ast_node<
                     | IDENTIFIER                    { $$ = driver.make_ast_node<ast::variable_expression>($1, @1); }
                     | QMARK                         { $$ = driver.make_ast_node<ast::read_expression>(@$); }
                     | LPAREN expression RPAREN      { $$ = $2; }
-                    | LPAREN error RPAREN           { auto error = driver.take_error(); $$ = driver.make_ast_node<ast::error_node>(error.error_message, error.loc); yyerrok; }
+                    | LPAREN error RPAREN           { auto error = driver.take_error(); $$ = driver.make_ast_node<ast::error_node>(error.m_error_message, error.m_loc); yyerrok; }
                     | statement_block               { $$ = $1; }
                     | function_call                 { $$ = $1; }
 
@@ -231,13 +231,13 @@ statements:           statements statement {
                       | statements error eof_or_semicol  {
                         $$ = std::move($1);
                         auto error = driver.take_error();
-                        $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc));
+                        $$.append_statement(*driver.make_ast_node<ast::error_node>(error.m_error_message, error.m_loc));
                         yyerrok;
                       }
                       | statement { $$.append_statement(*$1); }
                       | error eof_or_semicol {
                         auto error = driver.take_error();
-                        $$.append_statement(*driver.make_ast_node<ast::error_node>(error.error_message, error.loc));
+                        $$.append_statement(*driver.make_ast_node<ast::error_node>(error.m_error_message, error.m_loc));
                         yyerrok;
                       }
                       
@@ -246,7 +246,7 @@ statement_block:  LBRACE statements RBRACE    { $$ = driver.make_ast_node<ast::s
                   | LBRACE RBRACE             { $$ = driver.make_ast_node<ast::statement_block>(); }
                   | LBRACE error RBRACE {
                     auto error = driver.take_error();
-                    $$ = driver.make_ast_node<ast::error_node>(error.error_message, error.loc);
+                    $$ = driver.make_ast_node<ast::error_node>(error.m_error_message, error.m_loc);
                     yyerrok;
                   }
 
