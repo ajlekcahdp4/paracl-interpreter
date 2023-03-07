@@ -30,17 +30,10 @@ inline bool operator==(const callgraph_value_type &lhs, const callgraph_value_ty
   return lhs.m_name == rhs.m_name;
 }
 
-} // namespace paracl::frontend
-
-namespace std {
-template <> struct hash<paracl::frontend::callgraph_value_type> {
+struct callgraph_hash {
   size_t operator()(paracl::frontend::callgraph_value_type x) const { return std::hash<std::string>{}(x.m_name); }
 };
 
-} // namespace std
-
-namespace paracl::frontend {
-
-using callgraph = graphs::dag<callgraph_value_type>;
+using callgraph = graphs::dag<callgraph_value_type, callgraph_hash>;
 
 } // namespace paracl::frontend
