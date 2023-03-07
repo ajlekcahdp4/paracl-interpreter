@@ -15,6 +15,8 @@
 
 #include "utils/misc.hpp"
 
+#include <fmt/core.h>
+
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -29,13 +31,11 @@ void function_explorer::explore(ast::function_definition &ref) {
     auto [ptr, inserted] = m_analytics->m_named.define_function(name_v, &ref);
 
     if (!inserted) {
-      std::stringstream ss;
-      ss << "Redefinition of function "
-         << "\"" << name_v << "\""; // add information about previously declared function (in that case 'ptr' will
-                                    // be a pointer to already declared function)
-      report_error(error_report{
-          {ss.str(), ref.loc()}
-      });
+      auto report = error_report{
+          {fmt::format("Redefinition of function `{}`", name_v), ref.loc()}
+      };
+      report.add_attachment(error_attachment{fmt::format("[Note] Previously declared here:"), ptr->loc()});
+      report_error(report);
       return;
     }
 

@@ -12,8 +12,8 @@
 
 #include "bison_paracl_parser.hpp"
 #include "frontend/analysis/function_explorer.hpp"
-#include "frontend/analysis/functions_analytics.hpp"
 #include "frontend/analysis/semantic_analyzer.hpp"
+
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/error.hpp"
 #include "frontend/scanner.hpp"
@@ -117,10 +117,9 @@ class frontend_driver {
 private:
   source_input m_source;
   std::unique_ptr<std::istringstream> m_iss;
-
   std::unique_ptr<parser_driver> m_parsing_driver;
 
-  semantic_analyzer m_semantic_analyzer{};
+  semantic_analyzer m_semantic_analyzer;
   functions_analytics m_functions_analytics;
 
 private:
@@ -202,18 +201,22 @@ public:
   bool analyze() {
     auto &&ast = m_parsing_driver->ast();
     if (!ast.get_root_ptr()) return true;
+
     function_explorer explorer;
     std::vector<paracl::frontend::error_report> errors;
-    auto &&valid = explorer.explore(ast, errors, m_functions_analytics);
+    auto &&valid = explorer.explore(ast, m_functions_analytics, errors);
 
     auto &&scheduled = graphs::recursive_topo_sort(m_functions_analytics.m_callgraph);
     for (auto &&definition : scheduled) {
       if (definition.m_definition) valid = valid && m_semantic_analyzer.analyze(ast, definition.m_definition, errors);
     }
+
     valid = valid && m_semantic_analyzer.analyze(ast, ast.get_root_ptr(), errors);
 
-    for (const auto &e : errors)
+    for (const auto &e : errors) {
       report_pretty_error(e);
+    }
+
     return valid;
   }
 };

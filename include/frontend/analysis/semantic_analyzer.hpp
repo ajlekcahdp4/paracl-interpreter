@@ -11,12 +11,14 @@
 #pragma once
 
 #include "ezvis/ezvis.hpp"
+#include "location.hpp"
+
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/ast/ast_nodes.hpp"
+
 #include "frontend/error.hpp"
 #include "frontend/symtab.hpp"
 #include "frontend/types/types.hpp"
-#include "location.hpp"
 
 #include <iostream>
 #include <string_view>
@@ -87,6 +89,7 @@ public:
 
   bool analyze(ast::ast_container &ast, ast::i_ast_node *start, std::vector<error_report> &errors) {
     errors.clear();
+
     m_error_queue = &errors;
     m_ast = &ast;
     m_types = &m_ast->builtin_types();

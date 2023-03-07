@@ -12,11 +12,12 @@
 
 #include "ezvis/ezvis.hpp"
 
+#include "frontend/analysis/augmented_ast.hpp"
 #include "frontend/analysis/callgraph.hpp"
-#include "frontend/analysis/function_table.hpp"
-#include "frontend/analysis/functions_analytics.hpp"
+
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
+
 #include "frontend/error.hpp"
 #include "frontend/symtab.hpp"
 #include "frontend/types/types.hpp"
@@ -79,12 +80,15 @@ public:
   EZVIS_VISIT_INVOKER(explore);
 
 public:
-  bool explore(ast::ast_container &ast, std::vector<error_report> &errors, functions_analytics &analytics) {
+  bool explore(ast::ast_container &ast, functions_analytics &functions, std::vector<error_report> &errors) {
     errors.clear();
     m_function_stack.clear();
+
     m_ast = &ast;
+    m_analytics = &functions;
+
     m_error_queue = &errors;
-    m_analytics = &analytics;
+
     apply(*m_ast->get_root_ptr());
     return errors.empty();
   }

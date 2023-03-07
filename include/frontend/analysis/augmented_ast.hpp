@@ -10,16 +10,10 @@
 
 #pragma once
 
-#include "frontend/ast/ast_nodes/function_call.hpp"
-#include "frontend/ast/ast_nodes/function_decl.hpp"
-
 #include "callgraph.hpp"
 #include "function_table.hpp"
 
-#include <string>
-#include <string_view>
-#include <utility>
-#include <vector>
+#include "frontend/ast/ast_container.hpp"
 
 namespace paracl::frontend {
 
