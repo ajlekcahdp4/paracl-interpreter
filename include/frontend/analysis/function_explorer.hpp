@@ -62,20 +62,25 @@ public:
     }
   }
 
-  void explore(const ast::assignment_statement &ref) { apply(ref.right()); }
-  void explore(const ast::print_statement &ref) { apply(ref.expr()); }
-  void explore(const ast::unary_expression &ref) { apply(ref.expr()); }
-
   void explore(const ast::while_statement &ref) {
     apply(ref.cond());
     apply(ref.block());
   }
 
+  void explore(const ast::assignment_statement &ref) { apply(ref.right()); }
+
+  void explore(const ast::print_statement &ref) { apply(ref.expr()); }
+
+  void explore(const ast::unary_expression &ref) { apply(ref.expr()); }
+
   void explore(ast::function_definition &);
+
   void explore(const ast::function_definition_to_ptr_conv &ref);
+
   void explore(const ast::return_statement &ref) { apply(ref.expr()); }
 
   void explore(const ast::function_call &);
+
   void explore(const ast::i_ast_node &) {}
 
   EZVIS_VISIT_INVOKER(explore);

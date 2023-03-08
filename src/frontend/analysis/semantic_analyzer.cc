@@ -199,8 +199,11 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
 
   std::vector<types::shared_type> m_arg_type_vec;
   for (const auto &v : ref) {
-    m_arg_type_vec.push_back(v.m_type);
+    if (v.m_type) m_arg_type_vec.push_back(v.m_type);
+    else m_arg_type_vec.push_back(m_types->m_int);
   }
+
+  ref.m_type->set_argument_types(m_arg_type_vec);
 
   // The only other possibility for the reference is statement block.
   auto &&st_block = static_cast<ast::statement_block &>(body);
@@ -217,9 +220,8 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
     auto &&st = *start;
 
     current_state = semantic_analysis_state::E_LVALUE;
-    apply(*st);
-
     assert(st && "Encountered nullptr in a statement block");
+    apply(*st);
     auto st_type = ast::identify_node(st);
 
     if (st_type == ast::ast_node_type::E_RETURN_STATEMENT) {
@@ -254,6 +256,7 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
 
       report_error(error);
     }
+    ref.m_type->m_return_type = first_type;
   }
 
   m_scopes.end_scope();
@@ -329,6 +332,10 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
   };
 
   report_error(error);
+}
+
+void semantic_analyzer::analyze_node(ast::return_statement &ref) {
+  if (!ref.empty()) apply(ref.expr());
 }
 
 } // namespace paracl::frontend

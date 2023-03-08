@@ -94,7 +94,7 @@ public:
   void analyze_node(ast::function_call &);
   void analyze_node(ast::function_definition &);
   void analyze_node(ast::function_definition_to_ptr_conv &);
-  void analyze_node(ast::return_statement &) {}
+  void analyze_node(ast::return_statement &);
 
   EZVIS_VISIT_INVOKER(analyze_node);
 
@@ -112,7 +112,7 @@ public:
 
     // If we should visit the main scope, then we won't enter a function_definition node and set this flag ourselves.
     // This flag prevents the analyzer to go lower than 1 layer of functions;
-    m_in_function_body = !in_main;
+    m_in_function_body = in_main;
 
     apply(start);
     return errors.empty();

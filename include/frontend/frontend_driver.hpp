@@ -117,7 +117,7 @@ public:
       valid = valid && m_semantic_analyzer.analyze(ast, m_functions, *definition.m_definition, errors);
     }
 
-    valid = valid && m_semantic_analyzer.analyze(ast, m_functions, *ast.get_root_ptr(), errors);
+    valid = valid && m_semantic_analyzer.analyze(ast, m_functions, *ast.get_root_ptr(), errors, true);
 
     for (const auto &e : errors) {
       m_reporter.report_pretty_error(e);

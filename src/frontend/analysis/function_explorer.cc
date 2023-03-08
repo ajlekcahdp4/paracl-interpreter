@@ -48,7 +48,10 @@ void function_explorer::explore(ast::function_definition &ref) {
     std::stringstream ss;
     ss << "anonymous-" << m_analytics->m_anonymous.size();
     m_function_stack.push_back({ss.str(), &ref});
-    m_analytics->m_callgraph.insert({ss.str(), &ref});
+    if (std::find(m_analytics->m_anonymous.begin(), m_analytics->m_anonymous.end(), &ref) ==
+        m_analytics->m_anonymous.end()) {
+      m_analytics->m_callgraph.insert({ss.str(), &ref});
+    }
   }
 
   apply(ref.body());
@@ -56,10 +59,12 @@ void function_explorer::explore(ast::function_definition &ref) {
 }
 
 void function_explorer::explore(const ast::function_call &ref) {
+  auto *found = m_analytics->m_named.lookup(ref.name());
   if (!m_function_stack.empty()) {
     auto &&curr_func = m_function_stack.back();
-    auto found = m_analytics->m_named.lookup(ref.name());
     m_analytics->m_callgraph.insert(curr_func, {std::string{ref.name()}, found});
+  } else {
+    m_analytics->m_callgraph.insert({std::string{ref.name()}, found});
   }
 
   for (auto *param : ref) {
@@ -68,6 +73,23 @@ void function_explorer::explore(const ast::function_call &ref) {
 }
 
 void function_explorer::explore(const ast::function_definition_to_ptr_conv &ref) {
+  auto &&def = ref.definition();
+  auto &&name = def.name();
+  auto &&name_v = std::string{};
+  if (name.has_value()) {
+    name_v = name.value();
+  } else {
+    std::stringstream ss;
+    ss << "anonymous-" << m_analytics->m_anonymous.size();
+    name_v = ss.str();
+  }
+
+  if (!m_function_stack.empty()) {
+    auto &&curr_func = m_function_stack.back();
+    m_analytics->m_callgraph.insert(curr_func, {name_v, &def});
+  } else {
+    m_analytics->m_callgraph.insert({name_v, &def});
+  }
   apply(ref.definition());
 }
 
