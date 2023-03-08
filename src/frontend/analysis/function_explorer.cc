@@ -18,7 +18,6 @@
 #include <fmt/core.h>
 
 #include <iostream>
-#include <sstream>
 #include <string>
 
 namespace paracl::frontend {

@@ -103,8 +103,9 @@ public:
   }
 
   void set_argument_types(const std::vector<shared_type> &arg_types) {
-    for (auto &&arg : arg_types)
-      this->push_back(arg);
+    for (auto &&arg : arg_types) {
+      vector::push_back(arg);
+    }
   }
 
   std::string to_string() const override {

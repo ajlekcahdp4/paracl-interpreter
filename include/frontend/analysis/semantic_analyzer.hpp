@@ -22,7 +22,6 @@
 #include "frontend/types/types.hpp"
 
 #include <iostream>
-#include <string_view>
 
 namespace paracl::frontend {
 

@@ -13,6 +13,7 @@
 #include "ezvis/ezvis.hpp"
 #include "frontend/types/types.hpp"
 #include "location.hpp"
+#include "utils/misc.hpp"
 
 namespace paracl::frontend::ast {
 
@@ -67,13 +68,13 @@ class return_statement;
 
 class error_node;
 
+using tuple_expression_nodes = std::tuple<
+    assignment_statement, binary_expression, constant_expression, read_expression, statement_block, unary_expression,
+    variable_expression, function_call, function_definition_to_ptr_conv>;
+
 using tuple_all_nodes = std::tuple<
     assignment_statement, binary_expression, constant_expression, if_statement, print_statement, read_expression,
     statement_block, unary_expression, variable_expression, while_statement, error_node, function_definition,
     return_statement, function_call, function_definition_to_ptr_conv>;
-
-using tuple_expression_nodes = std::tuple<
-    assignment_statement, binary_expression, constant_expression, read_expression, statement_block, unary_expression,
-    variable_expression, function_call, function_definition_to_ptr_conv>;
 
 } // namespace paracl::frontend::ast
