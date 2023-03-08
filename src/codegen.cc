@@ -98,7 +98,7 @@ void codegen_visitor::generate(ast::statement_block &ref) {
   }
 
   auto int_type = frontend::types::type_builtin{frontend::types::builtin_type_class::E_BUILTIN_INT};
-  bool should_return = int_type.is_equal(*ref.m_type);
+  bool should_return = ref.m_type.get() && int_type.is_equal(*ref.m_type);
 
   if (ref.size()) {
     for (auto start = ref.cbegin(), finish = ref.cend(); start != finish; ++start) {
@@ -120,10 +120,15 @@ void codegen_visitor::generate(ast::statement_block &ref) {
         reset_currently_statement();
       }
 
-      apply(*statement);
+      if (node_type != ast::ast_node_type::E_FUNCTION_DEFINITION) {
+        apply(*statement);
+      }
 
       if (!is_assignment && pop_unused_result) {
-        m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
+        if (!(node_type == frontend::ast::ast_node_type::E_FUNCTION_CALL &&
+              static_cast<frontend::ast::function_call &>(*statement).m_type->is_equal(*m_types->m_void))) {
+          m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
+        }
       }
     }
   }
@@ -241,12 +246,87 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
   }
 }
 
+void codegen_visitor::generate(ast::function_call &ref) {
+  bool is_return;
+  if (!ref.m_type->is_equal(*m_types->m_void)) {
+    is_return = true;
+    uint32_t index = lookup_or_insert_constant(0);
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, index});
+  }
+
+  const auto const_index = current_constant_index();
+  m_return_address_constants.push_back({const_index, 0}); // Dummy address
+  const auto ret_addr_index = m_return_address_constants.size() - 1;
+  m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
+
+  m_builder.emit_operation(encoded_instruction{vm_instruction_set::setup_call_desc});
+  for (const auto &e : ref) {
+    assert(e);
+    apply(*e);
+  }
+
+  if (ref.m_def) {
+    uint32_t relocate_index = m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_desc});
+    m_relocations_function_calls.push_back({relocate_index, ref.m_def});
+  } else {
+    int32_t total_depth = m_symtab_stack.size() + 2 + (is_return ? 1 : 0);
+    int32_t index = m_symtab_stack.lookup_location(std::string{ref.name()});
+    int32_t rel_pos = index - total_depth;
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_local_rel_desc, rel_pos});
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_dynamic_desc});
+  }
+
+  m_return_address_constants[ret_addr_index].m_address = m_builder.current_loc();
+}
+
+void codegen_visitor::generate(frontend::ast::return_statement &ref) {
+  if (!ref.empty()) {
+    apply(ref.expr());
+    // Move return value to the previous stack frame
+    constexpr int32_t return_offset = -3;
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::mov_local_rel_desc, return_offset});
+  }
+
+  for (unsigned i = 0; i < m_symtab_stack.size(); ++i) {
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
+  }
+
+  m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
+
+  while (m_symtab_stack.depth()) {
+    m_symtab_stack.end_scope();
+  }
+}
+
+void codegen_visitor::generate(frontend::ast::function_definition_to_ptr_conv &ref) {
+  const auto const_index = current_constant_index();
+  m_dynamic_jumps_constants.push_back({const_index, 0, &ref.definition()}); // Dummy address
+  m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
+}
+
+uint32_t codegen_visitor::generate(frontend::ast::function_definition &ref) {
+  m_symtab_stack.begin_scope(ref.param_symtab());
+  m_curr_function = &ref;
+
+  const auto function_pos = m_builder.current_loc();
+  m_function_defs.insert({&ref, function_pos});
+  apply(ref.body());
+
+  for (uint32_t i = 0; i < ref.param_symtab()->size(); ++i) {
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
+  }
+
+  m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
+  m_symtab_stack.end_scope();
+  return function_pos;
+}
+
 uint32_t codegen_visitor::lookup_or_insert_constant(int constant) {
   auto found = m_constant_map.find(constant);
   uint32_t index;
 
   if (found == m_constant_map.end()) {
-    index = m_constant_map.size();
+    index = current_constant_index();
     m_constant_map.insert({constant, index});
   }
 
@@ -257,27 +337,56 @@ uint32_t codegen_visitor::lookup_or_insert_constant(int constant) {
   return index;
 }
 
-paracl::bytecode_vm::decl_vm::chunk codegen_visitor::to_chunk() {
-  // Last instruction is ret
+void codegen_visitor::generate_all(
+    const frontend::ast::ast_container &ast, const frontend::functions_analytics &functions
+) {
+  m_return_address_constants.clear();
+
+  m_types = &ast.builtin_types();
+  m_functions = &functions;
+
+  apply(*ast.get_root_ptr()); // Last instruction is ret
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
 
+  for (auto &func : functions.m_anonymous) {
+    generate(*func);
+  }
+
+  for (auto &func : functions.m_named) {
+    generate(*func.second);
+  }
+
+  for (const auto &reloc : m_relocations_function_calls) {
+    auto &relocate_instruction = m_builder.get_as(vm_instruction_set::jmp_desc, reloc.m_reloc_index);
+    relocate_instruction.m_attr = m_function_defs.at(reloc.m_func_ptr);
+  }
+
+  for (auto &dynjmp : m_dynamic_jumps_constants) {
+    assert(dynjmp.m_func_ptr);
+    dynjmp.m_address = m_function_defs.at(dynjmp.m_func_ptr);
+  }
+}
+
+paracl::bytecode_vm::decl_vm::chunk codegen_visitor::to_chunk() {
   auto ch = m_builder.to_chunk();
 
   std::vector<int> constants;
-  constants.resize(m_constant_map.size());
+  constants.resize(current_constant_index());
 
   for (const auto &v : m_constant_map) {
     constants[v.second] = v.first;
   }
 
+  for (const auto &v : m_return_address_constants) {
+    constants[v.m_index] = v.m_address;
+  }
+
+  for (const auto &v : m_dynamic_jumps_constants) {
+    constants[v.m_index] = v.m_address;
+  }
+
   ch.set_constant_pool(std::move(constants));
   return ch;
-}
-
-bytecode_vm::decl_vm::chunk generate_code(ast::i_ast_node &ref) {
-  codegen_visitor generator;
-  generator.apply(ref);
-  return generator.to_chunk();
 }
 
 } // namespace paracl::codegen

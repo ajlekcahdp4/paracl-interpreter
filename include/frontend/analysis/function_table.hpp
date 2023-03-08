@@ -23,7 +23,13 @@ class named_function_table final {
   std::unordered_map<std::string, ast::function_definition *> m_table;
 
 public:
-  ast::function_definition *lookup(const std::string_view &name) {
+  ast::function_definition *lookup(std::string_view name) {
+    auto found = m_table.find(std::string{name});
+    if (found == m_table.end()) return nullptr;
+    return found->second;
+  }
+
+  const ast::function_definition *lookup(std::string_view name) const {
     auto found = m_table.find(std::string{name});
     if (found == m_table.end()) return nullptr;
     return found->second;

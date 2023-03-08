@@ -157,7 +157,7 @@ constexpr auto mov_local_instr = mov_local_desc >> [](auto &&ctx, auto &&attr) {
   ctx.at_stack(std::get<0>(attr)) = val;
 };
 
-constexpr decl_vm::instruction_desc<E_MOV_LOCAL_REL_UNARY, uint32_t> mov_local_rel_desc = "mov_local_rel";
+constexpr decl_vm::instruction_desc<E_MOV_LOCAL_REL_UNARY, int32_t> mov_local_rel_desc = "mov_local_rel";
 constexpr auto mov_local_rel_instr = mov_local_rel_desc >> [](auto &&ctx, auto &&attr) {
   auto val = ctx.pop();
   ctx.at_stack(std::get<0>(attr) + ctx.sp()) = val;
@@ -169,7 +169,15 @@ constexpr auto push_local_instr = push_local_desc >> [](auto &&ctx, auto &&attr)
   ctx.push(val);
 };
 
-constexpr decl_vm::instruction_desc<E_PUSH_LOCAL_REL_UNARY, uint32_t> push_local_rel_desc = "push_local_rel";
+constexpr decl_vm::instruction_desc<E_PUSH_LOCAL_DYNAMIC_REL_NULLARY> push_local_dynamic_rel_desc =
+    "push_local_dyn_rel";
+constexpr auto push_local_dynamic_rel_instr = push_local_desc >> [](auto &&ctx, auto &&attr) {
+  auto first = ctx.pop();
+  auto val = ctx.at_stack(first);
+  ctx.push(val);
+};
+
+constexpr decl_vm::instruction_desc<E_PUSH_LOCAL_REL_UNARY, int32_t> push_local_rel_desc = "push_local_rel";
 constexpr auto push_local_rel_instr = push_local_rel_desc >> [](auto &&ctx, auto &&attr) {
   auto val = ctx.at_stack(std::get<0>(attr) + ctx.sp());
   ctx.push(val);
@@ -183,6 +191,18 @@ constexpr auto conditional_jump = [](auto &&ctx, auto &&attr, bool cond) {
 constexpr decl_vm::instruction_desc<E_JMP_UNARY, uint32_t> jmp_desc = "jmp";
 constexpr auto jmp_instr = jmp_desc >> [](auto &&ctx, auto &&attr) { conditional_jump(ctx, attr, true); };
 
+constexpr decl_vm::instruction_desc<E_JMP_DYNAMIC_NULLARY> jmp_dynamic_desc = "jmp_dynamic";
+constexpr auto jmp_dynamic_instr = jmp_dynamic_desc >> [](auto &&ctx, auto &&attr) {
+  auto first = ctx.pop();
+  ctx.set_ip(first);
+};
+
+constexpr decl_vm::instruction_desc<E_JMP_DYNAMIC_REL_UNARY, int32_t> jmp_dynamic_rel_desc = "jmp_dynamic_rel";
+constexpr auto jmp_dynamic_rel_instr = jmp_dynamic_rel_desc >> [](auto &&ctx, auto &&attr) {
+  auto val = ctx.at_stack(std::get<0>(attr) + ctx.sp());
+  ctx.set_ip(val);
+};
+
 constexpr decl_vm::instruction_desc<E_JMP_TRUE_UNARY, uint32_t> jmp_true_desc = "jmp_true";
 constexpr auto jmp_true_instr = jmp_true_desc >> [](auto &&ctx, auto &&attr) {
   auto first = ctx.pop();
@@ -195,20 +215,25 @@ constexpr auto jmp_false_instr = jmp_false_desc >> [](auto &&ctx, auto &&attr) {
   conditional_jump(ctx, attr, !first);
 };
 
-constexpr decl_vm::instruction_desc<E_SETUP_CALL_NULLARY, uint32_t> setup_call_desc = "call";
+constexpr decl_vm::instruction_desc<E_SETUP_CALL_NULLARY> setup_call_desc = "call";
 constexpr auto setup_call_instr = setup_call_desc >> [](auto &&ctx, auto &&attr) {
-  ctx.push(std::numeric_limits<uint32_t>::max()); // reserve place at stack to later fill with correct instruction
-                                                  // pointer value
   auto cur_sp = ctx.sp();
   ctx.push(cur_sp);
   ctx.set_sp(ctx.stack_size());
+};
+
+constexpr decl_vm::instruction_desc<E_PUSH_SP> push_sp_desc = "push_sp";
+constexpr auto push_sp_instr = push_sp_desc >> [](auto &&ctx, auto &&attr) {
+  auto cur_sp = ctx.sp();
+  ctx.push(cur_sp);
 };
 
 static const auto paracl_isa = decl_vm::instruction_set_description(
     push_const_instr, return_instr, pop_instr, add_instr, sub_instr, mul_instr, div_instr, mod_instr, and_instr,
     or_instr, cmp_eq_instr, cmp_ne_instr, cmp_gt_instr, cmp_ls_instr, cmp_ge_instr, cmp_le_instr, print_instr,
     push_read, mov_local_instr, mov_local_rel_instr, push_local_instr, push_local_rel_instr, jmp_instr, jmp_true_instr,
-    jmp_false_instr, not_instr, setup_call_instr
+    jmp_false_instr, not_instr, setup_call_instr, jmp_dynamic_instr, jmp_dynamic_rel_instr,
+    push_local_dynamic_rel_instr, push_sp_instr
 );
 
 } // namespace paracl::bytecode_vm::instruction_set

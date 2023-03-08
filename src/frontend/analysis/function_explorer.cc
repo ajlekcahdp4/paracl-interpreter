@@ -57,8 +57,9 @@ void function_explorer::explore(ast::function_definition &ref) {
   m_function_stack.pop_back();
 }
 
-void function_explorer::explore(const ast::function_call &ref) {
+void function_explorer::explore(ast::function_call &ref) {
   auto *found = m_analytics->m_named.lookup(ref.name());
+  ref.m_def = found;
 
   if (!m_function_stack.empty()) {
     auto &&curr_func = m_function_stack.back();
@@ -69,18 +70,21 @@ void function_explorer::explore(const ast::function_call &ref) {
   }
 
   for (auto *param : ref) {
-    assert(param && "Encountered a nullptr is statement block");
+    assert(param && "Encountered a nullptr in statement block");
     apply(*param);
   }
 }
 
 void function_explorer::explore(const ast::function_definition_to_ptr_conv &ref) {
   auto &&def = ref.definition();
-  auto &&name = def.name();
-  auto &&name_v = std::string{};
+  auto name = def.name();
+  auto name_v = std::string{};
+
   if (name.has_value()) {
     name_v = name.value();
-  } else {
+  }
+
+  else {
     std::stringstream ss;
     ss << "anonymous-" << m_analytics->m_anonymous.size();
     name_v = ss.str();
@@ -89,9 +93,12 @@ void function_explorer::explore(const ast::function_definition_to_ptr_conv &ref)
   if (!m_function_stack.empty()) {
     auto &&curr_func = m_function_stack.back();
     m_analytics->m_callgraph.insert(curr_func, {name_v, &def});
-  } else {
+  }
+
+  else {
     m_analytics->m_callgraph.insert({name_v, &def});
   }
+
   apply(ref.definition());
 }
 

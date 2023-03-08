@@ -74,7 +74,7 @@ public:
 
   void explore(ast::function_definition &);
   void explore(const ast::function_definition_to_ptr_conv &ref);
-  void explore(const ast::function_call &);
+  void explore(ast::function_call &);
 
   void explore(const ast::i_ast_node &) {}
 

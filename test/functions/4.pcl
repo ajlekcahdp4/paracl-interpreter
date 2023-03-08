@@ -1,5 +1,5 @@
-b = func(n) { return 1; }
-
-func(a) : myprint {
+mp = func(a) : myprint {
   print a;
 }
+
+mp(5);

@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <numeric>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -64,6 +65,12 @@ private:
 public:
   void begin_scope(symtab *stab) { m_stack.push_back(stab); }
   void end_scope() { m_stack.pop_back(); }
+
+  uint32_t size() const {
+    return std::accumulate(m_stack.begin(), m_stack.end(), 0, [](auto a, auto &&stab) { return a + stab->size(); });
+  }
+
+  uint32_t depth() const { return m_stack.size(); }
 
   uint32_t lookup_location(std::string_view name) const {
     uint32_t location = 0;

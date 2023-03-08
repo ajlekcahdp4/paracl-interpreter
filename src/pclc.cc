@@ -74,7 +74,11 @@ int main(int argc, char *argv[]) try {
   using paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler;
   namespace instruction_set = paracl::bytecode_vm::instruction_set;
 
-  auto ch = paracl::codegen::generate_code(*parse_tree.get_root_ptr());
+  paracl::codegen::codegen_visitor generator;
+
+  generator.generate_all(drv.ast(), drv.functions());
+  auto ch = generator.to_chunk();
+
   if (dump_binary) {
     chunk_complete_disassembler disas{instruction_set::paracl_isa};
     disas(std::cout, ch);
