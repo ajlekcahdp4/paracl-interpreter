@@ -24,8 +24,7 @@ namespace paracl::frontend {
 
 void semantic_analyzer::analyze_node(ast::unary_expression &ref) {
   apply(ref.expr());
-  expect_type_eq(ref.expr(), *m_types->m_int);
-  ref.set_type(m_types->m_int);
+  if (expect_type_eq(ref.expr(), *m_types->m_int)) ref.set_type(m_types->m_int);
 }
 
 void semantic_analyzer::analyze_node(ast::error_node &ref) {
@@ -71,9 +70,9 @@ void semantic_analyzer::analyze_node(ast::binary_expression &ref) {
   set_state(semantic_analysis_state::E_RVALUE);
   apply(ref.left());
 
-  expect_type_eq(ref.right(), *m_types->m_int);
-  expect_type_eq(ref.left(), *m_types->m_int);
-  ref.set_type(m_types->m_int);
+  if (expect_type_eq(ref.right(), *m_types->m_int) && expect_type_eq(ref.left(), *m_types->m_int)) {
+    ref.set_type(m_types->m_int);
+  }
 
   reset_state();
 }
@@ -196,11 +195,10 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
   }
 
   std::vector<types::shared_type> m_arg_type_vec;
-  for (auto &&v : ref) {
+  std::transform(ref.begin(), ref.end(), std::back_inserter(m_arg_type_vec), [&](auto &&v) {
     if (!v.m_type) v.m_type = m_types->m_int; // default argument type: int
-    m_arg_type_vec.push_back(v.m_type);
-  }
-
+    return v.get_type();
+  });
   ref.m_type->set_argument_types(m_arg_type_vec);
 
   // The only other possibility for the reference is statement block.
@@ -211,7 +209,7 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
     return ref.empty() || !ref.expr().is_type_set() ? m_types->m_void : ref.expr().get_type();
   };
 
-  std::vector<ast::return_statement *> return_statements;
+  m_return_statements.clear();
   for (auto start = st_block.begin(), finish = st_block.end(); start != finish; ++start) {
     auto last = std::prev(finish);
     bool is_last = (start == last);
@@ -220,13 +218,8 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
     current_state = semantic_analysis_state::E_LVALUE;
     assert(st && "Encountered nullptr in a statement block");
     apply(*st);
-    auto st_type = ast::identify_node(st);
 
-    if (st_type == ast::ast_node_type::E_RETURN_STATEMENT) {
-      return_statements.push_back(static_cast<ast::return_statement *>(st));
-    }
-
-    if (is_last && return_statements.empty()) {
+    if (is_last && m_return_statements.empty()) {
       auto type = ezvis::visit_tuple<types::shared_type, expressions_and_return>(
           paracl::utils::visitors{
               [](ast::i_expression &expr) { return expr.get_type(); }, get_return_statement_type,
@@ -237,24 +230,30 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
     }
   }
 
-  if (return_statements.size()) {
-    auto &&first_type = get_return_statement_type(*return_statements.front());
+  if (m_return_statements.size()) {
+    auto &&first_type = get_return_statement_type(*m_return_statements.front());
     auto &func_ret_type = ref.m_type->m_return_type;
+    bool valid = true;
 
-    if (!func_ret_type.get()) {
-      func_ret_type = first_type;
-    }
-
-    for (const auto &ret : return_statements) {
-      if (get_return_statement_type(*ret)->is_equal(*func_ret_type)) continue;
+    for (const auto &ret : m_return_statements) {
+      if (func_ret_type.get()) { // If return type is set
+        if (get_return_statement_type(*ret)->is_equal(*first_type) &&
+            get_return_statement_type(*ret)->is_equal(*func_ret_type))
+          continue;
+      } else {
+        if (get_return_statement_type(*ret)->is_equal(*first_type)) continue;
+      }
 
       error_report error = {
           {fmt::format("Return type deduction failed, found mismatch"), ref.loc()}
       };
 
       report_error(error);
+      valid = false;
+      break;
     }
-    ref.m_type->m_return_type = first_type;
+
+    if (valid) ref.m_type->m_return_type = first_type;
   }
 
   m_scopes.end_scope();
@@ -268,11 +267,11 @@ void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) 
 }
 
 void semantic_analyzer::analyze_node(ast::function_call &ref) {
-  for (auto &&param : ref)
+  for (auto &&param : ref) {
     apply(*param);
+  }
 
   auto &&name = ref.name();
-
   auto &&function_found = m_functions->m_named.lookup(std::string{name});
   auto &&attr = m_scopes.lookup_symbol(name);
 
@@ -294,12 +293,6 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
   };
 
   const auto check_func_ptr_parameter_list = [&](auto &&type, auto &&loc) {
-    bool size_match = ref.size() == type.size();
-
-    if (!size_match) {
-      report(loc);
-    }
-
     if (std::mismatch(ref.begin(), ref.end(), type.cbegin(), type.cend(), [&](auto *expr_ptr, auto &&arg) {
           return expect_type_eq(*expr_ptr, *arg);
         }).first != ref.end()) {
@@ -351,6 +344,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
 
 void semantic_analyzer::analyze_node(ast::return_statement &ref) {
   if (!ref.empty()) apply(ref.expr());
+  m_return_statements.push_back(&ref);
 }
 
 } // namespace paracl::frontend

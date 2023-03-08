@@ -112,12 +112,12 @@ public:
     auto &&valid = explorer.explore(ast, m_functions, errors);
 
     auto &&scheduled = graphs::recursive_topo_sort(m_functions.m_callgraph);
+    // Note the order of analyze(....) && valid to prevent short-circuiting to check all functions.
     for (auto &&definition : scheduled) {
       if (!definition.m_definition) continue;
-      valid = valid && m_semantic_analyzer.analyze(ast, m_functions, *definition.m_definition, errors);
+      valid = m_semantic_analyzer.analyze(ast, m_functions, *definition.m_definition, errors) && valid;
     }
-
-    valid = valid && m_semantic_analyzer.analyze(ast, m_functions, *ast.get_root_ptr(), errors, true);
+    valid = m_semantic_analyzer.analyze(ast, m_functions, *ast.get_root_ptr(), errors, true) && valid;
 
     for (const auto &e : errors) {
       m_reporter.report_pretty_error(e);

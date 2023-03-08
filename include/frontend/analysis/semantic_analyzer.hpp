@@ -34,6 +34,7 @@ private:
 
   const types::builtin_types *m_types;
   std::vector<error_report> *m_error_queue;
+  std::vector<ast::return_statement *> m_return_statements;
 
 private:
   enum class semantic_analysis_state {
@@ -101,8 +102,6 @@ public:
       ast::ast_container &ast, functions_analytics &functions, ast::i_ast_node &start,
       std::vector<error_report> &errors, bool in_main = false
   ) {
-    errors.clear();
-
     // Set pointers to resources
     m_error_queue = &errors;
     m_ast = &ast;

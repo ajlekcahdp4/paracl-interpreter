@@ -13,6 +13,9 @@
 #include "ezvis/ezvis.hpp"
 #include "location.hpp"
 
+#include <fmt/core.h>
+#include <fmt/format.h>
+
 #include <algorithm>
 #include <cassert>
 #include <iterator>
@@ -109,20 +112,17 @@ public:
   }
 
   std::string to_string() const override {
-    std::stringstream ss;
-    ss << "(" << m_return_type->to_string() << ")"
-       << " func(";
+    std::vector<std::string> arg_types_str;
 
-    if (!vector::empty()) {
-      auto start = vector::begin();
-      for (auto finish = std::prev(vector::end()); start != finish; ++start) {
-        ss << start->get()->to_string() << ", ";
-      }
-      ss << start->get()->to_string();
+    for (const auto &v : *this) {
+      arg_types_str.push_back(v->to_string());
     }
-    ss << ")";
 
-    return ss.str();
+    return fmt::format(
+        "({}) func({})", m_return_type.get() ? m_return_type->to_string() : "undetermined",
+        fmt::join(arg_types_str, ", ")
+    );
+    ;
   }
 
   unique_type clone() const override {

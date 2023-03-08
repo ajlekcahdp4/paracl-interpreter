@@ -82,12 +82,10 @@ public:
 
 public:
   bool explore(ast::ast_container &ast, functions_analytics &functions, std::vector<error_report> &errors) {
-    errors.clear();
     m_function_stack.clear();
 
     m_ast = &ast;
     m_analytics = &functions;
-
     m_error_queue = &errors;
 
     apply(*m_ast->get_root_ptr());

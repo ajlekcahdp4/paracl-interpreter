@@ -59,14 +59,17 @@ void function_explorer::explore(ast::function_definition &ref) {
 
 void function_explorer::explore(const ast::function_call &ref) {
   auto *found = m_analytics->m_named.lookup(ref.name());
+
   if (!m_function_stack.empty()) {
     auto &&curr_func = m_function_stack.back();
-    m_analytics->m_callgraph.insert(curr_func, {std::string{ref.name()}, found});
+    // Do not create recursive loops. These will get handled separately.
+    if (curr_func.m_name != ref.name()) m_analytics->m_callgraph.insert(curr_func, {std::string{ref.name()}, found});
   } else {
     m_analytics->m_callgraph.insert({std::string{ref.name()}, found});
   }
 
   for (auto *param : ref) {
+    assert(param && "Encountered a nullptr is statement block");
     apply(*param);
   }
 }
