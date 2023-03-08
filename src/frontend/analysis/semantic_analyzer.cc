@@ -278,7 +278,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
 
   const auto report = [&](auto &&loc) {
     error_report error = {
-        {fmt::format("Call parameter mismatch", name), ref.loc()}
+        {fmt::format("Call parameter type/count mismatch", name), ref.loc()}
     };
 
     error.add_attachment({fmt::format("Defined here", name), loc});
@@ -286,12 +286,6 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
   };
 
   const auto check_func_parameter_list = [&](auto &&type, auto &&loc) {
-    bool size_match = ref.size() == type.size();
-
-    if (!size_match) {
-      report(loc);
-    }
-
     if (std::mismatch(ref.begin(), ref.end(), type.cbegin(), type.cend(), [&](auto *expr_ptr, auto &&arg) {
           return expect_type_eq(*expr_ptr, *arg.get_type());
         }).first != ref.end()) {
