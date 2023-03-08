@@ -1,3 +1,2 @@
 b = func(n) { print n; };
-
 b(3);

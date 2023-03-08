@@ -11,4 +11,10 @@ func (a): buz {
   return a;
 }
 
+func (): biz {
+  a = foo() + bar();
+}
 
+a = 5;
+print buz(a);
+print biz();

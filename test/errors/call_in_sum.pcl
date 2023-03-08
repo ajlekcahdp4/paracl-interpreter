@@ -11,4 +11,7 @@ func (a): buz {
   return a;
 }
 
-
+func (): biz {
+  foo = func() { return 3; }
+  return foo();
+}
