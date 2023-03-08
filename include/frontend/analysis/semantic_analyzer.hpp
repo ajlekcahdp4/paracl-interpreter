@@ -47,15 +47,15 @@ private:
   void set_state(semantic_analysis_state s) { current_state = s; }
   void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
 
-  void report_error(std::string msg, location loc) {
+  void report_error(std::string msg, location loc) const {
     m_error_queue->push_back({
         error_kind{msg, loc}
     });
   }
 
-  void report_error(error_report report) { m_error_queue->push_back(std::move(report)); }
+  void report_error(error_report report) const { m_error_queue->push_back(std::move(report)); }
 
-  bool expect_type_eq(ast::i_expression &ref, types::i_type &rhs) {
+  bool expect_type_eq(const ast::i_expression &ref, const types::i_type &rhs) const {
     auto &&type = ref.m_type;
     if (!type || !(type->is_equal(rhs))) {
       report_error("Expression is not of type '" + rhs.to_string() + "'", ref.loc());
@@ -65,7 +65,7 @@ private:
     return true;
   }
 
-  bool expect_type_eq(ast::i_expression &ref, types::i_type *rhs) {
+  bool expect_type_eq(const ast::i_expression &ref, const types::i_type *rhs) const {
     if (!rhs) return false;
     return expect_type_eq(ref, *rhs);
   }

@@ -198,9 +198,9 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
   }
 
   std::vector<types::shared_type> m_arg_type_vec;
-  for (const auto &v : ref) {
-    if (v.m_type) m_arg_type_vec.push_back(v.m_type);
-    else m_arg_type_vec.push_back(m_types->m_int);
+  for (auto &&v : ref) {
+    if (!v.m_type) v.m_type = m_types->m_int; // default argument type: int
+    m_arg_type_vec.push_back(v.m_type);
   }
 
   ref.m_type->set_argument_types(m_arg_type_vec);
@@ -270,6 +270,9 @@ void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) 
 }
 
 void semantic_analyzer::analyze_node(ast::function_call &ref) {
+  for (auto &&param : ref)
+    apply(*param);
+
   auto &&name = ref.name();
 
   auto &&function_found = m_functions->m_named.lookup(std::string{name});
@@ -284,10 +287,30 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
     report_error(error);
   };
 
-  const auto check_parameter_list = [&](auto &&type, auto &&loc) {
+  const auto check_func_parameter_list = [&](auto &&type, auto &&loc) {
     bool size_match = ref.size() == type.size();
 
     if (!size_match) {
+      report(loc);
+    }
+
+    if (std::mismatch(ref.begin(), ref.end(), type.cbegin(), type.cend(), [&](auto *expr_ptr, auto &&arg) {
+          return expect_type_eq(*expr_ptr, *arg.get_type());
+        }).first != ref.end()) {
+      report(loc);
+    }
+  };
+
+  const auto check_func_ptr_parameter_list = [&](auto &&type, auto &&loc) {
+    bool size_match = ref.size() == type.size();
+
+    if (!size_match) {
+      report(loc);
+    }
+
+    if (std::mismatch(ref.begin(), ref.end(), type.cbegin(), type.cend(), [&](auto *expr_ptr, auto &&arg) {
+          return expect_type_eq(*expr_ptr, *arg);
+        }).first != ref.end()) {
       report(loc);
     }
   };
@@ -305,7 +328,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
   }
 
   else if (function_found && !attr) {
-    check_parameter_list(*function_found, function_found->loc());
+    check_func_parameter_list(*function_found, function_found->loc());
     ref.m_type = function_found->m_type->return_type();
     return;
   }
@@ -321,7 +344,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
     }
 
     auto &&cast_type = static_cast<types::type_composite_function &>(*def->m_type);
-    check_parameter_list(cast_type, def->loc());
+    check_func_ptr_parameter_list(cast_type, def->loc());
     ref.m_type = cast_type.return_type();
 
     return;

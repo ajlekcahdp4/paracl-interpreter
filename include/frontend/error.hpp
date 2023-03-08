@@ -111,7 +111,7 @@ public:
   void report_pretty_error(error_report report) {
     report_pretty_error(report.m_primary_error);
     for (const auto &attach : report.m_attachments) {
-      std::cerr << "\n";
+      std::cout << "\n";
       print_message_location(attach.m_info_message, attach.m_loc);
     }
   }

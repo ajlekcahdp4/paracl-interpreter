@@ -2,7 +2,6 @@ a = func (): foo {
   return 1;
 }
 
-func (a): bar {
-  a();
-  foo();
+func (void func ()a): bar {
+ a();
 }
