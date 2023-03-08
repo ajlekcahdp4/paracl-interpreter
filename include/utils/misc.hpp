@@ -32,4 +32,13 @@ template <typename... Ts> struct variant_from_tuple<std::tuple<Ts...>> {
 
 template <typename t_tuple> using variant_from_tuple_t = typename variant_from_tuple<t_tuple>::type;
 
+template <typename t_tuple, typename... t_types> struct tuple_add_types {};
+template <typename... t_tuple_types, typename... t_types>
+struct tuple_add_types<std::tuple<t_tuple_types...>, t_types...> {
+  using type = std::tuple<t_tuple_types..., t_types...>;
+};
+
+template <typename t_tuple, typename... t_types>
+using tuple_add_types_t = typename tuple_add_types<t_tuple, t_types...>::type;
+
 } // namespace paracl::utils

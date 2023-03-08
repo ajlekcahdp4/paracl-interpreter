@@ -72,9 +72,8 @@ using tuple_expression_nodes = std::tuple<
     assignment_statement, binary_expression, constant_expression, read_expression, statement_block, unary_expression,
     variable_expression, function_call, function_definition_to_ptr_conv>;
 
-using tuple_all_nodes = std::tuple<
-    assignment_statement, binary_expression, constant_expression, if_statement, print_statement, read_expression,
-    statement_block, unary_expression, variable_expression, while_statement, error_node, function_definition,
-    return_statement, function_call, function_definition_to_ptr_conv>;
+using tuple_all_nodes = utils::tuple_add_types_t<
+    tuple_expression_nodes, if_statement, print_statement, while_statement, error_node, function_definition,
+    return_statement>;
 
 } // namespace paracl::frontend::ast

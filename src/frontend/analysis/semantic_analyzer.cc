@@ -87,6 +87,8 @@ void semantic_analyzer::analyze_node(ast::print_statement &ref) {
   reset_state();
 }
 
+using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
+
 void semantic_analyzer::analyze_node(ast::statement_block &ref) {
   m_scopes.begin_scope(ref.symbol_table());
 
@@ -99,8 +101,11 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
   }
 
   if (is_rvalue) {
-    auto type = ezvis::visit_tuple<types::shared_type, ast::tuple_expression_nodes>(
-        [](ast::i_expression &expr) { return expr.get_type(); }, *ref.back()
+    auto type = ezvis::visit_tuple<types::shared_type, expressions_and_base>(
+        paracl::utils::visitors{
+            [](ast::i_expression &expr) { return expr.get_type(); },
+            [&](ast::i_ast_node &) { return m_types->m_void; }},
+        *ref.back()
     );
     ref.set_type(type);
   } else {
@@ -147,11 +152,7 @@ bool semantic_analyzer::analyze_node(ast::variable_expression &ref) {
       return false;
     }
 
-    std::stringstream ss;
-    ss << "Use of undeclared variable "
-       << "'" << ref.name() << "'";
-    report_error(ss.str(), ref.loc());
-
+    report_error(fmt::format("Use of undeclared variable `{}`", ref.name()), ref.loc());
     return false;
   }
 
@@ -164,10 +165,8 @@ bool semantic_analyzer::analyze_node(ast::variable_expression &ref) {
   return true;
 }
 
-using expressions_and_return = std::tuple<
-    ast::assignment_statement, ast::binary_expression, ast::constant_expression, ast::read_expression,
-    ast::statement_block, ast::unary_expression, ast::variable_expression, ast::function_call,
-    ast::function_definition_to_ptr_conv, ast::return_statement, ast::i_ast_node>;
+using expressions_and_return =
+    utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node, ast::return_statement>;
 
 void semantic_analyzer::analyze_node(ast::function_definition &ref) {
   if (m_in_function_body) return;
