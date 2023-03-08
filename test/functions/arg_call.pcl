@@ -2,6 +2,8 @@ a = func (): foo {
   return 1;
 }
 
-func (void func ()a): bar {
- a();
+func (int func ()b): bar {
+  b();
 }
+
+print bar(a);

@@ -285,19 +285,27 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
   };
 
   const auto check_func_parameter_list = [&](auto &&type, auto &&loc) {
-    if (std::mismatch(ref.begin(), ref.end(), type.cbegin(), type.cend(), [&](auto *expr_ptr, auto &&arg) {
-          return expect_type_eq(*expr_ptr, *arg.get_type());
-        }).first != ref.end()) {
+    if (std::mismatch(
+            ref.begin(), ref.end(), type.cbegin(), type.cend(),
+            [&](auto *expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, *arg.get_type()); }
+        ).first != ref.end() ||
+        ref.size() != type.size()) {
       report(loc);
+      return false;
     }
+    return true;
   };
 
   const auto check_func_ptr_parameter_list = [&](auto &&type, auto &&loc) {
-    if (std::mismatch(ref.begin(), ref.end(), type.cbegin(), type.cend(), [&](auto *expr_ptr, auto &&arg) {
-          return expect_type_eq(*expr_ptr, *arg);
-        }).first != ref.end()) {
+    if (std::mismatch(
+            ref.begin(), ref.end(), type.cbegin(), type.cend(),
+            [&](auto *expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, *arg); }
+        ).first != ref.end() ||
+        ref.size() != type.size()) {
       report(loc);
+      return false;
     }
+    return true;
   };
 
   if (function_found && attr) {
@@ -313,8 +321,9 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
   }
 
   else if (function_found && !attr) {
-    check_func_parameter_list(*function_found, function_found->loc());
-    ref.m_type = function_found->m_type->return_type();
+    if (check_func_parameter_list(*function_found, function_found->loc())) {
+      ref.m_type = function_found->m_type->return_type();
+    }
     return;
   }
 
@@ -329,8 +338,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
     }
 
     auto &&cast_type = static_cast<types::type_composite_function &>(*def->m_type);
-    check_func_ptr_parameter_list(cast_type, def->loc());
-    ref.m_type = cast_type.return_type();
+    if (check_func_ptr_parameter_list(cast_type, def->loc())) ref.m_type = cast_type.return_type();
 
     return;
   }
