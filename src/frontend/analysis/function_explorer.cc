@@ -65,6 +65,7 @@ void function_explorer::explore(ast::function_call &ref) {
     auto &&curr_func = m_function_stack.back();
     // Do not create recursive loops. These will get handled separately.
     if (curr_func.m_name != ref.name()) m_analytics->m_usegraph.insert(curr_func, {std::string{ref.name()}, found});
+    else m_analytics->m_recursions.insert(found);
   } else {
     m_analytics->m_usegraph.insert({std::string{ref.name()}, found});
   }
@@ -82,9 +83,7 @@ void function_explorer::explore(const ast::function_definition_to_ptr_conv &ref)
 
   if (name.has_value()) {
     name_v = name.value();
-  }
-
-  else {
+  } else {
     std::stringstream ss;
     ss << "anonymous-" << m_analytics->m_anonymous.size();
     name_v = ss.str();
@@ -93,9 +92,7 @@ void function_explorer::explore(const ast::function_definition_to_ptr_conv &ref)
   if (!m_function_stack.empty()) {
     auto &&curr_func = m_function_stack.back();
     m_analytics->m_usegraph.insert(curr_func, {name_v, &def});
-  }
-
-  else {
+  } else {
     m_analytics->m_usegraph.insert({name_v, &def});
   }
 

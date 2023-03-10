@@ -15,12 +15,15 @@
 
 #include "frontend/ast/ast_container.hpp"
 
+#include <unordered_set>
+
 namespace paracl::frontend {
 
 struct functions_analytics final {
   named_function_table m_named;
   anonymous_function_table m_anonymous;
   usegraph m_usegraph;
+  std::unordered_set<ast::function_definition *> m_recursions;
 };
 
 } // namespace paracl::frontend

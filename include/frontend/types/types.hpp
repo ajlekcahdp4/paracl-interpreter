@@ -106,6 +106,7 @@ public:
   }
 
   void set_argument_types(const std::vector<shared_type> &arg_types) {
+    vector::clear();
     for (auto &&arg : arg_types) {
       vector::push_back(arg);
     }

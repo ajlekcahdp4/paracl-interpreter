@@ -43,6 +43,7 @@ private:
     E_DEFAULT,
   } current_state = semantic_analysis_state::E_DEFAULT;
   bool m_in_function_body = false;
+  bool m_first_recursive_traversal = false;
 
   void set_state(semantic_analysis_state s) { current_state = s; }
   void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
@@ -62,6 +63,11 @@ private:
       return false;
     }
 
+    return true;
+  }
+
+  bool expect_type_eq_cond(const ast::i_expression &ref, const types::i_type &rhs, bool cond) {
+    if (cond) return expect_type_eq(ref, rhs);
     return true;
   }
 
@@ -106,7 +112,7 @@ public:
 
   bool analyze(
       ast::ast_container &ast, functions_analytics &functions, ast::i_ast_node &start,
-      std::vector<error_report> &errors, bool in_main = false
+      std::vector<error_report> &errors, bool in_main = false, bool first_recursive = false
   ) {
     // Set pointers to resources
     m_error_queue = &errors;
@@ -117,6 +123,8 @@ public:
     // If we should visit the main scope, then we won't enter a function_definition node and set this flag ourselves.
     // This flag prevents the analyzer to go lower than 1 layer of functions;
     m_in_function_body = in_main;
+
+    m_first_recursive_traversal = first_recursive;
 
     apply(start);
     return errors.empty();

@@ -24,7 +24,7 @@ namespace paracl::frontend {
 
 void semantic_analyzer::analyze_node(ast::unary_expression &ref) {
   apply(ref.expr());
-  if (expect_type_eq(ref.expr(), *m_types->m_int)) ref.set_type(m_types->m_int);
+  if (expect_type_eq_cond(ref.expr(), *m_types->m_int, !m_first_recursive_traversal)) ref.set_type(m_types->m_int);
 }
 
 void semantic_analyzer::analyze_node(ast::error_node &ref) {
@@ -56,7 +56,7 @@ void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
     if (right_type.get() && !declared && !v.m_type) {
       v.set_type(right_type);
     } else {
-      expect_type_eq(v, *(ref.right().m_type));
+      expect_type_eq_cond(v, *(ref.right().m_type), !m_first_recursive_traversal);
     }
   }
 
@@ -70,7 +70,8 @@ void semantic_analyzer::analyze_node(ast::binary_expression &ref) {
   set_state(semantic_analysis_state::E_RVALUE);
   apply(ref.left());
 
-  if (expect_type_eq(ref.right(), *m_types->m_int) && expect_type_eq(ref.left(), *m_types->m_int)) {
+  if (expect_type_eq_cond(ref.right(), *m_types->m_int, !m_first_recursive_traversal) &&
+      expect_type_eq_cond(ref.left(), *m_types->m_int, !m_first_recursive_traversal)) {
     ref.set_type(m_types->m_int);
   }
 
@@ -81,7 +82,7 @@ void semantic_analyzer::analyze_node(ast::print_statement &ref) {
   set_state(semantic_analysis_state::E_RVALUE);
 
   apply(ref.expr());
-  expect_type_eq(ref.expr(), *m_types->m_int);
+  expect_type_eq_cond(ref.expr(), *m_types->m_int, !m_first_recursive_traversal);
 
   reset_state();
 }
@@ -291,9 +292,13 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
     report_error(error);
   };
 
-  const auto match_expr_type = [&](auto *expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, *arg.get_type()); };
+  const auto match_expr_type = [&](auto *expr_ptr, auto &&arg) {
+    return expect_type_eq_cond(*expr_ptr, *arg.get_type(), !m_first_recursive_traversal);
+  };
 
-  const auto match_types = [&](auto *expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, *arg); };
+  const auto match_types = [&](auto *expr_ptr, auto &&arg) {
+    return expect_type_eq_cond(*expr_ptr, *arg, !m_first_recursive_traversal);
+  };
 
   const auto check_func_parameter_list = [&](auto &&type, auto &&loc, auto match) {
     if (std::mismatch(ref.begin(), ref.end(), type.cbegin(), type.cend(), match).first != ref.end() ||

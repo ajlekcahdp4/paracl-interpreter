@@ -1,0 +1,10 @@
+fact = func (x) : factorial {
+  if (x == 0)
+    return 1;
+  b = 1;
+  b = b * factorial(x - 1);
+  return b;
+}
+
+a = fact(5);
+print a;
