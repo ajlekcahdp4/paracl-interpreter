@@ -70,6 +70,12 @@ private:
     return expect_type_eq(ref, *rhs);
   }
 
+  void set_function_argument_types(ast::function_definition &ref);
+
+  void begin_function_scope(ast::function_definition &ref);
+
+  template <typename F> void check_return_types_matches(ast::function_definition &ref, F get_return_type);
+
   using to_visit = ast::tuple_all_nodes;
 
 public:

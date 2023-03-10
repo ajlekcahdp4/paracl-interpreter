@@ -164,42 +164,71 @@ bool semantic_analyzer::analyze_node(ast::variable_expression &ref) {
   return true;
 }
 
-using expressions_and_return =
-    utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node, ast::return_statement>;
-
-void semantic_analyzer::analyze_node(ast::function_definition &ref) {
-  if (m_in_function_body) return;
-
-  m_in_function_body = true; // Set flag
-
-  auto param_symtab = ref.param_symtab();
-  assert(param_symtab && "Broken param symtab pointer");
-  for (auto &def : ref) {
-    param_symtab->declare(def.name(), &def);
-  }
-  m_scopes.begin_scope(param_symtab);
-
-  auto &&body = ref.body();
-  auto body_type = ast::identify_node(body);
-
-  assert(
-      body_type == ast::ast_node_type::E_ERROR_NODE ||
-      body_type == ast::ast_node_type::E_STATEMENT_BLOCK && "Broken statement block pointer"
-  );
-
-  if (body_type == ast::ast_node_type::E_ERROR_NODE) {
-    apply(body);                // Visit error node
-    m_in_function_body = false; // Exit
-    m_scopes.end_scope();
-    return;
-  }
-
+void semantic_analyzer::set_function_argument_types(ast::function_definition &ref) {
   std::vector<types::shared_type> m_arg_type_vec;
   std::transform(ref.begin(), ref.end(), std::back_inserter(m_arg_type_vec), [&](auto &&v) {
     if (!v.m_type) v.m_type = m_types->m_int; // default argument type: int
     return v.get_type();
   });
   ref.m_type->set_argument_types(m_arg_type_vec);
+}
+
+void semantic_analyzer::begin_function_scope(ast::function_definition &ref) {
+  auto *param_symtab = ref.param_symtab();
+  assert(param_symtab && "Broken param symtab pointer");
+  for (auto &def : ref) {
+    param_symtab->declare(def.name(), &def);
+  }
+  m_scopes.begin_scope(param_symtab);
+}
+
+template <typename F>
+void semantic_analyzer::check_return_types_matches(ast::function_definition &ref, F get_return_type) {
+  auto &&first_type = get_return_type(*m_return_statements.front());
+  auto &func_ret_type = ref.m_type->m_return_type;
+  bool valid = true;
+
+  for (const auto &ret : m_return_statements) {
+    if (func_ret_type) { // If return type is set
+      if (get_return_type(*ret)->is_equal(*first_type) && get_return_type(*ret)->is_equal(*func_ret_type)) continue;
+    } else {
+      if (get_return_type(*ret)->is_equal(*first_type)) continue;
+    }
+
+    error_report error = {
+        {fmt::format("Return type deduction failed, found mismatch"), ref.loc()}
+    };
+
+    report_error(error);
+    valid = false;
+    break;
+  }
+
+  if (valid) ref.m_type->m_return_type = first_type;
+}
+
+using expressions_and_return =
+    utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node, ast::return_statement>;
+
+void semantic_analyzer::analyze_node(ast::function_definition &ref) {
+  if (m_in_function_body) return;
+  m_in_function_body = true; // Set flag
+
+  begin_function_scope(ref);
+  set_function_argument_types(ref);
+
+  auto &&body = ref.body();
+  auto body_type = ast::identify_node(body);
+  assert(
+      body_type == ast::ast_node_type::E_ERROR_NODE ||
+      body_type == ast::ast_node_type::E_STATEMENT_BLOCK && "Broken statement block pointer"
+  );
+  if (body_type == ast::ast_node_type::E_ERROR_NODE) {
+    apply(body);                // Visit error node
+    m_in_function_body = false; // Exit
+    m_scopes.end_scope();
+    return;
+  }
 
   // The only other possibility for the reference is statement block.
   auto &&st_block = static_cast<ast::statement_block &>(body);
@@ -230,30 +259,8 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
     }
   }
 
-  if (m_return_statements.size()) {
-    auto &&first_type = get_return_statement_type(*m_return_statements.front());
-    auto &func_ret_type = ref.m_type->m_return_type;
-    bool valid = true;
-
-    for (const auto &ret : m_return_statements) {
-      if (func_ret_type.get()) { // If return type is set
-        if (get_return_statement_type(*ret)->is_equal(*first_type) &&
-            get_return_statement_type(*ret)->is_equal(*func_ret_type))
-          continue;
-      } else {
-        if (get_return_statement_type(*ret)->is_equal(*first_type)) continue;
-      }
-
-      error_report error = {
-          {fmt::format("Return type deduction failed, found mismatch"), ref.loc()}
-      };
-
-      report_error(error);
-      valid = false;
-      break;
-    }
-
-    if (valid) ref.m_type->m_return_type = first_type;
+  if (!m_return_statements.empty()) {
+    check_return_types_matches(ref, get_return_statement_type);
   }
 
   m_scopes.end_scope();
@@ -284,11 +291,12 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
     report_error(error);
   };
 
-  const auto check_func_parameter_list = [&](auto &&type, auto &&loc) {
-    if (std::mismatch(
-            ref.begin(), ref.end(), type.cbegin(), type.cend(),
-            [&](auto *expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, *arg.get_type()); }
-        ).first != ref.end() ||
+  const auto match_expr_type = [&](auto *expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, *arg.get_type()); };
+
+  const auto match_types = [&](auto *expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, *arg); };
+
+  const auto check_func_parameter_list = [&](auto &&type, auto &&loc, auto match) {
+    if (std::mismatch(ref.begin(), ref.end(), type.cbegin(), type.cend(), match).first != ref.end() ||
         ref.size() != type.size()) {
       report(loc);
       return false;
@@ -296,50 +304,30 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
     return true;
   };
 
-  const auto check_func_ptr_parameter_list = [&](auto &&type, auto &&loc) {
-    if (std::mismatch(
-            ref.begin(), ref.end(), type.cbegin(), type.cend(),
-            [&](auto *expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, *arg); }
-        ).first != ref.end() ||
-        ref.size() != type.size()) {
-      report(loc);
-      return false;
+  if (function_found) {
+    if (attr) {
+      error_report report = {
+          {fmt::format("Ambiguous call of `{}`", name), ref.loc()}
+      };
+      report.add_attachment({fmt::format("[Info] Have variable `{}`", name), attr->m_definition->loc()});
+      report.add_attachment({fmt::format("[Info] Have function `{}`", name), function_found->loc()});
+      report_error(report);
+      return;
+    } else {
+      if (check_func_parameter_list(*function_found, function_found->loc(), match_expr_type))
+        ref.m_type = function_found->m_type->return_type();
+      return;
     }
-    return true;
-  };
-
-  if (function_found && attr) {
-    error_report report = {
-        {fmt::format("Ambiguous call of `{}`", name), ref.loc()}
-    };
-
-    report.add_attachment({fmt::format("[Info] Have variable `{}`", name), attr->m_definition->loc()});
-    report.add_attachment({fmt::format("[Info] Have function `{}`", name), function_found->loc()});
-
-    report_error(report);
-    return;
   }
-
-  else if (function_found && !attr) {
-    if (check_func_parameter_list(*function_found, function_found->loc())) {
-      ref.m_type = function_found->m_type->return_type();
-    }
-    return;
-  }
-
-  else if (!function_found && attr) {
-    // Basically the same
+  if (attr) {
     auto *def = attr->m_definition;
     auto &&type = def->m_type;
-
     if (type->get_type() != types::type_class::E_COMPOSITE_FUNCTION) {
       report(def->loc());
       return;
     }
-
     auto &&cast_type = static_cast<types::type_composite_function &>(*def->m_type);
-    if (check_func_ptr_parameter_list(cast_type, def->loc())) ref.m_type = cast_type.return_type();
-
+    if (check_func_parameter_list(cast_type, def->loc(), match_types)) ref.m_type = cast_type.return_type();
     return;
   }
 
