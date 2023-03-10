@@ -21,19 +21,19 @@
 
 namespace paracl::frontend {
 
-struct callgraph_value_type final {
+struct usegraph_value_type final {
   std::string m_name;
   ast::function_definition *m_definition;
 };
 
-inline bool operator==(const callgraph_value_type &lhs, const callgraph_value_type &rhs) {
+inline bool operator==(const usegraph_value_type &lhs, const usegraph_value_type &rhs) {
   return lhs.m_name == rhs.m_name;
 }
 
-struct callgraph_hash {
-  size_t operator()(paracl::frontend::callgraph_value_type x) const { return std::hash<std::string>{}(x.m_name); }
+struct usegraph_hash {
+  size_t operator()(paracl::frontend::usegraph_value_type x) const { return std::hash<std::string>{}(x.m_name); }
 };
 
-using callgraph = graphs::dag<callgraph_value_type, callgraph_hash>;
+using usegraph = graphs::dag<usegraph_value_type, usegraph_hash>;
 
 } // namespace paracl::frontend

@@ -113,7 +113,7 @@ public:
     std::vector<paracl::frontend::error_report> errors;
     auto &&valid = explorer.explore(ast, m_functions, errors);
 
-    auto &&scheduled = graphs::recursive_topo_sort(m_functions.m_callgraph);
+    auto &&scheduled = graphs::recursive_topo_sort(m_functions.m_usegraph);
     // Note the order of analyze(....) && valid to prevent short-circuiting to check all functions.
     for (auto &&definition : scheduled) {
       if (!definition.m_definition) continue;

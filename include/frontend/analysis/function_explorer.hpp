@@ -13,7 +13,7 @@
 #include "ezvis/ezvis.hpp"
 
 #include "frontend/analysis/augmented_ast.hpp"
-#include "frontend/analysis/callgraph.hpp"
+#include "frontend/analysis/usegraph.hpp"
 
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
@@ -31,7 +31,7 @@ namespace paracl::frontend {
 
 class function_explorer final : public ezvis::visitor_base<ast::i_ast_node, function_explorer, void> {
 private:
-  std::vector<callgraph_value_type> m_function_stack;
+  std::vector<usegraph_value_type> m_function_stack;
   std::vector<error_report> *m_error_queue;
   functions_analytics *m_analytics;
   ast::ast_container *m_ast;

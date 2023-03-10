@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "callgraph.hpp"
 #include "function_table.hpp"
+#include "usegraph.hpp"
 
 #include "frontend/ast/ast_container.hpp"
 
@@ -20,7 +20,7 @@ namespace paracl::frontend {
 struct functions_analytics final {
   named_function_table m_named;
   anonymous_function_table m_anonymous;
-  callgraph m_callgraph;
+  usegraph m_usegraph;
 };
 
 } // namespace paracl::frontend
