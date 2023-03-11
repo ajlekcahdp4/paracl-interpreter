@@ -67,14 +67,14 @@ public:
   void end_scope() { m_stack.pop_back(); }
 
   uint32_t size() const {
-    return std::accumulate(m_stack.begin(), m_stack.end(), 0, [](auto a, auto &&stab) { return a + stab->size(); });
+    return std::accumulate(m_stack.cbegin(), m_stack.cend(), 0, [](auto a, auto &&stab) { return a + stab->size(); });
   }
 
   uint32_t depth() const { return m_stack.size(); }
 
   uint32_t lookup_location(std::string_view name) const {
     uint32_t location = 0;
-    auto found = std::find_if(m_stack.begin(), m_stack.end(), [&name, &location](auto &stab) {
+    auto found = std::find_if(m_stack.cbegin(), m_stack.cend(), [&name, &location](auto &stab) {
       auto loc = stab->location(name);
       if (loc.has_value()) {
         location += loc.value();
@@ -84,7 +84,7 @@ public:
       return false;
     });
 
-    if (found == m_stack.end()) {
+    if (found == m_stack.cend()) {
       throw std::logic_error{"Trying to look up scope of a variable not present in symbol table"};
     }
 
@@ -92,16 +92,16 @@ public:
   }
 
   uint32_t lookup_scope(std::string_view name) const {
-    auto found = std::find_if(m_stack.rbegin(), m_stack.rend(), [&name](auto &stab) { return stab->declared(name); });
-    if (found == m_stack.rend()) {
+    auto found = std::find_if(m_stack.crbegin(), m_stack.crend(), [&name](auto &stab) { return stab->declared(name); });
+    if (found == m_stack.crend()) {
       throw std::logic_error{"Trying to look up scope of a variable not present in symbol table"};
     }
-    return std::distance(m_stack.rbegin(), found);
+    return std::distance(m_stack.crbegin(), found);
   }
 
   std::optional<symtab::attributes> lookup_symbol(std::string_view name) const {
-    auto found = std::find_if(m_stack.rbegin(), m_stack.rend(), [&name](auto &stab) { return stab->declared(name); });
-    if (found == m_stack.rend()) return std::nullopt;
+    auto found = std::find_if(m_stack.crbegin(), m_stack.crend(), [&name](auto &stab) { return stab->declared(name); });
+    if (found == m_stack.crend()) return std::nullopt;
     return (*found)->get_attributes(name);
   }
 
