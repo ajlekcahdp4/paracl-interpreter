@@ -93,12 +93,18 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
 void codegen_visitor::generate(ast::statement_block &ref) {
   m_symtab_stack.begin_scope(ref.symbol_table());
 
-  for (unsigned i = 0; i < ref.symbol_table()->size(); ++i) {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
-  }
-
   auto int_type = frontend::types::type_builtin{frontend::types::builtin_type_class::E_BUILTIN_INT};
   bool should_return = ref.m_type.get() && int_type.is_equal(*ref.m_type);
+
+  auto &&n_symbols = ref.symbol_table()->size();
+  unsigned first_symb_index = m_symtab_stack.size() - n_symbols;
+
+  if (!n_symbols && should_return)
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
+
+  for (unsigned i = 0; i < n_symbols; ++i) {
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
+  }
 
   if (ref.size()) {
     for (auto start = ref.cbegin(), finish = ref.cend(); start != finish; ++start) {
@@ -112,7 +118,9 @@ void codegen_visitor::generate(ast::statement_block &ref) {
       const auto is_raw_expression =
           std::find(ast_expression_types.begin(), ast_expression_types.end(), node_type) != ast_expression_types.end();
       bool is_assignment = (node_type == frontend::ast::ast_node_type::E_ASSIGNMENT_STATEMENT);
-      bool pop_unused_result = ((start != last) || !should_return) && is_raw_expression;
+      bool is_last_iteration = start == last;
+      bool result_used = is_raw_expression && (is_last_iteration || is_assignment) && should_return;
+      bool pop_unused_result = (!is_last_iteration || !should_return) && is_raw_expression;
 
       if (is_assignment && pop_unused_result) {
         set_currently_statement();
@@ -133,7 +141,12 @@ void codegen_visitor::generate(ast::statement_block &ref) {
     }
   }
 
-  for (uint32_t i = 0; i < ref.symbol_table()->size(); ++i) {
+  if (should_return) {
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::mov_local_rel_desc, first_symb_index});
+    n_symbols = n_symbols ? n_symbols - 1 : n_symbols;
+  }
+
+  for (uint32_t i = 0; i < n_symbols; ++i) {
     // Incorrect. If Statement block returns some value we should put it in the right place before pops. Otherwise
     // it will be lost.
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});

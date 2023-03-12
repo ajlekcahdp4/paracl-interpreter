@@ -1,5 +1,5 @@
 a = 5;
 
 print (a * 2);
-a = { b = 5; c = {3 * b;}; c;};
+a = { b = a; c = {3 * b;}; c;};
 print a;
