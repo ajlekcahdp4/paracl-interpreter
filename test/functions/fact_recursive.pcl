@@ -6,5 +6,5 @@ fact = func (x) : factorial {
   return b;
 }
 
-a = fact(5);
+a = fact(2);
 print a;

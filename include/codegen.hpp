@@ -69,7 +69,6 @@ private:
   const frontend::functions_analytics *m_functions;
   frontend::symtab_stack m_symtab_stack;
   builder_type m_builder;
-  std::vector<unsigned> m_scopes_depths;
   bool m_is_currently_statement = false;
 
 private:

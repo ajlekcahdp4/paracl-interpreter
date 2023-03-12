@@ -12,7 +12,7 @@ func (a): buz {
 }
 
 func (): biz {
-  a = foo() + bar();
+  return a = foo() + bar();
 }
 
 a = 5;

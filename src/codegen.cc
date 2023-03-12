@@ -91,7 +91,6 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
 }
 
 void codegen_visitor::generate(ast::statement_block &ref) {
-  m_scopes_depths.push_back(m_symtab_stack.depth());
   m_symtab_stack.begin_scope(ref.symbol_table());
 
   for (unsigned i = 0; i < ref.symbol_table()->size(); ++i) {
@@ -183,7 +182,6 @@ void codegen_visitor::generate(ast::if_statement &ref) {
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
 
-  m_scopes_depths.push_back(m_symtab_stack.depth());
   if (!ref.else_block()) {
     visit_if_no_else(ref);
   } else {
@@ -210,7 +208,6 @@ void codegen_visitor::generate(ast::while_statement &ref) {
 
   auto index_jmp_to_after_loop = m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
   set_currently_statement();
-  m_scopes_depths.push_back(m_symtab_stack.depth());
   apply(ref.block());
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_desc, while_location_start});
 
@@ -276,12 +273,12 @@ void codegen_visitor::generate(ast::function_call &ref) {
   } else {
     int32_t total_depth = m_symtab_stack.size() + 2 + (is_return ? 1 : 0);
     int32_t index = m_symtab_stack.lookup_location(std::string{ref.name()});
-    int32_t rel_pos = index - total_depth - n_args;
+    int32_t rel_pos = index - total_depth;
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_local_rel_desc, rel_pos});
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_dynamic_desc});
   }
 
-  m_return_address_constants[ret_addr_index].m_address = m_builder.current_loc();
+  m_return_address_constants.at(ret_addr_index).m_address = m_builder.current_loc();
 }
 
 void codegen_visitor::generate(frontend::ast::return_statement &ref) {
@@ -297,12 +294,6 @@ void codegen_visitor::generate(frontend::ast::return_statement &ref) {
   }
 
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-
-  auto &&prev_depth = m_scopes_depths.back();
-  m_scopes_depths.pop_back();
-  while (m_symtab_stack.depth() > prev_depth) {
-    m_symtab_stack.end_scope();
-  }
 }
 
 void codegen_visitor::generate(frontend::ast::function_definition_to_ptr_conv &ref) {
@@ -314,7 +305,6 @@ void codegen_visitor::generate(frontend::ast::function_definition_to_ptr_conv &r
 uint32_t codegen_visitor::generate(frontend::ast::function_definition &ref) {
   m_curr_function = &ref;
 
-  m_scopes_depths.push_back(m_symtab_stack.depth());
   m_symtab_stack.begin_scope(ref.param_symtab());
 
   const auto function_pos = m_builder.current_loc();

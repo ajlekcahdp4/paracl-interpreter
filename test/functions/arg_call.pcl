@@ -3,7 +3,7 @@ a = func (): foo {
 }
 
 func (int func ()b): bar {
-  b();
+  return b(); //does not work without explicit 'return'
 }
 
 print bar(a);
