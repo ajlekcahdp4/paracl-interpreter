@@ -58,23 +58,21 @@ public:
   auto size() const { return m_table.size(); }
 };
 
-class symtab_stack final {
-private:
-  std::vector<symtab *> m_stack;
+class symtab_stack final : private std::vector<symtab *> {
 
 public:
-  void begin_scope(symtab *stab) { m_stack.push_back(stab); }
-  void end_scope() { m_stack.pop_back(); }
+  void begin_scope(symtab *stab) { vector::push_back(stab); }
+  void end_scope() { vector::pop_back(); }
 
   uint32_t size() const {
-    return std::accumulate(m_stack.cbegin(), m_stack.cend(), 0, [](auto a, auto &&stab) { return a + stab->size(); });
+    return std::accumulate(vector::cbegin(), vector::cend(), 0, [](auto a, auto &&stab) { return a + stab->size(); });
   }
 
-  uint32_t depth() const { return m_stack.size(); }
+  uint32_t depth() const { return vector::size(); }
 
   uint32_t lookup_location(std::string_view name) const {
     uint32_t location = 0;
-    auto found = std::find_if(m_stack.cbegin(), m_stack.cend(), [&name, &location](auto &stab) {
+    auto found = std::find_if(vector::cbegin(), vector::cend(), [&name, &location](auto &stab) {
       auto loc = stab->location(name);
       if (loc.has_value()) {
         location += loc.value();
@@ -84,7 +82,7 @@ public:
       return false;
     });
 
-    if (found == m_stack.cend()) {
+    if (found == vector::cend()) {
       throw std::logic_error{"Trying to look up scope of a variable not present in symbol table"};
     }
 
@@ -92,21 +90,21 @@ public:
   }
 
   uint32_t lookup_scope(std::string_view name) const {
-    auto found = std::find_if(m_stack.crbegin(), m_stack.crend(), [&name](auto &stab) { return stab->declared(name); });
-    if (found == m_stack.crend()) {
+    auto found = std::find_if(vector::crbegin(), vector::crend(), [&name](auto &stab) { return stab->declared(name); });
+    if (found == vector::crend()) {
       throw std::logic_error{"Trying to look up scope of a variable not present in symbol table"};
     }
-    return std::distance(m_stack.crbegin(), found);
+    return std::distance(vector::crbegin(), found);
   }
 
   std::optional<symtab::attributes> lookup_symbol(std::string_view name) const {
-    auto found = std::find_if(m_stack.crbegin(), m_stack.crend(), [&name](auto &stab) { return stab->declared(name); });
-    if (found == m_stack.crend()) return std::nullopt;
+    auto found = std::find_if(vector::crbegin(), vector::crend(), [&name](auto &stab) { return stab->declared(name); });
+    if (found == vector::crend()) return std::nullopt;
     return (*found)->get_attributes(name);
   }
 
   bool declared(std::string_view name) const { return (lookup_symbol(name) ? true : false); }
-  void declare(std::string_view name, ast::variable_expression *def) { m_stack.back()->declare(name, def); }
+  void declare(std::string_view name, ast::variable_expression *def) { vector::back()->declare(name, def); }
 };
 
 } // namespace paracl::frontend

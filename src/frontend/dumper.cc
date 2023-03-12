@@ -153,7 +153,7 @@ void ast_dumper::dump_node(const print_statement &ref) {
 }
 
 void ast_dumper::dump_node(const statement_block &ref) {
-  print_declare_node(ref, "<statement_block>");
+  print_declare_node(ref, fmt::format("<statement_block>\n<type>: {}", ref.type_str()));
 
   for (const auto &v : ref) {
     print_bind_node(ref, *v);

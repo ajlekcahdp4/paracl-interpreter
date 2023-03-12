@@ -1,10 +1,5 @@
 a = 5;
-a * a; // Expression without side effects
-
-while (a != 5) {
-  // Do nothing
-}
 
 print (a * 2);
-a = { b = 5; c = {b;}};
+a = { b = 5; c = {3 * b;}; c;};
 print a;

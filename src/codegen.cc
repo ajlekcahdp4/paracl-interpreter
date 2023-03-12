@@ -134,6 +134,8 @@ void codegen_visitor::generate(ast::statement_block &ref) {
   }
 
   for (uint32_t i = 0; i < ref.symbol_table()->size(); ++i) {
+    // Incorrect. If Statement block returns some value we should put it in the right place before pops. Otherwise
+    // it will be lost.
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
   }
 
@@ -265,7 +267,7 @@ void codegen_visitor::generate(ast::function_call &ref) {
     assert(e);
     apply(*e);
   }
-  m_builder.emit_operation(encoded_instruction{vm_instruction_set::call_desc, n_args});
+  m_builder.emit_operation(encoded_instruction{vm_instruction_set::update_sp_desc, n_args});
 
   if (ref.m_def) {
     uint32_t relocate_index = m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_desc});

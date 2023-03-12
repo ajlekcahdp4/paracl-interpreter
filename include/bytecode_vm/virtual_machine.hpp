@@ -222,14 +222,14 @@ constexpr auto setup_call_instr = setup_call_desc >> [](auto &&ctx, auto &&attr)
   ctx.set_sp(ctx.stack_size());
 };
 
-constexpr decl_vm::instruction_desc<E_PUSH_SP> push_sp_desc = "push_sp";
+constexpr decl_vm::instruction_desc<E_PUSH_SP_NULLARY> push_sp_desc = "push_sp";
 constexpr auto push_sp_instr = push_sp_desc >> [](auto &&ctx, auto &&attr) {
   auto cur_sp = ctx.sp();
   ctx.push(cur_sp);
 };
 
-constexpr decl_vm::instruction_desc<E_CALL_UNARY, uint32_t> call_desc = "call";
-constexpr auto call_instr = call_desc >> [](auto &&ctx, auto &&attr) {
+constexpr decl_vm::instruction_desc<E_UPDATE_SP_UNARY, uint32_t> update_sp_desc = "update_sp";
+constexpr auto update_sp_instr = update_sp_desc >> [](auto &&ctx, auto &&attr) {
   auto new_sp = ctx.stack_size() - std::get<0>(attr);
   ctx.set_sp(new_sp);
 };
@@ -239,7 +239,7 @@ static const auto paracl_isa = decl_vm::instruction_set_description(
     or_instr, cmp_eq_instr, cmp_ne_instr, cmp_gt_instr, cmp_ls_instr, cmp_ge_instr, cmp_le_instr, print_instr,
     push_read, mov_local_instr, mov_local_rel_instr, push_local_instr, push_local_rel_instr, jmp_instr, jmp_true_instr,
     jmp_false_instr, not_instr, setup_call_instr, jmp_dynamic_instr, jmp_dynamic_rel_instr,
-    push_local_dynamic_rel_instr, push_sp_instr, call_instr
+    push_local_dynamic_rel_instr, push_sp_instr, update_sp_instr
 );
 
 } // namespace paracl::bytecode_vm::instruction_set
