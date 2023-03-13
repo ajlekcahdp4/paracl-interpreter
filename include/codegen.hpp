@@ -69,6 +69,10 @@ private:
   const frontend::functions_analytics *m_functions;
   frontend::symtab_stack m_symtab_stack;
   builder_type m_builder;
+
+  unsigned m_current_block_depth = 0;
+  unsigned m_current_block_rank = 0;
+
   bool m_is_currently_statement = false;
 
 private:

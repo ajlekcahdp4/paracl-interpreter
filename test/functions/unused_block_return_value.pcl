@@ -1,0 +1,5 @@
+a = { 
+  {1;}; // here 1 is ignored
+  2;  
+};
+print a;

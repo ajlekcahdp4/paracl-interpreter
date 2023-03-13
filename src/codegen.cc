@@ -95,12 +95,20 @@ void codegen_visitor::generate(ast::statement_block &ref) {
 
   auto int_type = frontend::types::type_builtin{frontend::types::builtin_type_class::E_BUILTIN_INT};
   bool should_return = ref.m_type.get() && int_type.is_equal(*ref.m_type);
+  unsigned prev_rank = 0, return_index = 0;
+  auto n_symbols = ref.symbol_table()->size();
 
-  auto &&n_symbols = ref.symbol_table()->size();
-  unsigned first_symb_index = m_symtab_stack.size() - n_symbols;
+  if (should_return) {
+    prev_rank = m_current_block_rank;
+    ++m_current_block_depth;
 
-  if (!n_symbols && should_return)
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
+    auto first_symbol_location_on_stack = m_symtab_stack.size() - n_symbols;
+    return_index = first_symbol_location_on_stack + m_current_block_depth + m_current_block_rank - 1;
+
+    if (!n_symbols) // Reserve place on the stack for return value if symtab is empty. Otherwise store return in the
+                    // first symbol's value.
+      m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
+  }
 
   for (unsigned i = 0; i < n_symbols; ++i) {
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
@@ -119,7 +127,6 @@ void codegen_visitor::generate(ast::statement_block &ref) {
           std::find(ast_expression_types.begin(), ast_expression_types.end(), node_type) != ast_expression_types.end();
       bool is_assignment = (node_type == frontend::ast::ast_node_type::E_ASSIGNMENT_STATEMENT);
       bool is_last_iteration = start == last;
-      bool result_used = is_raw_expression && (is_last_iteration || is_assignment) && should_return;
       bool pop_unused_result = (!is_last_iteration || !should_return) && is_raw_expression;
 
       if (is_assignment && pop_unused_result) {
@@ -142,13 +149,14 @@ void codegen_visitor::generate(ast::statement_block &ref) {
   }
 
   if (should_return) {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::mov_local_rel_desc, first_symb_index});
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::mov_local_rel_desc, return_index});
+    // Decrease number of 'pop' instructions so as not to lose return value.
     n_symbols = n_symbols ? n_symbols - 1 : n_symbols;
+    --m_current_block_depth;
+    m_current_block_rank = prev_rank + 1;
   }
 
   for (uint32_t i = 0; i < n_symbols; ++i) {
-    // Incorrect. If Statement block returns some value we should put it in the right place before pops. Otherwise
-    // it will be lost.
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
   }
 
