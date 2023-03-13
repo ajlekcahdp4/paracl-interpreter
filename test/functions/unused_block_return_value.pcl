@@ -1,5 +1,6 @@
 a = { 
-  {1;}; // here 1 is ignored
+  {a = 1;}; // here 1 is ignored
+  b = 3;
   2;  
 };
 print a;

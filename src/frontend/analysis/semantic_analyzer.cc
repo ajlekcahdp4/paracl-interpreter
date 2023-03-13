@@ -94,10 +94,14 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
 
   bool is_rvalue = (current_state == semantic_analysis_state::E_RVALUE);
   // Save state, because it will get mangled by subsequent apply calls.
+  auto size = ref.size();
+  unsigned i = 0;
   for (auto &&statement : ref) {
     assert(statement);
-    current_state = semantic_analysis_state::E_LVALUE;
+    if (i == size - 1) set_state(semantic_analysis_state::E_RVALUE);
+    else set_state(semantic_analysis_state::E_LVALUE);
     apply(*statement);
+    ++i;
   }
 
   if (is_rvalue) {

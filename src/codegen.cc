@@ -91,24 +91,19 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
 }
 
 void codegen_visitor::generate(ast::statement_block &ref) {
-  m_symtab_stack.begin_scope(ref.symbol_table());
-
-  auto int_type = frontend::types::type_builtin{frontend::types::builtin_type_class::E_BUILTIN_INT};
-  bool should_return = ref.m_type.get() && int_type.is_equal(*ref.m_type);
-  unsigned prev_rank = 0, return_index = 0;
-  auto n_symbols = ref.symbol_table()->size();
+  auto void_type = frontend::types::type_builtin{frontend::types::builtin_type_class::E_BUILTIN_VOID};
+  bool should_return = ref.m_type.get() && !void_type.is_equal(*ref.m_type);
+  unsigned return_index = m_symtab_stack.size();
 
   if (should_return) {
-    prev_rank = m_current_block_rank;
-    ++m_current_block_depth;
-
-    auto first_symbol_location_on_stack = m_symtab_stack.size() - n_symbols;
-    return_index = first_symbol_location_on_stack + m_current_block_depth + m_current_block_rank - 1;
-
-    if (!n_symbols) // Reserve place on the stack for return value if symtab is empty. Otherwise store return in the
-                    // first symbol's value.
-      m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
+    m_symtab_stack.declare(std::to_string(m_return_n++) + "_ret", nullptr);
+    // Reserve place on the stack for return value if symtab is empty
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
+
+  m_symtab_stack.begin_scope(ref.symbol_table());
+
+  auto n_symbols = ref.symbol_table()->size();
 
   for (unsigned i = 0; i < n_symbols; ++i) {
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
@@ -126,6 +121,7 @@ void codegen_visitor::generate(ast::statement_block &ref) {
       const auto is_raw_expression =
           std::find(ast_expression_types.begin(), ast_expression_types.end(), node_type) != ast_expression_types.end();
       bool is_assignment = (node_type == frontend::ast::ast_node_type::E_ASSIGNMENT_STATEMENT);
+      bool is_statement_block = (node_type == frontend::ast::ast_node_type::E_STATEMENT_BLOCK);
       bool is_last_iteration = start == last;
       bool pop_unused_result = (!is_last_iteration || !should_return) && is_raw_expression;
 
@@ -139,7 +135,7 @@ void codegen_visitor::generate(ast::statement_block &ref) {
         apply(*statement);
       }
 
-      if (!is_assignment && pop_unused_result) {
+      if (!is_assignment && !is_statement_block && pop_unused_result) {
         if (!(node_type == frontend::ast::ast_node_type::E_FUNCTION_CALL &&
               static_cast<frontend::ast::function_call &>(*statement).m_type->is_equal(*m_types->m_void))) {
           m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
@@ -150,10 +146,6 @@ void codegen_visitor::generate(ast::statement_block &ref) {
 
   if (should_return) {
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::mov_local_rel_desc, return_index});
-    // Decrease number of 'pop' instructions so as not to lose return value.
-    n_symbols = n_symbols ? n_symbols - 1 : n_symbols;
-    --m_current_block_depth;
-    m_current_block_rank = prev_rank + 1;
   }
 
   for (uint32_t i = 0; i < n_symbols; ++i) {
