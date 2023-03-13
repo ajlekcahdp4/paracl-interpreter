@@ -96,8 +96,10 @@ void codegen_visitor::generate(ast::statement_block &ref) {
   unsigned return_index = m_symtab_stack.size();
 
   if (should_return) {
+    // Dummy name to be aligned w/ execution stack.
+    // User can't specify that name cause it starts with a digit.
     m_symtab_stack.declare(std::to_string(m_return_n++) + "_ret", nullptr);
-    // Reserve place on the stack for return value if symtab is empty
+    // Reserve place on the stack for the return value.
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
 
@@ -131,8 +133,16 @@ void codegen_visitor::generate(ast::statement_block &ref) {
         reset_currently_statement();
       }
 
+      auto old_return_count = m_return_values_on_stack;
+      frontend::symtab return_val_symtab;
+      m_symtab_stack.begin_scope(&return_val_symtab);
       if (node_type != ast::ast_node_type::E_FUNCTION_DEFINITION) {
         apply(*statement);
+      }
+      m_symtab_stack.end_scope();
+
+      for (; m_return_values_on_stack > old_return_count; --m_return_values_on_stack) {
+        m_symtab_stack.end_scope();
       }
 
       if (!is_assignment && !is_statement_block && pop_unused_result) {
