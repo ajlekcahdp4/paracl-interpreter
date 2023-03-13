@@ -93,15 +93,6 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
 void codegen_visitor::generate(ast::statement_block &ref) {
   auto void_type = frontend::types::type_builtin{frontend::types::builtin_type_class::E_BUILTIN_VOID};
   bool should_return = ref.m_type.get() && !void_type.is_equal(*ref.m_type);
-  unsigned return_index = m_symtab_stack.size();
-
-  if (should_return) {
-    // Dummy name to be aligned w/ execution stack.
-    // User can't specify that name cause it starts with a digit.
-    m_symtab_stack.declare(std::to_string(m_return_n++) + "_ret", nullptr);
-    // Reserve place on the stack for the return value.
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
-  }
 
   m_symtab_stack.begin_scope(ref.symbol_table());
 
@@ -133,16 +124,8 @@ void codegen_visitor::generate(ast::statement_block &ref) {
         reset_currently_statement();
       }
 
-      auto old_return_count = m_return_values_on_stack;
-      frontend::symtab return_val_symtab;
-      m_symtab_stack.begin_scope(&return_val_symtab);
       if (node_type != ast::ast_node_type::E_FUNCTION_DEFINITION) {
         apply(*statement);
-      }
-      m_symtab_stack.end_scope();
-
-      for (; m_return_values_on_stack > old_return_count; --m_return_values_on_stack) {
-        m_symtab_stack.end_scope();
       }
 
       if (!is_assignment && !is_statement_block && pop_unused_result) {
@@ -155,11 +138,15 @@ void codegen_visitor::generate(ast::statement_block &ref) {
   }
 
   if (should_return) {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::mov_local_rel_desc, return_index});
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::load_r0_desc});
   }
 
   for (uint32_t i = 0; i < n_symbols; ++i) {
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
+  }
+
+  if (should_return) {
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::store_r0_desc});
   }
 
   m_symtab_stack.end_scope();

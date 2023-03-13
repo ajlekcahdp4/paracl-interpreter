@@ -70,9 +70,6 @@ private:
   frontend::symtab_stack m_symtab_stack;
   builder_type m_builder;
 
-  unsigned m_return_n = 0;
-  unsigned m_return_values_on_stack = 0;
-
   bool m_is_currently_statement = false;
 
 private:

@@ -234,12 +234,21 @@ constexpr auto update_sp_instr = update_sp_desc >> [](auto &&ctx, auto &&attr) {
   ctx.set_sp(new_sp);
 };
 
+constexpr decl_vm::instruction_desc<E_LOAD_R0_NULLARY> load_r0_desc = "load_r0";
+constexpr auto load_r0_instr = load_r0_desc >> [](auto &&ctx, auto &&attr) {
+  auto val = ctx.pop();
+  ctx.set_r0(val);
+};
+
+constexpr decl_vm::instruction_desc<E_STORE_R0_NULLARY> store_r0_desc = "store_r0";
+constexpr auto store_r0_instr = store_r0_desc >> [](auto &&ctx, auto &&attr) { ctx.push(ctx.r0()); };
+
 static const auto paracl_isa = decl_vm::instruction_set_description(
     push_const_instr, return_instr, pop_instr, add_instr, sub_instr, mul_instr, div_instr, mod_instr, and_instr,
     or_instr, cmp_eq_instr, cmp_ne_instr, cmp_gt_instr, cmp_ls_instr, cmp_ge_instr, cmp_le_instr, print_instr,
     push_read, mov_local_instr, mov_local_rel_instr, push_local_instr, push_local_rel_instr, jmp_instr, jmp_true_instr,
     jmp_false_instr, not_instr, setup_call_instr, jmp_dynamic_instr, jmp_dynamic_rel_instr,
-    push_local_dynamic_rel_instr, push_sp_instr, update_sp_instr
+    push_local_dynamic_rel_instr, push_sp_instr, update_sp_instr, load_r0_instr, store_r0_instr
 );
 
 } // namespace paracl::bytecode_vm::instruction_set
