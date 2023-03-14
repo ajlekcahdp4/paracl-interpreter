@@ -80,7 +80,7 @@ private:
 
   void begin_function_scope(ast::function_definition &ref);
 
-  template <typename F> void check_return_types_matches(ast::function_definition &ref, F get_return_type);
+  void check_return_types_matches(ast::statement_block &ref);
 
   using to_visit = ast::tuple_all_nodes;
 

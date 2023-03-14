@@ -89,6 +89,28 @@ void semantic_analyzer::analyze_node(ast::print_statement &ref) {
 
 using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
 
+void semantic_analyzer::check_return_types_matches(ast::statement_block &ref) {
+  auto first_type = m_return_statements.front()->get_type();
+  auto ret_type = ref.get_type();
+  bool valid = true;
+
+  for (const auto &ret : m_return_statements) {
+    if (ret_type) // If return type is set
+      if (ret->get_type()->is_equal(*ret_type)) continue;
+    if (ret->get_type()->is_equal(*first_type)) continue;
+
+    error_report error = {
+        {fmt::format("Return type deduction failed, found mismatch"), ret->loc()}
+    };
+
+    report_error(error);
+    valid = false;
+    break;
+  }
+
+  if (valid) ref.set_type(first_type);
+}
+
 void semantic_analyzer::analyze_node(ast::statement_block &ref) {
   m_scopes.begin_scope(ref.symbol_table());
 
@@ -96,26 +118,22 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
   // Save state, because it will get mangled by subsequent apply calls.
   auto size = ref.size();
   unsigned i = 0;
+  m_return_statements.clear();
   for (auto &&statement : ref) {
     assert(statement);
+    apply(*statement);
     if (i == size - 1) set_state(semantic_analysis_state::E_RVALUE);
     else set_state(semantic_analysis_state::E_LVALUE);
-    apply(*statement);
     ++i;
   }
 
-  if (is_rvalue) {
-    auto type = ezvis::visit_tuple<types::shared_type, expressions_and_base>(
-        paracl::utils::visitors{
-            [](ast::i_expression &expr) { return expr.get_type(); },
-            [&](ast::i_ast_node &) { return m_types->m_void; }},
-        *ref.back()
-    );
-    ref.set_type(type);
-  } else {
-    ref.set_type(m_types->m_void);
+  if (!m_return_statements.empty()) {
+    check_return_types_matches(ref);
   }
 
+  if (!is_rvalue && !ref.is_type_set()) ref.set_type(m_types->m_void);
+
+  m_return_statements.clear();
   m_scopes.end_scope();
 }
 
@@ -187,31 +205,6 @@ void semantic_analyzer::begin_function_scope(ast::function_definition &ref) {
   m_scopes.begin_scope(param_symtab);
 }
 
-template <typename F>
-void semantic_analyzer::check_return_types_matches(ast::function_definition &ref, F get_return_type) {
-  auto &&first_type = get_return_type(*m_return_statements.front());
-  auto &func_ret_type = ref.m_type->m_return_type;
-  bool valid = true;
-
-  for (const auto &ret : m_return_statements) {
-    if (func_ret_type) { // If return type is set
-      if (get_return_type(*ret)->is_equal(*first_type) && get_return_type(*ret)->is_equal(*func_ret_type)) continue;
-    } else {
-      if (get_return_type(*ret)->is_equal(*first_type)) continue;
-    }
-
-    error_report error = {
-        {fmt::format("Return type deduction failed, found mismatch"), ref.loc()}
-    };
-
-    report_error(error);
-    valid = false;
-    break;
-  }
-
-  if (valid) ref.m_type->m_return_type = first_type;
-}
-
 using expressions_and_return =
     utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node, ast::return_statement>;
 
@@ -237,38 +230,11 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
 
   // The only other possibility for the reference is statement block.
   auto &&st_block = static_cast<ast::statement_block &>(body);
-  m_scopes.begin_scope(st_block.symbol_table());
 
-  const auto get_return_statement_type = [&](ast::return_statement &ref) {
-    return ref.empty() || !ref.expr().is_type_set() ? m_types->m_void : ref.expr().get_type();
-  };
-
-  m_return_statements.clear();
-  for (auto start = st_block.begin(), finish = st_block.end(); start != finish; ++start) {
-    auto last = std::prev(finish);
-    bool is_last = (start == last);
-    auto &&st = *start;
-
-    current_state = semantic_analysis_state::E_LVALUE;
-    assert(st && "Encountered nullptr in a statement block");
-    apply(*st);
-
-    if (is_last && m_return_statements.empty()) {
-      auto type = ezvis::visit_tuple<types::shared_type, expressions_and_return>(
-          paracl::utils::visitors{
-              [](ast::i_expression &expr) { return expr.get_type(); }, get_return_statement_type,
-              [&](ast::i_ast_node &) { return m_types->m_void; }},
-          *st
-      );
-      ref.m_type->m_return_type = type;
-    }
-  }
-
-  if (!m_return_statements.empty()) {
-    check_return_types_matches(ref, get_return_statement_type);
-  }
-
-  m_scopes.end_scope();
+  // "The only difference between function and statement blocks in paraCL
+  // is that we can call functions several times"
+  apply(st_block);
+  ref.m_type->m_return_type = st_block.get_type();
   m_scopes.end_scope();
 
   m_in_function_body = false; // Exit
@@ -350,6 +316,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
 void semantic_analyzer::analyze_node(ast::return_statement &ref) {
   if (!ref.empty()) apply(ref.expr());
   m_return_statements.push_back(&ref);
+  ref.set_type(ref.expr().get_type());
 }
 
 } // namespace paracl::frontend

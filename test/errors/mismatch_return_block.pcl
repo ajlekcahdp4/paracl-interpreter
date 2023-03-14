@@ -4,7 +4,8 @@ a = {
     d = 2;
     return c + d; 
   }
-  return func () {return 1;}
+  foo = func () {return 1;}
+  return foo;
   return b;
 }
 print a;
