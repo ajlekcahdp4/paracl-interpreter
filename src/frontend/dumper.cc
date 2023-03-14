@@ -197,7 +197,7 @@ void ast_dumper::dump_node(const function_definition &ref) {
 }
 
 void ast_dumper::dump_node(const return_statement &ref) {
-  print_declare_node(ref, "<return statement>");
+  print_declare_node(ref, fmt::format("<return statement>\n<type>: {}", ref.type_str()));
   print_bind_node(ref, ref.expr(), "<expression>");
   add_next(ref.expr());
 }
