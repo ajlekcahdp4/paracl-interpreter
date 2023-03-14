@@ -122,8 +122,16 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
   for (auto &&statement : ref) {
     assert(statement);
     apply(*statement);
-    if (i == size - 1) set_state(semantic_analysis_state::E_RVALUE);
-    else set_state(semantic_analysis_state::E_LVALUE);
+    if (i == size - 1) {
+      set_state(semantic_analysis_state::E_RVALUE);
+      auto type = ezvis::visit_tuple<types::shared_type, expressions_and_base>(
+          paracl::utils::visitors{
+              [](ast::i_expression &expr) { return expr.get_type(); },
+              [&](ast::i_ast_node &) { return m_types->m_void; }},
+          *statement
+      );
+      ref.set_type(type);
+    } else set_state(semantic_analysis_state::E_LVALUE);
     ++i;
   }
 

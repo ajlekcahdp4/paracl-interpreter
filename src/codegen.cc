@@ -338,9 +338,7 @@ void codegen_visitor::generate(frontend::ast::return_statement &ref) {
     --m_current_frame_size;
   }
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-  if (m_current_frame_size > 0) {
-    --m_current_frame_size;
-  }
+  --m_current_frame_size;
 }
 
 void codegen_visitor::generate(frontend::ast::function_definition_to_ptr_conv &ref) {
@@ -368,10 +366,7 @@ uint32_t codegen_visitor::generate(frontend::ast::function_definition &ref) {
   }
 
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-  if (m_current_frame_size > 0) {
-    assert(m_current_frame_size >= 2);
-    m_current_frame_size -= 2;
-  }
+  --m_current_frame_size;
 
   m_symtab_stack.end_scope();
 
@@ -406,10 +401,7 @@ void codegen_visitor::generate_all(
 
   apply(*ast.get_root_ptr()); // Last instruction is ret
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-  if (m_current_frame_size > 0) {
-    assert(m_current_frame_size >= 2);
-    m_current_frame_size -= 2;
-  }
+  --m_current_frame_size;
 
   for (auto &func : functions.m_anonymous) {
     generate(*func);
