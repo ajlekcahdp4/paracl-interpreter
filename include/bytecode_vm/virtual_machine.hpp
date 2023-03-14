@@ -161,13 +161,6 @@ constexpr auto mov_local_rel_instr = mov_local_rel_desc >> [](auto &&ctx, auto &
   ctx.at_stack(std::get<0>(attr) + ctx.sp()) = val;
 };
 
-constexpr decl_vm::instruction_desc<E_MOV_LOCAL_REL_TOP_UNARY, int32_t> mov_local_rel_top_desc = "mov_local_rel_top";
-constexpr auto mov_local_rel_top_instr = mov_local_rel_top_desc >> [](auto &&ctx, auto &&attr) {
-  auto size = ctx.stack_size();
-  auto val = ctx.pop();
-  ctx.at_stack(size + std::get<0>(attr)) = val;
-};
-
 constexpr decl_vm::instruction_desc<E_PUSH_LOCAL_UNARY, uint32_t> push_local_desc = "push_local";
 constexpr auto push_local_instr = push_local_desc >> [](auto &&ctx, auto &&attr) {
   auto val = ctx.at_stack(std::get<0>(attr));
@@ -179,12 +172,6 @@ constexpr decl_vm::instruction_desc<E_PUSH_LOCAL_DYNAMIC_REL_NULLARY> push_local
 constexpr auto push_local_dynamic_rel_instr = push_local_desc >> [](auto &&ctx, auto &&attr) {
   auto first = ctx.pop();
   auto val = ctx.at_stack(first);
-  ctx.push(val);
-};
-
-constexpr decl_vm::instruction_desc<E_PUSH_LOCAL_REL_TOP_UNARY, int32_t> push_local_rel_top_desc = "push_local_rel_top";
-constexpr auto push_local_rel_top_instr = push_local_rel_top_desc >> [](auto &&ctx, auto &&attr) {
-  auto val = ctx.at_stack(ctx.stack_size() + std::get<0>(attr));
   ctx.push(val);
 };
 
@@ -258,8 +245,7 @@ static const auto paracl_isa = decl_vm::instruction_set_description(
     or_instr, cmp_eq_instr, cmp_ne_instr, cmp_gt_instr, cmp_ls_instr, cmp_ge_instr, cmp_le_instr, print_instr,
     push_read, mov_local_instr, mov_local_rel_instr, push_local_instr, push_local_rel_instr, jmp_instr, jmp_true_instr,
     jmp_false_instr, not_instr, setup_call_instr, jmp_dynamic_instr, jmp_dynamic_rel_instr,
-    push_local_dynamic_rel_instr, push_sp_instr, update_sp_instr, load_r0_instr, store_r0_instr,
-    mov_local_rel_top_instr, push_local_rel_top_instr
+    push_local_dynamic_rel_instr, push_sp_instr, update_sp_instr, load_r0_instr, store_r0_instr
 );
 
 } // namespace paracl::bytecode_vm::instruction_set

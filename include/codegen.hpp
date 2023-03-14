@@ -32,6 +32,67 @@
 
 namespace paracl::codegen {
 
+class codegen_stack_frame {
+private:
+  struct stack_block {
+    unsigned m_top = 0;
+    std::unordered_map<std::string, unsigned> m_map;
+  };
+
+  std::vector<stack_block> m_blocks;
+
+public:
+  void begin_scope() {
+    auto block = stack_block{size()};
+    m_blocks.push_back(block);
+  }
+
+  void begin_scope(frontend::symtab *stab) {
+    assert(stab);
+    begin_scope();
+
+    for (const auto &v : *stab) {
+      push_var(v.first);
+    }
+  }
+
+  void end_scope() {
+    assert(m_blocks.size() && "Ending nonexistent scope");
+    m_blocks.pop_back();
+  }
+
+  void push_var(const std::string &name) {
+    auto &back = m_blocks.back();
+    auto res = back.m_map.insert({name, back.m_top++});
+    assert(res.second && "Reinserting var with the same label");
+  }
+
+  void pop_dummy() { m_blocks.back().m_top--; }
+
+  unsigned lookup_location(const std::string &name) const {
+    unsigned loc = 0;
+
+    auto found = std::find_if(m_blocks.crbegin(), m_blocks.crend(), [&name, &loc](auto &block) {
+      auto it = block.m_map.find(name);
+      if (it == block.m_map.end()) return false;
+      loc = it->second;
+      return true;
+    });
+
+    assert(found != m_blocks.crend());
+    return loc;
+  }
+
+  void push_dummy() { ++m_blocks.back().m_top; }
+
+  unsigned size() const {
+    if (m_blocks.empty()) return 0;
+    return m_blocks.back().m_top;
+  }
+
+  void clear() { m_blocks.clear(); }
+};
+
 class codegen_visitor final : public ezvis::visitor_base<frontend::ast::i_ast_node, codegen_visitor, void> {
   using builder_type = bytecode_vm::builder::bytecode_builder<decltype(bytecode_vm::instruction_set::paracl_isa)>;
 
@@ -64,14 +125,11 @@ private:
   std::vector<reloc_info> m_relocations_function_calls;
   std::vector<uint32_t> m_exit_relocations;
 
+private:
   std::unordered_map<frontend::ast::function_definition *, uint32_t> m_function_defs;
-
   const frontend::functions_analytics *m_functions;
-  frontend::symtab_stack m_symtab_stack;
+  codegen_stack_frame m_symtab_stack;
   builder_type m_builder;
-
-  unsigned m_current_frame_size = 0;
-
   bool m_is_currently_statement = false;
 
 private:
@@ -88,6 +146,25 @@ private:
     return m_constant_map.size() + m_return_address_constants.size() + m_dynamic_jumps_constants.size();
   }
 
+private:
+  void emit_pop();
+
+  auto emit_with_increment(auto &&desc) {
+    increment_stack();
+    return m_builder.emit_operation(desc);
+  }
+
+  auto emit_with_decrement(auto &&desc) {
+    decrement_stack();
+    return m_builder.emit_operation(desc);
+  }
+
+  // clang-format off
+  void increment_stack() { m_symtab_stack.push_dummy(); }
+  void decrement_stack() { assert(m_symtab_stack.size() > 0); m_symtab_stack.pop_dummy(); }
+  // clang-format on
+
+private:
   using to_visit = std::tuple<
       frontend::ast::assignment_statement, frontend::ast::binary_expression, frontend::ast::constant_expression,
       frontend::ast::if_statement, frontend::ast::print_statement, frontend::ast::read_expression,
@@ -120,7 +197,6 @@ public:
   EZVIS_VISIT_INVOKER(generate);
 
   void generate_all(const frontend::ast::ast_container &ast, const frontend::functions_analytics &functions);
-
   bytecode_vm::decl_vm::chunk to_chunk();
 };
 

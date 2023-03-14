@@ -31,6 +31,7 @@ namespace paracl::bytecode_vm::builder {
 
 template <typename t_desc> struct encoded_instruction {
   using attribute_types = typename t_desc::attribute_types;
+  using description_type = t_desc;
 
   attribute_types m_attr;
 
@@ -50,6 +51,10 @@ public:
     *iter = t_desc::get_opcode();
     encode_attributes(iter, std::make_index_sequence<std::tuple_size_v<attribute_types>>{});
   }
+
+  encoded_instruction(t_desc)
+    requires(std::tuple_size_v<attribute_types> == 0)
+  {}
 
   template <typename... Ts> encoded_instruction(t_desc, Ts &&...p_args) : m_attr{std::forward<Ts>(p_args)...} {}
 };
@@ -73,6 +78,10 @@ private:
 
 public:
   bytecode_builder() = default;
+
+  template <typename t_desc> auto emit_operation(t_desc description) {
+    emit_operation(encoded_instruction{description});
+  }
 
   template <typename t_desc> auto emit_operation(encoded_instruction<t_desc> instruction) {
     m_code.push_back(instruction_variant_type{instruction});

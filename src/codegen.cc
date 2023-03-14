@@ -25,29 +25,28 @@ namespace ast = frontend::ast;
 
 using vm_builder::encoded_instruction;
 
+void codegen_visitor::emit_pop() {
+  emit_with_decrement(vm_instruction_set::pop_desc);
+}
+
 void codegen_visitor::generate(ast::constant_expression &ref) {
   uint32_t index = lookup_or_insert_constant(ref.value());
-  m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, index});
-  ++m_current_frame_size;
+  emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, index});
 }
 
 void codegen_visitor::generate(ast::read_expression &ref) {
-  m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_read_desc});
-  ++m_current_frame_size;
+  emit_with_increment(vm_instruction_set::push_read_desc);
 }
 
 void codegen_visitor::generate(ast::variable_expression &ref) {
   auto index = m_symtab_stack.lookup_location(std::string{ref.name()});
-  m_builder.emit_operation(encoded_instruction{
-      vm_instruction_set::push_local_rel_top_desc, index - m_current_frame_size});
-  ++m_current_frame_size;
+  emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, index});
 }
 
 void codegen_visitor::generate(ast::print_statement &ref) {
   reset_currently_statement();
   apply(ref.expr());
-  m_builder.emit_operation(encoded_instruction{vm_instruction_set::print_desc});
-  --m_current_frame_size;
+  emit_with_decrement(vm_instruction_set::print_desc);
 }
 
 void codegen_visitor::generate(ast::assignment_statement &ref) {
@@ -57,23 +56,15 @@ void codegen_visitor::generate(ast::assignment_statement &ref) {
   const auto last_it = std::prev(ref.rend());
   for (auto start = ref.rbegin(), finish = last_it; start != finish; ++start) {
     const auto left_index = m_symtab_stack.lookup_location(std::string{start->name()});
-    m_builder.emit_operation(encoded_instruction{
-        vm_instruction_set::mov_local_rel_top_desc, left_index - m_current_frame_size});
-    --m_current_frame_size;
-    m_builder.emit_operation(encoded_instruction{
-        vm_instruction_set::push_local_rel_top_desc, left_index - m_current_frame_size});
-    ++m_current_frame_size;
+    emit_with_decrement(encoded_instruction{vm_instruction_set::mov_local_rel_desc, left_index});
+    emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, left_index});
   }
 
   // Last iteration:
   const auto left_index = m_symtab_stack.lookup_location(std::string{last_it->name()});
-  m_builder.emit_operation(encoded_instruction{
-      vm_instruction_set::mov_local_rel_top_desc, left_index - m_current_frame_size});
-  --m_current_frame_size;
+  emit_with_decrement(encoded_instruction{vm_instruction_set::mov_local_rel_desc, left_index});
   if (emit_push) {
-    m_builder.emit_operation(encoded_instruction{
-        vm_instruction_set::push_local_rel_top_desc, left_index - m_current_frame_size});
-    ++m_current_frame_size;
+    emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, left_index});
   }
 }
 
@@ -87,21 +78,20 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
   using bin_op = ast::binary_operation;
 
   switch (ref.op_type()) {
-  case bin_op::E_BIN_OP_ADD: m_builder.emit_operation(encoded_instruction{vm_instruction_set::add_desc}); break;
-  case bin_op::E_BIN_OP_SUB: m_builder.emit_operation(encoded_instruction{vm_instruction_set::sub_desc}); break;
-  case bin_op::E_BIN_OP_MUL: m_builder.emit_operation(encoded_instruction{vm_instruction_set::mul_desc}); break;
-  case bin_op::E_BIN_OP_DIV: m_builder.emit_operation(encoded_instruction{vm_instruction_set::div_desc}); break;
-  case bin_op::E_BIN_OP_MOD: m_builder.emit_operation(encoded_instruction{vm_instruction_set::mod_desc}); break;
-  case bin_op::E_BIN_OP_EQ: m_builder.emit_operation(encoded_instruction{vm_instruction_set::cmp_eq_desc}); break;
-  case bin_op::E_BIN_OP_NE: m_builder.emit_operation(encoded_instruction{vm_instruction_set::cmp_ne_desc}); break;
-  case bin_op::E_BIN_OP_GT: m_builder.emit_operation(encoded_instruction{vm_instruction_set::cmp_gt_desc}); break;
-  case bin_op::E_BIN_OP_LS: m_builder.emit_operation(encoded_instruction{vm_instruction_set::cmp_ls_desc}); break;
-  case bin_op::E_BIN_OP_GE: m_builder.emit_operation(encoded_instruction{vm_instruction_set::cmp_ge_desc}); break;
-  case bin_op::E_BIN_OP_LE: m_builder.emit_operation(encoded_instruction{vm_instruction_set::cmp_le_desc}); break;
-  case bin_op::E_BIN_OP_AND: m_builder.emit_operation(encoded_instruction{vm_instruction_set::and_desc}); break;
-  case bin_op::E_BIN_OP_OR: m_builder.emit_operation(encoded_instruction{vm_instruction_set::or_desc}); break;
+  case bin_op::E_BIN_OP_ADD: emit_with_decrement(vm_instruction_set::add_desc); break;
+  case bin_op::E_BIN_OP_SUB: emit_with_decrement(vm_instruction_set::sub_desc); break;
+  case bin_op::E_BIN_OP_MUL: emit_with_decrement(vm_instruction_set::mul_desc); break;
+  case bin_op::E_BIN_OP_DIV: emit_with_decrement(vm_instruction_set::div_desc); break;
+  case bin_op::E_BIN_OP_MOD: emit_with_decrement(vm_instruction_set::mod_desc); break;
+  case bin_op::E_BIN_OP_EQ: emit_with_decrement(vm_instruction_set::cmp_eq_desc); break;
+  case bin_op::E_BIN_OP_NE: emit_with_decrement(vm_instruction_set::cmp_ne_desc); break;
+  case bin_op::E_BIN_OP_GT: emit_with_decrement(vm_instruction_set::cmp_gt_desc); break;
+  case bin_op::E_BIN_OP_LS: emit_with_decrement(vm_instruction_set::cmp_ls_desc); break;
+  case bin_op::E_BIN_OP_GE: emit_with_decrement(vm_instruction_set::cmp_ge_desc); break;
+  case bin_op::E_BIN_OP_LE: emit_with_decrement(vm_instruction_set::cmp_le_desc); break;
+  case bin_op::E_BIN_OP_AND: emit_with_decrement(vm_instruction_set::and_desc); break;
+  case bin_op::E_BIN_OP_OR: emit_with_decrement(vm_instruction_set::or_desc); break;
   }
-  --m_current_frame_size; // after each of these operations stack will be 1 value smaller
 }
 
 void codegen_visitor::generate(ast::statement_block &ref) {
@@ -114,7 +104,6 @@ void codegen_visitor::generate(ast::statement_block &ref) {
 
   for (unsigned i = 0; i < n_symbols; ++i) {
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
-    ++m_current_frame_size;
   }
 
   if (ref.size()) {
@@ -146,27 +135,17 @@ void codegen_visitor::generate(ast::statement_block &ref) {
       if (!is_assignment && !is_statement_block && pop_unused_result) {
         if (!(node_type == frontend::ast::ast_node_type::E_FUNCTION_CALL &&
               static_cast<frontend::ast::function_call &>(*statement).m_type->is_equal(*m_types->m_void))) {
-          m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
-          --m_current_frame_size;
+          emit_pop();
         }
       }
     }
   }
 
-  if (should_return) {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::load_r0_desc});
-    --m_current_frame_size;
-  }
-
+  // if (should_return) emit_with_decrement(vm_instruction_set::load_r0_desc);
   for (uint32_t i = 0; i < n_symbols; ++i) {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
-    --m_current_frame_size;
+    emit_pop();
   }
-
-  if (should_return) {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::store_r0_desc});
-    ++m_current_frame_size;
-  }
+  // if (should_return) emit_with_increment(vm_instruction_set::store_r0_desc);
 
   m_symtab_stack.end_scope();
 }
@@ -175,8 +154,7 @@ void codegen_visitor::visit_if_no_else(ast::if_statement &ref) {
   reset_currently_statement();
   apply(ref.cond());
 
-  auto index_jmp_to_false_block = m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
-  --m_current_frame_size;
+  auto index_jmp_to_false_block = emit_with_decrement(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
 
   set_currently_statement();
   apply(ref.true_block());
@@ -191,8 +169,7 @@ void codegen_visitor::visit_if_with_else(ast::if_statement &ref) {
   reset_currently_statement();
   apply(ref.cond());
 
-  auto index_jmp_to_false_block = m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
-  --m_current_frame_size;
+  auto index_jmp_to_false_block = emit_with_decrement(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
 
   set_currently_statement();
   apply(ref.true_block());
@@ -212,8 +189,7 @@ void codegen_visitor::generate(ast::if_statement &ref) {
   m_symtab_stack.begin_scope(ref.control_block_symtab());
 
   for (unsigned i = 0; i < ref.control_block_symtab()->size(); ++i) {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
-    ++m_current_frame_size;
+    emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
 
   if (!ref.else_block()) {
@@ -223,8 +199,7 @@ void codegen_visitor::generate(ast::if_statement &ref) {
   }
 
   for (uint32_t i = 0; i < ref.control_block_symtab()->size(); ++i) {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
-    --m_current_frame_size;
+    emit_pop();
   }
 
   m_symtab_stack.end_scope();
@@ -235,26 +210,22 @@ void codegen_visitor::generate(ast::while_statement &ref) {
 
   for (unsigned i = 0; i < ref.symbol_table()->size(); ++i) {
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
-    ++m_current_frame_size;
   }
 
   auto while_location_start = m_builder.current_loc();
   reset_currently_statement();
   apply(ref.cond());
 
-  auto index_jmp_to_after_loop = m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
-  --m_current_frame_size;
+  auto index_jmp_to_after_loop = emit_with_decrement(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
   set_currently_statement();
   apply(ref.block());
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_desc, while_location_start});
 
   auto &to_relocate_after_loop_jump = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_after_loop);
   std::get<0>(to_relocate_after_loop_jump.m_attr) = m_builder.current_loc();
-  --m_current_frame_size;
 
   for (uint32_t i = 0; i < ref.symbol_table()->size(); ++i) {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
-    --m_current_frame_size;
+    emit_pop();
   }
 
   m_symtab_stack.end_scope();
@@ -266,11 +237,9 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
   reset_currently_statement();
   switch (ref.op_type()) {
   case unary_op::E_UN_OP_NEG: {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
-    ++m_current_frame_size;
+    emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
     apply(ref.expr());
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::sub_desc});
-    --m_current_frame_size;
+    emit_with_decrement(vm_instruction_set::sub_desc);
     break;
   }
 
@@ -281,7 +250,7 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
 
   case unary_op::E_UN_OP_NOT: {
     apply(ref.expr());
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::not_desc});
+    m_builder.emit_operation(vm_instruction_set::not_desc);
     break;
   }
   }
@@ -292,18 +261,15 @@ void codegen_visitor::generate(ast::function_call &ref) {
   if (!ref.m_type->is_equal(*m_types->m_void)) {
     is_return = true;
     uint32_t index = lookup_or_insert_constant(0);
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, index});
-    ++m_current_frame_size;
+    emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, index});
   }
 
   const auto const_index = current_constant_index();
   m_return_address_constants.push_back({const_index, 0}); // Dummy address
   const auto ret_addr_index = m_return_address_constants.size() - 1;
-  m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
-  ++m_current_frame_size;
+  emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
 
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::setup_call_desc});
-  m_current_frame_size += 2;
   auto &&n_args = ref.size();
   for (const auto &e : ref) {
     assert(e);
@@ -318,11 +284,9 @@ void codegen_visitor::generate(ast::function_call &ref) {
     int32_t total_depth = m_symtab_stack.size() + 2 + (is_return ? 1 : 0);
     int32_t index = m_symtab_stack.lookup_location(std::string{ref.name()});
     int32_t rel_pos = index - total_depth;
-    m_builder.emit_operation(encoded_instruction{
-        vm_instruction_set::push_local_rel_top_desc, rel_pos - m_current_frame_size});
-    ++m_current_frame_size;
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_dynamic_desc});
-    --m_current_frame_size;
+
+    emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, rel_pos});
+    emit_with_decrement(vm_instruction_set::jmp_dynamic_desc);
   }
 
   m_return_address_constants.at(ret_addr_index).m_address = m_builder.current_loc();
@@ -334,26 +298,22 @@ void codegen_visitor::generate(frontend::ast::return_statement &ref) {
   }
 
   for (unsigned i = 0; i < m_symtab_stack.size(); ++i) {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
-    --m_current_frame_size;
+    emit_pop();
   }
+
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-  --m_current_frame_size;
 }
 
 void codegen_visitor::generate(frontend::ast::function_definition_to_ptr_conv &ref) {
   const auto const_index = current_constant_index();
   m_dynamic_jumps_constants.push_back({const_index, 0, &ref.definition()}); // Dummy address
-  m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
-  ++m_current_frame_size;
+  emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
 }
 
 uint32_t codegen_visitor::generate(frontend::ast::function_definition &ref) {
-  auto old_frame_size = m_current_frame_size; // save the size of previouse frame
-  m_current_frame_size = 0;
+  m_symtab_stack.clear();
 
   m_curr_function = &ref;
-
   m_symtab_stack.begin_scope(ref.param_symtab());
 
   const auto function_pos = m_builder.current_loc();
@@ -361,16 +321,11 @@ uint32_t codegen_visitor::generate(frontend::ast::function_definition &ref) {
   apply(ref.body());
 
   for (uint32_t i = 0; i < ref.param_symtab()->size(); ++i) {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
-    --m_current_frame_size;
+    emit_pop();
   }
 
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-  --m_current_frame_size;
-
   m_symtab_stack.end_scope();
-
-  m_current_frame_size = old_frame_size;
 
   return function_pos;
 }
@@ -401,7 +356,7 @@ void codegen_visitor::generate_all(
 
   apply(*ast.get_root_ptr()); // Last instruction is ret
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-  --m_current_frame_size;
+  // assert(m_current_frame_size == 0);
 
   for (auto &func : functions.m_anonymous) {
     generate(*func);
