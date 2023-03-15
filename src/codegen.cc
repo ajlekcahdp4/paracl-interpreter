@@ -30,7 +30,7 @@ void codegen_visitor::emit_pop() {
 }
 
 void codegen_visitor::generate(ast::constant_expression &ref) {
-  uint32_t index = lookup_or_insert_constant(ref.value());
+  auto index = lookup_or_insert_constant(ref.value());
   emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, index});
 }
 
@@ -143,7 +143,7 @@ void codegen_visitor::generate(ast::statement_block &ref) {
   }
 
   if (should_return) emit_with_decrement(vm_instruction_set::load_r0_desc);
-  for (uint32_t i = 0; i < n_symbols; ++i) {
+  for (unsigned i = 0; i < n_symbols; ++i) {
     emit_pop();
   }
   if (should_return) emit_with_increment(vm_instruction_set::store_r0_desc);
@@ -200,7 +200,7 @@ void codegen_visitor::generate(ast::if_statement &ref) {
     visit_if_with_else(ref);
   }
 
-  for (uint32_t i = 0; i < ref.control_block_symtab()->size(); ++i) {
+  for (unsigned i = 0; i < ref.control_block_symtab()->size(); ++i) {
     emit_pop();
   }
 
@@ -227,7 +227,7 @@ void codegen_visitor::generate(ast::while_statement &ref) {
   auto &to_relocate_after_loop_jump = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_after_loop);
   std::get<0>(to_relocate_after_loop_jump.m_attr) = m_builder.current_loc();
 
-  for (uint32_t i = 0; i < ref.symbol_table()->size(); ++i) {
+  for (unsigned i = 0; i < ref.symbol_table()->size(); ++i) {
     emit_pop();
   }
 
@@ -263,7 +263,7 @@ void codegen_visitor::generate(ast::function_call &ref) {
   bool is_return;
   if (!ref.m_type->is_equal(*m_types->m_void)) {
     is_return = true;
-    uint32_t index = lookup_or_insert_constant(0);
+    auto index = lookup_or_insert_constant(0);
     emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, index});
   }
 
@@ -281,12 +281,12 @@ void codegen_visitor::generate(ast::function_call &ref) {
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::update_sp_desc, n_args});
 
   if (ref.m_def) {
-    uint32_t relocate_index = m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_desc});
+    auto relocate_index = m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_desc});
     m_relocations_function_calls.push_back({relocate_index, ref.m_def});
   } else {
-    int32_t total_depth = m_symtab_stack.size() + 2 + (is_return ? 1 : 0);
-    int32_t index = m_symtab_stack.lookup_location(std::string{ref.name()});
-    int32_t rel_pos = index - total_depth;
+    int total_depth = m_symtab_stack.size() + 2 + (is_return ? 1 : 0);
+    int index = m_symtab_stack.lookup_location(std::string{ref.name()});
+    int rel_pos = index - total_depth;
 
     emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, rel_pos});
     emit_with_decrement(vm_instruction_set::jmp_dynamic_desc);
@@ -313,7 +313,7 @@ void codegen_visitor::generate(frontend::ast::function_definition_to_ptr_conv &r
   emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
 }
 
-uint32_t codegen_visitor::generate(frontend::ast::function_definition &ref) {
+unsigned codegen_visitor::generate(frontend::ast::function_definition &ref) {
   m_symtab_stack.clear();
 
   m_curr_function = &ref;
@@ -323,7 +323,7 @@ uint32_t codegen_visitor::generate(frontend::ast::function_definition &ref) {
   m_function_defs.insert({&ref, function_pos});
   apply(ref.body());
 
-  for (uint32_t i = 0; i < ref.param_symtab()->size(); ++i) {
+  for (unsigned i = 0; i < ref.param_symtab()->size(); ++i) {
     emit_pop();
   }
 
@@ -333,9 +333,9 @@ uint32_t codegen_visitor::generate(frontend::ast::function_definition &ref) {
   return function_pos;
 }
 
-uint32_t codegen_visitor::lookup_or_insert_constant(int constant) {
+unsigned codegen_visitor::lookup_or_insert_constant(int constant) {
   auto found = m_constant_map.find(constant);
-  uint32_t index;
+  unsigned index;
 
   if (found == m_constant_map.end()) {
     index = current_constant_index();

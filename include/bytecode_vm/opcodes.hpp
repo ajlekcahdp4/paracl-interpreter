@@ -15,7 +15,7 @@
 namespace paracl::bytecode_vm {
 
 // clang-format off
-enum opcode : std::uint8_t {
+enum opcode : char {
   E_RETURN_NULLARY,
 
   E_PUSH_CONST_UNARY,

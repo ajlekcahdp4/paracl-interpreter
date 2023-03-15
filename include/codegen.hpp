@@ -97,36 +97,36 @@ class codegen_visitor final : public ezvis::visitor_base<frontend::ast::i_ast_no
   using builder_type = bytecode_vm::builder::bytecode_builder<decltype(bytecode_vm::instruction_set::paracl_isa)>;
 
 private:
-  std::unordered_map<int, uint32_t> m_constant_map;
+  std::unordered_map<int, unsigned> m_constant_map;
 
   const frontend::ast::function_definition *m_curr_function;
   const frontend::types::builtin_types *m_types;
 
   struct reloc_constant {
-    uint32_t m_index;
-    uint32_t m_address;
+    unsigned m_index;
+    unsigned m_address;
   };
 
   std::vector<reloc_constant> m_return_address_constants;
 
   struct dyn_jump_reloc {
-    uint32_t m_index;
-    uint32_t m_address;
+    unsigned m_index;
+    unsigned m_address;
     frontend::ast::function_definition *m_func_ptr;
   };
 
   std::vector<dyn_jump_reloc> m_dynamic_jumps_constants;
 
   struct reloc_info {
-    uint32_t m_reloc_index;
+    unsigned m_reloc_index;
     frontend::ast::function_definition *m_func_ptr;
   };
 
   std::vector<reloc_info> m_relocations_function_calls;
-  std::vector<uint32_t> m_exit_relocations;
+  std::vector<unsigned> m_exit_relocations;
 
 private:
-  std::unordered_map<frontend::ast::function_definition *, uint32_t> m_function_defs;
+  std::unordered_map<frontend::ast::function_definition *, unsigned> m_function_defs;
   const frontend::functions_analytics *m_functions;
   codegen_stack_frame m_symtab_stack;
   builder_type m_builder;
@@ -140,9 +140,9 @@ private:
   void visit_if_no_else(frontend::ast::if_statement &);
   void visit_if_with_else(frontend::ast::if_statement &);
 
-  uint32_t lookup_or_insert_constant(int constant);
+  unsigned lookup_or_insert_constant(int constant);
 
-  uint32_t current_constant_index() const {
+  unsigned current_constant_index() const {
     return m_constant_map.size() + m_return_address_constants.size() + m_dynamic_jumps_constants.size();
   }
 
@@ -192,7 +192,7 @@ public:
   void generate(frontend::ast::function_definition_to_ptr_conv &);
 
   void generate(const frontend::ast::i_ast_node &) {}
-  uint32_t generate(frontend::ast::function_definition &);
+  unsigned generate(frontend::ast::function_definition &);
 
   EZVIS_VISIT_INVOKER(generate);
 

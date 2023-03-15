@@ -55,7 +55,7 @@ std::pair<std::optional<T>, iter> read_little_endian(iter first, iter last)
   return std::make_pair(std::bit_cast<T>(raw_bytes), first);
 }
 
-template <typename T, std::output_iterator<uint8_t> iter>
+template <typename T, std::output_iterator<char> iter>
 void write_little_endian(T val, iter oput)
   requires std::integral<T> || std::floating_point<T>
 {

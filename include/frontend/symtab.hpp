@@ -26,7 +26,7 @@ namespace paracl::frontend {
 class symtab final {
 public:
   struct attributes {
-    uint32_t m_loc;
+    unsigned m_loc;
     ast::variable_expression *m_definition;
   };
 
@@ -36,7 +36,7 @@ private:
 public:
   void declare(std::string_view name, ast::variable_expression *def) {
     auto size = m_table.size();
-    m_table.emplace(name, attributes{static_cast<uint32_t>(size), def});
+    m_table.emplace(name, attributes{static_cast<unsigned>(size), def});
   }
 
   bool declared(std::string_view name) const { return m_table.count(std::string{name}); }
@@ -47,7 +47,7 @@ public:
   }
 
   // Deprecated, prefer attributes func
-  std::optional<uint32_t> location(std::string_view name) const {
+  std::optional<unsigned> location(std::string_view name) const {
     auto found = m_table.find(std::string{name});
     if (found == m_table.end()) return std::nullopt;
     return found->second.m_loc;
@@ -64,14 +64,14 @@ public:
   void begin_scope(symtab *stab) { vector::push_back(stab); }
   void end_scope() { vector::pop_back(); }
 
-  uint32_t size() const {
+  unsigned size() const {
     return std::accumulate(vector::cbegin(), vector::cend(), 0, [](auto a, auto &&stab) { return a + stab->size(); });
   }
 
-  uint32_t depth() const { return vector::size(); }
+  unsigned depth() const { return vector::size(); }
 
-  uint32_t lookup_location(std::string_view name) const {
-    uint32_t location = 0;
+  unsigned lookup_location(std::string_view name) const {
+    unsigned location = 0;
     auto found = std::find_if(vector::cbegin(), vector::cend(), [&name, &location](auto &stab) {
       auto loc = stab->location(name);
       if (loc.has_value()) {
@@ -89,7 +89,7 @@ public:
     return location;
   }
 
-  uint32_t lookup_scope(std::string_view name) const {
+  unsigned lookup_scope(std::string_view name) const {
     auto found = std::find_if(vector::crbegin(), vector::crend(), [&name](auto &stab) { return stab->declared(name); });
     if (found == vector::crend()) {
       throw std::logic_error{"Trying to look up scope of a variable not present in symbol table"};

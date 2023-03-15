@@ -45,7 +45,7 @@ template <typename t_desc> struct encoded_instruction {
 
 public:
   auto get_size() const { return t_desc::get_size(); }
-  uint8_t get_opcode() const { return t_desc::get_opcode(); }
+  auto get_opcode() const { return t_desc::get_opcode(); }
 
   void encode(auto iter) const {
     *iter = t_desc::get_opcode();
@@ -74,22 +74,22 @@ public:
 
 private:
   std::vector<instruction_variant_type> m_code;
-  uint32_t m_cur_loc = 0;
+  unsigned m_cur_loc = 0;
 
 public:
   bytecode_builder() = default;
 
-  template <typename t_desc> auto emit_operation(t_desc description) {
-    emit_operation(encoded_instruction{description});
+  template <typename t_desc> unsigned emit_operation(t_desc description) {
+    return emit_operation(encoded_instruction{description});
   }
 
-  template <typename t_desc> auto emit_operation(encoded_instruction<t_desc> instruction) {
+  template <typename t_desc> unsigned emit_operation(encoded_instruction<t_desc> instruction) {
     m_code.push_back(instruction_variant_type{instruction});
     m_cur_loc += instruction.get_size();
     return m_code.size() - 1;
   }
 
-  template <typename as_desc> auto &get_as(as_desc, std::size_t index) {
+  template <typename as_desc> decltype(auto) get_as(as_desc, std::size_t index) {
     return std::get<encoded_instruction<as_desc>>(m_code.at(index));
   }
 
@@ -104,7 +104,7 @@ public:
     return ch;
   }
 
-  uint32_t current_loc() const { return m_cur_loc; }
+  auto current_loc() const { return m_cur_loc; }
 };
 
 } // namespace paracl::bytecode_vm::builder
