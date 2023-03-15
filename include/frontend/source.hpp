@@ -10,12 +10,15 @@
 
 #pragma once
 
+#include "utils/serialization.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <iterator>
+#include <memory>
+#include <sstream>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -23,9 +26,12 @@ namespace paracl::frontend {
 
 class source_input {
 private:
-  std::string m_filename, m_file_source;
+  std::string m_filename; // Name of the source file
+
+private:
+  std::string m_file_source; // Raw file representation as a string
   using line_vec = std::vector<std::string>;
-  line_vec m_file_lines;
+  line_vec m_file_lines; // Vector of lines split
 
 private:
   void fill_lines() {
@@ -36,26 +42,19 @@ private:
   }
 
 public:
-  source_input(std::filesystem::path input_path) : m_filename{input_path} {
-    std::ifstream ifs;
-    ifs.exceptions(ifs.exceptions() | std::ios::failbit);
-    ifs.open(input_path, std::ios::binary);
-
-    std::stringstream ss;
-    ss << ifs.rdbuf();
-    m_file_source = ss.str();
-
+  source_input(const std::filesystem::path &input_path)
+      : m_filename{input_path}, m_file_source{utils::read_file(input_path)} {
     fill_lines();
   }
 
-  std::string_view getline(unsigned i) const {
+  std::string_view getline(unsigned i) const & {
     assert(i != 0 && "Line number can't be equal to 1");
     return m_file_lines.at(i - 1); /* Bison lines start with 1, so we have to subtrack */
   }
 
   // Can't make this const qualified, because bison location requires it be a modifiable pointer for whatever reason.
-  std::string *filename() { return &m_filename; }
-  std::unique_ptr<std::istringstream> iss() const { return std::make_unique<std::istringstream>(m_file_source); }
+  std::string *filename() & { return &m_filename; }
+  std::istringstream iss() const & { return std::istringstream{m_file_source}; }
 };
 
 } // namespace paracl::frontend

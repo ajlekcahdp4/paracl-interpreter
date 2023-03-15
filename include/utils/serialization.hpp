@@ -16,11 +16,13 @@
 #include <array>
 #include <bit>
 #include <concepts>
-#include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <iterator>
 #include <optional>
 #include <span>
+#include <sstream>
 
 namespace paracl::utils {
 
@@ -76,6 +78,16 @@ constexpr auto padded_hex_printer = padded_hex{};
 
 template <typename T> auto pointer_to_uintptr(T *pointer) {
   return std::bit_cast<uintptr_t>(pointer);
+}
+
+inline std::string read_file(const std::filesystem::path &input_path) {
+  std::ifstream ifs;
+  ifs.exceptions(ifs.exceptions() | std::ios::failbit | std::ios::badbit);
+  ifs.open(input_path, std::ios::binary);
+
+  std::stringstream ss;
+  ss << ifs.rdbuf();
+  return ss.str();
 }
 
 } // namespace paracl::utils

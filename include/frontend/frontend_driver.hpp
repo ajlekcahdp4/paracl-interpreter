@@ -95,7 +95,7 @@ private:
 
 public:
   frontend_driver(std::filesystem::path input_path)
-      : m_source{input_path}, m_reporter{m_source}, m_iss{m_source.iss()},
+      : m_source{input_path}, m_reporter{m_source}, m_iss{std::make_unique<std::istringstream>(m_source.iss())},
         m_parsing_driver{std::make_unique<parser_driver>(m_source.filename())} {
     m_parsing_driver->switch_input_stream(m_iss.get());
   }
