@@ -39,7 +39,7 @@ public:
   i_expression(location l = location{}, types::generic_type p_type = {}) : i_ast_node{l}, type{p_type} {}
 
   std::string type_str() const {
-    if (type) return "<undetermined>";
+    if (!type) return "<undetermined>";
     return type.to_string();
   }
 };

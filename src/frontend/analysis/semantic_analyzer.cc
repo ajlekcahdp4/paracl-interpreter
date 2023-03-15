@@ -126,8 +126,8 @@ void semantic_analyzer::check_return_types_matches(ast::function_definition &ref
 using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
 void semantic_analyzer::analyze_node(ast::statement_block &ref) {
   begin_scope(ref.stab);
-  ref.type = types::type_builtin::type_void();
 
+  ref.type = types::type_builtin::type_void();
   for (auto start = ref.cbegin(), finish = ref.cend(); start != finish; ++start) {
     auto ptr = *start;
     assert(ptr && "[Debug]: broken statement pointer in a block");
