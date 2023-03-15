@@ -182,7 +182,7 @@ void ast_dumper::dump_node(const function_definition &ref) {
 
   fmt::format_to(
       iter, "<function definition>: {}\n<arg count>: {}\n<type>: {}", ref.name().value_or("anonymous"), ref.size(),
-      ref.type_str()
+      ref.m_type.to_string()
   );
 
   print_declare_node(ref, label);

@@ -31,26 +31,30 @@ private:
   symtab m_symtab;
   i_ast_node *m_block;
 
-public:
-  using shared_func_type = types::shared_func_type;
-  shared_func_type m_type;
-
-  EZVIS_VISITABLE();
-
-  function_definition(
-      std::optional<std::string> name, i_ast_node &body, location l, std::vector<variable_expression> vars = {},
-      shared_func_type return_type = nullptr
-  )
-      : i_ast_node{l}, vector{std::move(vars)}, m_name{name}, m_block{&body} {
-    std::vector<types::shared_type> arg_types;
+private:
+  types::type_composite_function
+  make_func_type(const std::vector<variable_expression> &vars, const types::type &return_type) {
+    std::vector<types::type> arg_types;
 
     for (const auto &v : vars) {
       assert(v.m_type);
       arg_types.push_back(v.m_type);
     }
 
-    m_type = std::make_shared<types::type_composite_function>(arg_types, return_type);
+    return types::type_composite_function{arg_types, return_type};
   }
+
+public:
+  types::type_composite_function m_type;
+
+  EZVIS_VISITABLE();
+
+  function_definition(
+      std::optional<std::string> name, i_ast_node &body, location l, std::vector<variable_expression> vars = {},
+      types::type return_type = {}
+  )
+      : i_ast_node{l}, vector{std::move(vars)}, m_name{name}, m_block{&body}, m_type{
+                                                                                  make_func_type(vars, return_type)} {}
 
   using vector::begin;
   using vector::cbegin;
@@ -64,11 +68,6 @@ public:
 
   i_ast_node &body() const { return *m_block; }
   std::optional<std::string> name() const { return m_name; }
-
-  std::string type_str() const {
-    if (!m_type) return "";
-    return m_type->to_string();
-  }
 };
 
 class function_definition_to_ptr_conv final : public i_expression {

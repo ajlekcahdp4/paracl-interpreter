@@ -33,19 +33,15 @@ public:
 
 class i_expression : public i_ast_node {
 public:
-  types::shared_type m_type;
+  types::type m_type;
 
 public:
-  i_expression(location l = location{}, types::shared_type type = nullptr) : i_ast_node{l}, m_type{type} {}
-  types::shared_type get_type() const { return m_type; }
+  i_expression(location l = location{}, types::type type = {}) : i_ast_node{l}, m_type{type} {}
 
   std::string type_str() const {
-    if (!m_type.get()) return "<undetermined>";
-    return m_type->to_string();
+    if (m_type) return "<undetermined>";
+    return m_type.to_string();
   }
-
-  void set_type(types::shared_type type) { m_type = type; }
-  bool is_type_set() const { return m_type.get(); }
 };
 
 // Expresssions

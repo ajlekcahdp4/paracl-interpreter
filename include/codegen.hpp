@@ -100,8 +100,6 @@ private:
   std::unordered_map<int, unsigned> m_constant_map;
 
   const frontend::ast::function_definition *m_curr_function;
-  const frontend::types::builtin_types *m_types;
-
   struct reloc_constant {
     unsigned m_index;
     unsigned m_address;

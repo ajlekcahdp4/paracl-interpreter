@@ -30,7 +30,6 @@ class ast_container final {
 private:
   std::vector<i_ast_node_uptr> m_nodes;
   i_ast_node *m_root = nullptr;
-  types::builtin_types m_types;
 
   template <typename T, typename... Ts> T &emplace_back(Ts &&...args) {
     auto uptr = std::make_unique<T>(std::forward<Ts>(args)...);
@@ -70,11 +69,6 @@ public:
   {
     return emplace_back<t_node_type>(std::forward<t_args>(args)...);
   }
-
-  auto void_type_ptr() { return m_types.m_void; }
-  auto int_type_ptr() { return m_types.m_int; }
-
-  const types::builtin_types &builtin_types() const & { return m_types; }
 };
 
 } // namespace paracl::frontend::ast

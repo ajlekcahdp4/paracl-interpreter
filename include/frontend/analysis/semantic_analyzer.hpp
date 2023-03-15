@@ -32,7 +32,6 @@ private:
   ast::ast_container *m_ast;
   functions_analytics *m_functions;
 
-  const types::builtin_types *m_types;
   std::vector<error_report> *m_error_queue;
   std::vector<ast::return_statement *> m_return_statements;
 
@@ -60,7 +59,7 @@ private:
 
   bool expect_type_eq(const ast::i_expression &ref, const types::i_type &rhs) const {
     auto &&type = ref.m_type;
-    if (!type || !(type->is_equal(rhs))) {
+    if (!type || !(type == rhs)) {
       report_error("Expression is not of type '" + rhs.to_string() + "'", ref.loc());
       return false;
     }
@@ -90,8 +89,8 @@ public:
   EZVIS_VISIT_CT(to_visit);
 
   // clang-format off
-  void analyze_node(ast::read_expression &);
-  void analyze_node(ast::constant_expression &);
+  void analyze_node(ast::read_expression &) {}
+  void analyze_node(ast::constant_expression &) {}
   // clang-format on
 
   void analyze_node(ast::assignment_statement &);
@@ -120,7 +119,6 @@ public:
     m_error_queue = &errors;
     m_ast = &ast;
     m_functions = &functions;
-    m_types = &m_ast->builtin_types();
 
     // If we should visit the main scope, then we won't enter a function_definition node and set this flag ourselves.
     // This flag prevents the analyzer to go lower than 1 layer of functions;

@@ -67,9 +67,6 @@ public:
     return &m_ast.make_node<t_node_type>(std::forward<t_args>(args)...);
   }
 
-  auto void_type_ptr() { return m_ast.void_type_ptr(); }
-  auto int_type_ptr() { return m_ast.int_type_ptr(); }
-
   void set_ast_root_ptr(ast::i_ast_node *ptr) { // nullptr is possible
     m_ast.set_root_ptr(ptr);
   }
@@ -88,10 +85,6 @@ private:
 
   semantic_analyzer m_semantic_analyzer;
   functions_analytics m_functions;
-
-private:
-  auto void_type_ptr() { return m_parsing_driver->void_type_ptr(); }
-  auto int_type_ptr() { return m_parsing_driver->int_type_ptr(); }
 
 public:
   frontend_driver(std::filesystem::path input_path)
