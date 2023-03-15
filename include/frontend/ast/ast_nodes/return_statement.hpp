@@ -20,7 +20,8 @@ class return_statement final : public i_expression {
   EZVIS_VISITABLE();
 
 public:
-  return_statement(i_expression *p_expr, location l) : i_expression{l}, m_expr{p_expr} {}
+  return_statement(i_expression *p_expr, location l)
+      : i_expression{l, p_expr ? types::generic_type{} : types::type_builtin::type_void()}, m_expr{p_expr} {}
 
   bool empty() const { return !m_expr; }
   i_expression &expr() const {

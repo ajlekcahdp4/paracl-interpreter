@@ -99,9 +99,9 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
 void codegen_visitor::generate(ast::statement_block &ref) {
   bool should_return = ref.type && ref.type != frontend::types::type_builtin::type_void();
 
-  m_symtab_stack.begin_scope(ref.symbol_table());
+  m_symtab_stack.begin_scope(&ref.stab);
 
-  auto n_symbols = ref.symbol_table()->size();
+  auto n_symbols = ref.stab.size();
 
   for (unsigned i = 0; i < n_symbols; ++i) {
     // no need to increment there cause it is already done in begin_scope
@@ -321,13 +321,13 @@ unsigned codegen_visitor::generate(frontend::ast::function_definition &ref) {
   m_symtab_stack.clear();
 
   m_curr_function = &ref;
-  m_symtab_stack.begin_scope(ref.param_symtab());
+  m_symtab_stack.begin_scope(&ref.param_symtab());
 
   const auto function_pos = m_builder.current_loc();
   m_function_defs.insert({&ref, function_pos});
   apply(ref.body());
 
-  for (unsigned i = 0; i < ref.param_symtab()->size(); ++i) {
+  for (unsigned i = 0; i < ref.param_symtab().size(); ++i) {
     emit_pop();
   }
 

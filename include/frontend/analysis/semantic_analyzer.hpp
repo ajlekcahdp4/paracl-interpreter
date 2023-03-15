@@ -33,7 +33,9 @@ private:
   functions_analytics *m_functions;
 
   std::vector<error_report> *m_error_queue;
-  std::vector<ast::return_statement *> m_return_statements;
+
+  // Vector of return statements in the current functions.
+  std::vector<const ast::return_statement *> m_return_statements;
 
 private:
   enum class semantic_analysis_state {
@@ -41,14 +43,16 @@ private:
     E_RVALUE,
     E_DEFAULT,
   } current_state = semantic_analysis_state::E_DEFAULT;
+
   bool m_in_function_body = false;
-  bool m_first_recursive_traversal = false;
+  bool m_type_errors_allowed = false; // Flag used to indicate that a type mismatch is not an error.
+  // Set this flag to true when doing a first pass on recurisive functions.
 
-  bool m_in_void_block = false;
-
+private:
   void set_state(semantic_analysis_state s) { current_state = s; }
   void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
 
+private:
   void report_error(std::string msg, location loc) const {
     m_error_queue->push_back({
         error_kind{msg, loc}
@@ -58,6 +62,8 @@ private:
   void report_error(error_report report) const { m_error_queue->push_back(std::move(report)); }
 
   bool expect_type_eq(const ast::i_expression &ref, const types::i_type &rhs) const {
+    if (m_type_errors_allowed) return false;
+
     auto &&type = ref.type;
     if (!type || !(type == rhs)) {
       report_error("Expression is not of type '" + rhs.to_string() + "'", ref.loc());
@@ -67,26 +73,24 @@ private:
     return true;
   }
 
+  bool expect_type_eq(const ast::i_expression &ref, const types::generic_type &rhs) const {
+    return expect_type_eq(ref, rhs.base());
+  }
+
   bool expect_type_eq_cond(const ast::i_expression &ref, const types::i_type &rhs, bool cond) {
     if (cond) return expect_type_eq(ref, rhs);
     return true;
   }
 
-  bool expect_type_eq(const ast::i_expression &ref, const types::i_type *rhs) const {
-    if (!rhs) return false;
-    return expect_type_eq(ref, *rhs);
-  }
-
-  void set_function_argument_types(ast::function_definition &ref);
-
-  void begin_function_scope(ast::function_definition &ref);
-
-  void check_return_types_matches(ast::statement_block &ref);
-
-  using to_visit = ast::tuple_all_nodes;
+private:
+  void check_return_types_matches(ast::function_definition &ref);
+  void begin_scope(symtab &stab) { m_scopes.begin_scope(&stab); }
+  void end_scope() { m_scopes.end_scope(); }
 
 public:
-  EZVIS_VISIT_CT(to_visit);
+  EZVIS_VISIT_CT(ast::tuple_all_nodes);
+
+  void analyze_node(ast::error_node &ref) { report_error(ref.error_msg(), ref.loc()); }
 
   // clang-format off
   void analyze_node(ast::read_expression &) {}
@@ -103,7 +107,7 @@ public:
   void analyze_node(ast::unary_expression &);
   bool analyze_node(ast::variable_expression &);
   void analyze_node(ast::while_statement &);
-  void analyze_node(ast::error_node &);
+
   void analyze_node(ast::function_call &);
   void analyze_node(ast::function_definition &);
   void analyze_node(ast::function_definition_to_ptr_conv &);
@@ -123,9 +127,6 @@ public:
     // If we should visit the main scope, then we won't enter a function_definition node and set this flag ourselves.
     // This flag prevents the analyzer to go lower than 1 layer of functions;
     m_in_function_body = in_main;
-
-    m_first_recursive_traversal = first_recursive;
-
     apply(start);
     return errors.empty();
   }

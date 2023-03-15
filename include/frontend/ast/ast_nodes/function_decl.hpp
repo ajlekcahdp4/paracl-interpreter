@@ -27,19 +27,19 @@ class function_definition final : public i_ast_node, private std::vector<variabl
 public:
   // An optional function name. Those functions that don't have a name will be called anonymous functions
   std::optional<std::string> name;
+  symtab param_stab;
 
 private:
-  symtab m_symtab;
   i_ast_node *m_block;
 
 private:
-  types::type_composite_function
-  make_func_type(const std::vector<variable_expression> &vars, const types::generic_type &return_type) {
+  types::type_composite_function make_func_type(const types::generic_type &return_type) {
     std::vector<types::generic_type> arg_types;
 
-    for (const auto &v : vars) {
-      assert(v.type);
+    for (auto &v : *this) {
+      if (!v.type) v.type = types::type_builtin::type_int();
       arg_types.push_back(v.type);
+      param_stab.declare(v.name(), &v);
     }
 
     return types::type_composite_function{arg_types, return_type};
@@ -54,7 +54,7 @@ public:
       std::optional<std::string> p_name, i_ast_node &body, location l, std::vector<variable_expression> vars = {},
       types::generic_type return_type = {}
   )
-      : i_ast_node{l}, vector{std::move(vars)}, name{p_name}, m_block{&body}, type{make_func_type(vars, return_type)} {}
+      : i_ast_node{l}, vector{std::move(vars)}, name{p_name}, m_block{&body}, type{make_func_type(return_type)} {}
 
   using vector::begin;
   using vector::cbegin;
@@ -64,7 +64,7 @@ public:
   using vector::end;
   using vector::size;
 
-  symtab *param_symtab() { return &m_symtab; }
+  symtab &param_symtab() { return param_stab; }
   i_ast_node &body() const { return *m_block; }
 };
 
