@@ -23,35 +23,20 @@
 namespace paracl::frontend {
 
 void function_explorer::explore(ast::function_definition &ref) {
-  auto &&name = ref.name();
+  auto &&name_v = ref.name.value();
+  auto [ptr, inserted] = m_analytics->m_named.define_function(name_v, &ref);
 
-  if (name.has_value()) {
-    auto &&name_v = name.value();
-    auto [ptr, inserted] = m_analytics->m_named.define_function(name_v, &ref);
-
-    if (!inserted) {
-      auto report = error_report{
-          {fmt::format("Redefinition of function `{}`", name_v), ref.loc()}
-      };
-      report.add_attachment(error_attachment{fmt::format("[Note] Previously declared here:"), ptr->loc()});
-      report_error(report);
-      return;
-    }
-
-    m_function_stack.push_back({name_v, &ref});
-    m_analytics->m_usegraph.insert({std::string{name_v}, &ref});
+  if (!inserted) {
+    auto report = error_report{
+        {fmt::format("Redefinition of function `{}`", name_v), ref.loc()}
+    };
+    report.add_attachment(error_attachment{fmt::format("[Note] Previously declared here:"), ptr->loc()});
+    report_error(report);
+    return;
   }
 
-  else {
-    m_analytics->m_anonymous.define_function(&ref);
-    std::stringstream ss;
-    ss << "anonymous-" << m_analytics->m_anonymous.size();
-    m_function_stack.push_back({ss.str(), &ref});
-    if (std::find(m_analytics->m_anonymous.begin(), m_analytics->m_anonymous.end(), &ref) ==
-        m_analytics->m_anonymous.end()) {
-      m_analytics->m_usegraph.insert({ss.str(), &ref});
-    }
-  }
+  m_function_stack.push_back({name_v, &ref});
+  m_analytics->m_usegraph.insert({std::string{name_v}, &ref});
 
   apply(ref.body());
   m_function_stack.pop_back();
@@ -77,26 +62,20 @@ void function_explorer::explore(ast::function_call &ref) {
 }
 
 void function_explorer::explore(const ast::function_definition_to_ptr_conv &ref) {
-  auto &&def = ref.definition();
-  auto name = def.name();
-  auto name_v = std::string{};
+  auto &def = ref.definition();
+  auto &name = def.name;
 
-  if (name.has_value()) {
-    name_v = name.value();
-  } else {
-    std::stringstream ss;
-    ss << "anonymous-" << m_analytics->m_anonymous.size();
-    name_v = ss.str();
+  if (!name) {
+    name = fmt::format("$anon-func-{}", m_analytics->m_named.size());
   }
 
   if (!m_function_stack.empty()) {
-    auto &&curr_func = m_function_stack.back();
-    m_analytics->m_usegraph.insert(curr_func, {name_v, &def});
+    m_analytics->m_usegraph.insert(m_function_stack.back(), {name.value(), &def});
   } else {
-    m_analytics->m_usegraph.insert({name_v, &def});
+    m_analytics->m_usegraph.insert({name.value(), &def});
   }
 
-  apply(ref.definition());
+  apply(def);
 }
 
 } // namespace paracl::frontend

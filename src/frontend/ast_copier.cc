@@ -58,7 +58,7 @@ while_statement &ast_copier::copy(const while_statement &ref) {
 
 function_definition &ast_copier::copy(const function_definition &ref) {
   std::vector<variable_expression> arguments{ref.begin(), ref.end()};
-  return m_container.make_node<function_definition>(ref.name(), ref.body(), ref.loc(), arguments);
+  return m_container.make_node<function_definition>(ref.name, ref.body(), ref.loc(), arguments);
 }
 
 function_definition_to_ptr_conv &ast_copier::copy(const function_definition_to_ptr_conv &ref) {

@@ -181,8 +181,8 @@ void ast_dumper::dump_node(const function_definition &ref) {
   auto iter = std::back_inserter(label);
 
   fmt::format_to(
-      iter, "<function definition>: {}\n<arg count>: {}\n<type>: {}", ref.name().value_or("anonymous"), ref.size(),
-      ref.m_type.to_string()
+      iter, "<function definition>: {}\n<arg count>: {}\n<type>: {}", ref.name.value_or("anonymous"), ref.size(),
+      ref.type.to_string()
   );
 
   print_declare_node(ref, label);

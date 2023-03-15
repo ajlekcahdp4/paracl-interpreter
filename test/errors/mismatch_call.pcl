@@ -1,4 +1,5 @@
-a = func (): foo {
+a = func () {
+  print a;
   return 1;
 }
 

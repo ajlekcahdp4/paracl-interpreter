@@ -24,10 +24,11 @@
 namespace paracl::frontend::ast {
 
 class function_definition final : public i_ast_node, private std::vector<variable_expression> {
-private:
+public:
   // An optional function name. Those functions that don't have a name will be called anonymous functions
-  std::optional<std::string> m_name;
+  std::optional<std::string> name;
 
+private:
   symtab m_symtab;
   i_ast_node *m_block;
 
@@ -37,7 +38,7 @@ private:
     std::vector<types::generic_type> arg_types;
 
     for (const auto &v : vars) {
-      assert(v.m_type);
+      assert(v.type);
       arg_types.push_back(v.type);
     }
 
@@ -45,16 +46,15 @@ private:
   }
 
 public:
-  types::type_composite_function m_type;
+  types::type_composite_function type;
 
   EZVIS_VISITABLE();
 
   function_definition(
-      std::optional<std::string> name, i_ast_node &body, location l, std::vector<variable_expression> vars = {},
+      std::optional<std::string> p_name, i_ast_node &body, location l, std::vector<variable_expression> vars = {},
       types::generic_type return_type = {}
   )
-      : i_ast_node{l}, vector{std::move(vars)}, m_name{name}, m_block{&body}, m_type{
-                                                                                  make_func_type(vars, return_type)} {}
+      : i_ast_node{l}, vector{std::move(vars)}, name{p_name}, m_block{&body}, type{make_func_type(vars, return_type)} {}
 
   using vector::begin;
   using vector::cbegin;
@@ -65,9 +65,7 @@ public:
   using vector::size;
 
   symtab *param_symtab() { return &m_symtab; }
-
   i_ast_node &body() const { return *m_block; }
-  std::optional<std::string> name() const { return m_name; }
 };
 
 class function_definition_to_ptr_conv final : public i_expression {

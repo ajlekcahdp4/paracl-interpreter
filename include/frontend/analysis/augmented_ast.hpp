@@ -22,7 +22,6 @@ using usegraph = graphs::basic_directed_graph<std::string, ast::function_definit
 
 struct functions_analytics final {
   named_function_table m_named;
-  anonymous_function_table m_anonymous;
   usegraph m_usegraph;
   std::unordered_set<ast::function_definition *> m_recursions;
 };

@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include "ezvis/ezvis.hpp"
-
 #include "frontend/analysis/augmented_ast.hpp"
 
 #include "frontend/ast/ast_container.hpp"
@@ -21,6 +19,7 @@
 #include "frontend/symtab.hpp"
 #include "frontend/types/types.hpp"
 
+#include "ezvis/ezvis.hpp"
 #include "location.hpp"
 
 #include <iostream>

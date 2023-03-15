@@ -104,16 +104,17 @@ public:
 
     function_explorer explorer;
     std::vector<paracl::frontend::error_report> errors;
-    auto &&valid = explorer.explore(ast, m_functions, errors);
 
-    auto &&scheduled = graphs::recursive_topo_sort(m_functions.m_usegraph);
+    auto valid = explorer.explore(ast, m_functions, errors);
+    auto scheduled = graphs::recursive_topo_sort(m_functions.m_usegraph);
+
     // Note the order of analyze(....) && valid to prevent short-circuiting to check all functions.
     for (auto &&function : scheduled) {
       auto *def = function.attr;
       if (!def) continue;
-      if (m_functions.m_recursions.contains(def))
-        valid = valid && m_semantic_analyzer.analyze(ast, m_functions, *def, errors, false, true);
-      valid = m_semantic_analyzer.analyze(ast, m_functions, *def, errors) && valid;
+      valid =
+          m_semantic_analyzer.analyze(ast, m_functions, *def, errors, false, m_functions.m_recursions.contains(def)) &&
+          valid;
     }
     valid = m_semantic_analyzer.analyze(ast, m_functions, *ast.get_root_ptr(), errors, true) && valid;
 

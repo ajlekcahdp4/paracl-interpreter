@@ -48,14 +48,4 @@ public:
   auto size() const { return m_table.size(); }
 };
 
-class anonymous_function_table final : private std::vector<ast::function_definition *> {
-public:
-  void define_function(ast::function_definition *definition) { vector::push_back(definition); }
-
-  using vector::begin;
-  using vector::end;
-  using vector::operator[];
-  using vector::empty;
-  using vector::size;
-};
 } // namespace paracl::frontend

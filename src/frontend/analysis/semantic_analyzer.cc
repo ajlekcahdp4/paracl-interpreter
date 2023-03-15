@@ -204,7 +204,7 @@ void semantic_analyzer::set_function_argument_types(ast::function_definition &re
     if (!v.type) v.type = type_builtin::type_int(); // default argument type: int
     return v.type;
   });
-  ref.m_type.set_argument_types(m_arg_type_vec);
+  ref.type.set_argument_types(m_arg_type_vec);
 }
 
 void semantic_analyzer::begin_function_scope(ast::function_definition &ref) {
@@ -245,14 +245,14 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
   // "The only difference between function and statement blocks in paraCL
   // is that we can call functions several times"
   apply(st_block);
-  ref.m_type.m_return_type = st_block.type;
+  ref.type.m_return_type = st_block.type;
   m_scopes.end_scope();
 
   m_in_function_body = false; // Exit
 }
 
 void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) {
-  ref.type = types::generic_type::make<types::type_composite_function>(ref.definition().m_type);
+  ref.type = types::generic_type::make<types::type_composite_function>(ref.definition().type);
 }
 
 void semantic_analyzer::analyze_node(ast::function_call &ref) {
@@ -301,7 +301,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
       return;
     } else {
       if (check_func_parameter_list(*function_found, function_found->loc(), match_expr_type))
-        ref.type = function_found->m_type.return_type();
+        ref.type = function_found->type.return_type();
       return;
     }
   }

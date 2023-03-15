@@ -65,7 +65,6 @@ public:
   virtual unique_type clone() const = 0;
   virtual std::string to_string() const = 0;
   virtual bool is_equal(const i_type &) const = 0;
-
   type_class get_class() const { return m_type_tag; }
 
   virtual ~i_type() {}

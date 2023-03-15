@@ -361,11 +361,6 @@ void codegen_visitor::generate_all(
 
   apply(*ast.get_root_ptr()); // Last instruction is ret
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-  // assert(m_current_frame_size == 0);
-
-  for (auto &func : functions.m_anonymous) {
-    generate(*func);
-  }
 
   for (auto &func : functions.m_named) {
     generate(*func.second);
