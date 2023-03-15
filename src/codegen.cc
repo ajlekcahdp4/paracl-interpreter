@@ -97,7 +97,7 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
 }
 
 void codegen_visitor::generate(ast::statement_block &ref) {
-  bool should_return = ref.m_type && ref.m_type != frontend::types::type_builtin::type_void();
+  bool should_return = ref.type && ref.type != frontend::types::type_builtin::type_void();
 
   m_symtab_stack.begin_scope(ref.symbol_table());
 
@@ -136,8 +136,8 @@ void codegen_visitor::generate(ast::statement_block &ref) {
 
       if (!is_assignment && !is_statement_block && pop_unused_result) {
         if (!(node_type == frontend::ast::ast_node_type::E_FUNCTION_CALL &&
-              static_cast<frontend::ast::function_call &>(*statement).m_type ==
-                  frontend::types::type_builtin::type_void())) {
+              static_cast<frontend::ast::function_call &>(*statement).type == frontend::types::type_builtin::type_void()
+            )) {
           emit_pop();
         }
       }
@@ -265,7 +265,7 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
 
 void codegen_visitor::generate(ast::function_call &ref) {
   bool is_return;
-  if (ref.m_type != frontend::types::type_builtin::type_void()) {
+  if (ref.type != frontend::types::type_builtin::type_void()) {
     is_return = true;
     auto index = lookup_or_insert_constant(0);
     emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, index});

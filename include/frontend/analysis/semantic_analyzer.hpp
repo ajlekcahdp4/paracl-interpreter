@@ -58,7 +58,7 @@ private:
   void report_error(error_report report) const { m_error_queue->push_back(std::move(report)); }
 
   bool expect_type_eq(const ast::i_expression &ref, const types::i_type &rhs) const {
-    auto &&type = ref.m_type;
+    auto &&type = ref.type;
     if (!type || !(type == rhs)) {
       report_error("Expression is not of type '" + rhs.to_string() + "'", ref.loc());
       return false;

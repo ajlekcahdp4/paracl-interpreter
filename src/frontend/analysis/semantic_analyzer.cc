@@ -27,7 +27,7 @@ using types::type_builtin;
 void semantic_analyzer::analyze_node(ast::unary_expression &ref) {
   apply(ref.expr());
   if (expect_type_eq_cond(ref.expr(), type_builtin::type_int().base(), !m_first_recursive_traversal)) {
-    ref.m_type = type_builtin::type_int();
+    ref.type = type_builtin::type_int();
   }
 }
 
@@ -40,7 +40,7 @@ void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
   apply(ref.right());
 
   set_state(semantic_analysis_state::E_LVALUE);
-  auto &&right_type = ref.right().m_type;
+  auto &&right_type = ref.right().type;
   if (!right_type) {
     report_error("Type of the right side of the assignment is unknown or can't be deduced", ref.right().loc());
     reset_state();
@@ -49,15 +49,15 @@ void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
 
   for (auto &v : ref) {
     auto &&declared = analyze_node(v);
-    if (right_type && !declared && !v.m_type) {
-      v.m_type = right_type;
+    if (right_type && !declared && !v.type) {
+      v.type = right_type;
     } else {
-      expect_type_eq_cond(v, ref.right().m_type.base(), !m_first_recursive_traversal);
+      expect_type_eq_cond(v, ref.right().type.base(), !m_first_recursive_traversal);
     }
   }
 
   reset_state();
-  ref.m_type = ref.right().m_type;
+  ref.type = ref.right().type;
 }
 
 void semantic_analyzer::analyze_node(ast::binary_expression &ref) {
@@ -68,7 +68,7 @@ void semantic_analyzer::analyze_node(ast::binary_expression &ref) {
 
   if (expect_type_eq_cond(ref.right(), type_builtin::type_int().base(), !m_first_recursive_traversal) &&
       expect_type_eq_cond(ref.left(), type_builtin::type_int().base(), !m_first_recursive_traversal)) {
-    ref.m_type = type_builtin::type_int();
+    ref.type = type_builtin::type_int();
   }
 
   reset_state();
@@ -86,14 +86,14 @@ void semantic_analyzer::analyze_node(ast::print_statement &ref) {
 using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
 
 void semantic_analyzer::check_return_types_matches(ast::statement_block &ref) {
-  auto first_type = m_return_statements.front()->m_type;
-  auto ret_type = ref.m_type;
+  auto first_type = m_return_statements.front()->type;
+  auto ret_type = ref.type;
   bool valid = true;
 
   for (const auto &ret : m_return_statements) {
     if (ret_type) // If return type is set
-      if (ret->m_type == ret_type) continue;
-    if (ret->m_type == first_type) continue;
+      if (ret->type == ret_type) continue;
+    if (ret->type == first_type) continue;
 
     error_report error = {
         {fmt::format("Return type deduction failed, found mismatch"), ret->loc()}
@@ -104,7 +104,7 @@ void semantic_analyzer::check_return_types_matches(ast::statement_block &ref) {
     break;
   }
 
-  if (valid) ref.m_type = first_type;
+  if (valid) ref.type = first_type;
 }
 
 void semantic_analyzer::analyze_node(ast::statement_block &ref) {
@@ -120,13 +120,13 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
     apply(*statement);
     if ((i == size - 1) && !m_in_void_block) {
       set_state(semantic_analysis_state::E_RVALUE);
-      auto type = ezvis::visit_tuple<types::type, expressions_and_base>(
+      auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
           paracl::utils::visitors{
-              [](ast::i_expression &expr) { return expr.m_type; },
+              [](ast::i_expression &expr) { return expr.type; },
               [&](ast::i_ast_node &) { return type_builtin::type_void(); }},
           *statement
       );
-      ref.m_type = type;
+      ref.type = type;
     } else set_state(semantic_analysis_state::E_LVALUE);
     ++i;
   }
@@ -135,7 +135,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
     check_return_types_matches(ref);
   }
 
-  if (m_in_void_block || (!is_rvalue && !ref.m_type)) ref.m_type = type_builtin::type_void();
+  if (m_in_void_block || (!is_rvalue && !ref.type)) ref.type = type_builtin::type_void();
   ;
 
   m_return_statements.clear();
@@ -190,19 +190,19 @@ bool semantic_analyzer::analyze_node(ast::variable_expression &ref) {
   }
 
   assert(attr->m_definition && "Broken definition pointer");
-  auto type = ezvis::visit<types::type, ast::variable_expression>(
-      [](ast::variable_expression &v) { return v.m_type; }, *attr->m_definition
+  auto type = ezvis::visit<types::generic_type, ast::variable_expression>(
+      [](ast::variable_expression &v) { return v.type; }, *attr->m_definition
   );
-  ref.m_type = type;
+  ref.type = type;
 
   return true;
 }
 
 void semantic_analyzer::set_function_argument_types(ast::function_definition &ref) {
-  std::vector<types::type> m_arg_type_vec;
+  std::vector<types::generic_type> m_arg_type_vec;
   std::transform(ref.begin(), ref.end(), std::back_inserter(m_arg_type_vec), [&](auto &&v) {
-    if (!v.m_type) v.m_type = type_builtin::type_int(); // default argument type: int
-    return v.m_type;
+    if (!v.type) v.type = type_builtin::type_int(); // default argument type: int
+    return v.type;
   });
   ref.m_type.set_argument_types(m_arg_type_vec);
 }
@@ -245,14 +245,14 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
   // "The only difference between function and statement blocks in paraCL
   // is that we can call functions several times"
   apply(st_block);
-  ref.m_type.m_return_type = st_block.m_type;
+  ref.m_type.m_return_type = st_block.type;
   m_scopes.end_scope();
 
   m_in_function_body = false; // Exit
 }
 
 void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) {
-  ref.m_type = types::type::make<types::type_composite_function>(ref.definition().m_type);
+  ref.type = types::generic_type::make<types::type_composite_function>(ref.definition().m_type);
 }
 
 void semantic_analyzer::analyze_node(ast::function_call &ref) {
@@ -274,7 +274,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
   };
 
   const auto match_expr_type = [&](auto *expr_ptr, auto &&arg) {
-    return expect_type_eq_cond(*expr_ptr, arg.m_type.base(), !m_first_recursive_traversal);
+    return expect_type_eq_cond(*expr_ptr, arg.type.base(), !m_first_recursive_traversal);
   };
 
   const auto match_types = [&](auto *expr_ptr, auto &&arg) {
@@ -301,19 +301,19 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
       return;
     } else {
       if (check_func_parameter_list(*function_found, function_found->loc(), match_expr_type))
-        ref.m_type = function_found->m_type.return_type();
+        ref.type = function_found->m_type.return_type();
       return;
     }
   }
   if (attr) {
     auto *def = attr->m_definition;
-    auto &&type = def->m_type;
+    auto &&type = def->type;
     if (type.base().get_class() != types::type_class::E_COMPOSITE_FUNCTION) {
       report(def->loc());
       return;
     }
-    auto &&cast_type = static_cast<types::type_composite_function &>(def->m_type.base());
-    if (check_func_parameter_list(cast_type, def->loc(), match_types)) ref.m_type = cast_type.return_type();
+    auto &&cast_type = static_cast<types::type_composite_function &>(def->type.base());
+    if (check_func_parameter_list(cast_type, def->loc(), match_types)) ref.type = cast_type.return_type();
     return;
   }
 
@@ -327,7 +327,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
 void semantic_analyzer::analyze_node(ast::return_statement &ref) {
   if (!ref.empty()) apply(ref.expr());
   m_return_statements.push_back(&ref);
-  ref.m_type = ref.expr().m_type;
+  ref.type = ref.expr().type;
 }
 
 } // namespace paracl::frontend

@@ -33,12 +33,12 @@ private:
 
 private:
   types::type_composite_function
-  make_func_type(const std::vector<variable_expression> &vars, const types::type &return_type) {
-    std::vector<types::type> arg_types;
+  make_func_type(const std::vector<variable_expression> &vars, const types::generic_type &return_type) {
+    std::vector<types::generic_type> arg_types;
 
     for (const auto &v : vars) {
       assert(v.m_type);
-      arg_types.push_back(v.m_type);
+      arg_types.push_back(v.type);
     }
 
     return types::type_composite_function{arg_types, return_type};
@@ -51,7 +51,7 @@ public:
 
   function_definition(
       std::optional<std::string> name, i_ast_node &body, location l, std::vector<variable_expression> vars = {},
-      types::type return_type = {}
+      types::generic_type return_type = {}
   )
       : i_ast_node{l}, vector{std::move(vars)}, m_name{name}, m_block{&body}, m_type{
                                                                                   make_func_type(vars, return_type)} {}

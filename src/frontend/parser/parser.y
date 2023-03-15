@@ -135,8 +135,8 @@ additive_expression comparison_expression equality_expression logical_expression
 
 %type eof_or_semicol
 
-%type <types::type> builtin_type function_type type
-%type <std::vector<types::type>> type_list type_list_or_empty
+%type <types::generic_type> builtin_type function_type type
+%type <std::vector<types::generic_type>> type_list type_list_or_empty
 %type <ast::variable_expression *> typed_identifier
 
 %precedence THEN
@@ -294,7 +294,7 @@ function_call:    IDENTIFIER LPAREN param_list_or_empty RPAREN { $$ = driver.mak
 builtin_type:     INT       { $$ = types::type_builtin::type_int(); }
                   | VOID    { $$ = types::type_builtin::type_void(); }
 
-function_type:    type FUNC LPAREN type_list_or_empty RPAREN { $$ = types::type::make<types::type_composite_function>(std::move($4), $1); }
+function_type:    type FUNC LPAREN type_list_or_empty RPAREN { $$ = types::generic_type::make<types::type_composite_function>(std::move($4), $1); }
 
 type: builtin_type        { $$ = $1; }
       | function_type     { $$ = $1; }

@@ -71,7 +71,7 @@ public:
   virtual ~i_type() {}
 };
 
-class type {
+class generic_type {
 private:
   std::unique_ptr<i_type> m_impl = nullptr;
 
@@ -80,27 +80,27 @@ private:
     if (!m_impl) throw std::runtime_error{"Bad type dereference"};
   }
 
-  type(std::unique_ptr<i_type> ptr) : m_impl{std::move(ptr)} {}
+  generic_type(std::unique_ptr<i_type> ptr) : m_impl{std::move(ptr)} {}
 
 public:
-  type() = default;
+  generic_type() = default;
 
-  template <typename T, typename... Ts> static type make(Ts &&...args) {
-    return type{std::unique_ptr<T>{new T{std::forward<Ts>(args)...}}};
+  template <typename T, typename... Ts> static generic_type make(Ts &&...args) {
+    return generic_type{std::unique_ptr<T>{new T{std::forward<Ts>(args)...}}};
   }
 
-  type(type &&) = default;
-  type &operator=(type &&) = default;
+  generic_type(generic_type &&) = default;
+  generic_type &operator=(generic_type &&) = default;
 
-  type(const type &rhs) : m_impl{rhs ? rhs.m_impl->clone() : nullptr} {}
-  type &operator=(const type &rhs) {
+  generic_type(const generic_type &rhs) : m_impl{rhs ? rhs.m_impl->clone() : nullptr} {}
+  generic_type &operator=(const generic_type &rhs) {
     if (this == &rhs) return *this;
-    type temp{rhs};
+    generic_type temp{rhs};
     swap(temp);
     return *this;
   }
 
-  ~type() = default;
+  ~generic_type() = default;
 
 public:
   i_type &base() & {
@@ -113,16 +113,16 @@ public:
     return *m_impl;
   }
 
-  friend bool operator==(const type &lhs, const type &rhs) { return lhs.base().is_equal(rhs.base()); }
-  friend bool operator!=(const type &lhs, const type &rhs) { return !(lhs == rhs); }
+  friend bool operator==(const generic_type &lhs, const generic_type &rhs) { return lhs.base().is_equal(rhs.base()); }
+  friend bool operator!=(const generic_type &lhs, const generic_type &rhs) { return !(lhs == rhs); }
 
-  friend bool operator==(const type &lhs, const i_type &rhs) { return lhs.base().is_equal(rhs); }
-  friend bool operator==(const i_type &lhs, const type &rhs) { return rhs.base().is_equal(lhs); }
-  friend bool operator!=(const type &lhs, const i_type &rhs) { return !(lhs == rhs); }
-  friend bool operator!=(const i_type &lhs, const type &rhs) { return !(lhs == rhs); }
+  friend bool operator==(const generic_type &lhs, const i_type &rhs) { return lhs.base().is_equal(rhs); }
+  friend bool operator==(const i_type &lhs, const generic_type &rhs) { return rhs.base().is_equal(lhs); }
+  friend bool operator!=(const generic_type &lhs, const i_type &rhs) { return !(lhs == rhs); }
+  friend bool operator!=(const i_type &lhs, const generic_type &rhs) { return !(lhs == rhs); }
 
   std::string to_string() const { return base().to_string(); }
-  void swap(type &rhs) { std::swap(*this, rhs); }
+  void swap(generic_type &rhs) { std::swap(*this, rhs); }
   operator bool() const { return m_impl.get(); }
 };
 
@@ -133,13 +133,13 @@ private:
   EZVIS_VISITABLE();
 
 public:
-  static const type &type_int() {
-    static const type obj = type::make<type_builtin>(builtin_type_class::E_BUILTIN_INT);
+  static const generic_type &type_int() {
+    static const generic_type obj = generic_type::make<type_builtin>(builtin_type_class::E_BUILTIN_INT);
     return obj;
   }
 
-  static const type &type_void() {
-    static const type obj = type::make<type_builtin>(builtin_type_class::E_BUILTIN_VOID);
+  static const generic_type &type_void() {
+    static const generic_type obj = generic_type::make<type_builtin>(builtin_type_class::E_BUILTIN_VOID);
     return obj;
   }
 
@@ -155,14 +155,14 @@ public:
   unique_type clone() const override { return std::make_unique<type_builtin>(*this); }
 };
 
-class type_composite_function : public i_type, private std::vector<type> {
+class type_composite_function : public i_type, private std::vector<generic_type> {
 public:
-  type m_return_type;
+  generic_type m_return_type;
 
   EZVIS_VISITABLE();
 
 public:
-  type_composite_function(std::vector<type> arg_types, type return_type)
+  type_composite_function(std::vector<generic_type> arg_types, generic_type return_type)
       : i_type{type_class::E_COMPOSITE_FUNCTION}, vector{std::move(arg_types)}, m_return_type{return_type} {}
 
   bool is_equal(const i_type &rhs) const override {
@@ -174,7 +174,7 @@ public:
     );
   }
 
-  void set_argument_types(const std::vector<type> &arg_types) {
+  void set_argument_types(const std::vector<generic_type> &arg_types) {
     vector::clear();
     for (auto &&arg : arg_types) {
       vector::push_back(arg);
@@ -191,13 +191,13 @@ public:
   }
 
   unique_type clone() const override {
-    std::vector<type> args;
+    std::vector<generic_type> args;
     std::copy(cbegin(), cend(), std::back_inserter(args));
     return std::make_unique<type_composite_function>(std::move(args), m_return_type);
   }
 
-  type &return_type() & { return m_return_type; }
-  const type &return_type() const & { return m_return_type; }
+  generic_type &return_type() & { return m_return_type; }
+  const generic_type &return_type() const & { return m_return_type; }
 
   using vector::cbegin;
   using vector::cend;

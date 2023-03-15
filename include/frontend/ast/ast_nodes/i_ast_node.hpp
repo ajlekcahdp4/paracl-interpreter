@@ -33,14 +33,14 @@ public:
 
 class i_expression : public i_ast_node {
 public:
-  types::type m_type;
+  types::generic_type type;
 
 public:
-  i_expression(location l = location{}, types::type type = {}) : i_ast_node{l}, m_type{type} {}
+  i_expression(location l = location{}, types::generic_type p_type = {}) : i_ast_node{l}, type{p_type} {}
 
   std::string type_str() const {
-    if (m_type) return "<undetermined>";
-    return m_type.to_string();
+    if (type) return "<undetermined>";
+    return type.to_string();
   }
 };
 
