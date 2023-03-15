@@ -13,6 +13,7 @@
 #include "i_ast_node.hpp"
 
 #include <cassert>
+#include <exception>
 #include <stdexcept>
 
 namespace paracl::frontend::ast {
@@ -52,7 +53,7 @@ constexpr std::string_view binary_operation_to_string(binary_operation op) {
   }
 
   assert(0); // We really shouldn't get here. If we do, then someone has broken the enum class intentionally.
-  throw std::invalid_argument{"Broken enum"};
+  std::terminate();
 }
 
 class binary_expression final : public i_expression {

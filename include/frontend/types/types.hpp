@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <exception>
 #include <iterator>
 #include <memory>
 #include <sstream>
@@ -44,6 +45,7 @@ inline std::string builtin_type_to_string(builtin_type_class type_tag) {
   }
 
   assert(0 && "Broken builtin_type_class enum");
+  std::terminate();
 }
 
 class i_type;

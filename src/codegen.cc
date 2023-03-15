@@ -13,6 +13,7 @@
 #include "frontend/ast/node_identifier.hpp"
 
 #include <cassert>
+#include <exception>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -91,6 +92,7 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
   case bin_op::E_BIN_OP_LE: emit_with_decrement(vm_instruction_set::cmp_le_desc); break;
   case bin_op::E_BIN_OP_AND: emit_with_decrement(vm_instruction_set::and_desc); break;
   case bin_op::E_BIN_OP_OR: emit_with_decrement(vm_instruction_set::or_desc); break;
+  default: std::terminate();
   }
 }
 
@@ -255,6 +257,8 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
     apply(ref.expr());
     m_builder.emit_operation(vm_instruction_set::not_desc);
     break;
+
+  default: std::terminate();
   }
   }
 }
