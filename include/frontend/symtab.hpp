@@ -68,27 +68,6 @@ public:
     return std::accumulate(vector::cbegin(), vector::cend(), 0, [](auto a, auto &&stab) { return a + stab->size(); });
   }
 
-  unsigned depth() const { return vector::size(); }
-
-  unsigned lookup_location(std::string_view name) const {
-    unsigned location = 0;
-    auto found = std::find_if(vector::cbegin(), vector::cend(), [&name, &location](auto &stab) {
-      auto loc = stab->location(name);
-      if (loc.has_value()) {
-        location += loc.value();
-        return true;
-      }
-      location += stab->size();
-      return false;
-    });
-
-    if (found == vector::cend()) {
-      throw std::logic_error{"Trying to look up scope of a variable not present in symbol table"};
-    }
-
-    return location;
-  }
-
   unsigned lookup_scope(std::string_view name) const {
     auto found = std::find_if(vector::crbegin(), vector::crend(), [&name](auto &stab) { return stab->declared(name); });
     if (found == vector::crend()) {

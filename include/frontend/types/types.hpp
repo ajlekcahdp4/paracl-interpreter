@@ -183,11 +183,7 @@ public:
 
   std::string to_string() const override {
     std::vector<std::string> arg_types_str;
-
-    for (const auto &v : *this) {
-      arg_types_str.push_back(v.to_string());
-    }
-
+    std::transform(cbegin(), cend(), std::back_inserter(arg_types_str), [](auto &&elem) { return elem.to_string(); });
     return fmt::format(
         "({}) func({})", m_return_type ? m_return_type.to_string() : "undetermined", fmt::join(arg_types_str, ", ")
     );
@@ -196,11 +192,7 @@ public:
 
   unique_type clone() const override {
     std::vector<type> args;
-
-    for (const auto &v : *this) {
-      args.push_back(v);
-    }
-
+    std::copy(cbegin(), cend(), std::back_inserter(args));
     return std::make_unique<type_composite_function>(std::move(args), m_return_type);
   }
 
