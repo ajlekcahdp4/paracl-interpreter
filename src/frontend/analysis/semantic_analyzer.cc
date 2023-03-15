@@ -252,7 +252,7 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
 }
 
 void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) {
-  ref.m_type = types::type::make_type<types::type_composite_function>(ref.definition().m_type);
+  ref.m_type = types::type::make<types::type_composite_function>(ref.definition().m_type);
 }
 
 void semantic_analyzer::analyze_node(ast::function_call &ref) {

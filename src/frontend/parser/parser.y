@@ -294,7 +294,7 @@ function_call:    IDENTIFIER LPAREN param_list_or_empty RPAREN { $$ = driver.mak
 builtin_type:     INT       { $$ = types::type_builtin::type_int(); }
                   | VOID    { $$ = types::type_builtin::type_void(); }
 
-function_type:    type FUNC LPAREN type_list_or_empty RPAREN { $$ = types::type::make_type<types::type_composite_function>(std::move($4), $1); }
+function_type:    type FUNC LPAREN type_list_or_empty RPAREN { $$ = types::type::make<types::type_composite_function>(std::move($4), $1); }
 
 type: builtin_type        { $$ = $1; }
       | function_type     { $$ = $1; }

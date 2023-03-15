@@ -75,7 +75,7 @@ private:
 
 private:
   void check_impl() const {
-    if (m_impl) throw std::runtime_error{"Bad type dereference"};
+    if (!m_impl) throw std::runtime_error{"Bad type dereference"};
   }
 
   type(std::unique_ptr<i_type> ptr) : m_impl{std::move(ptr)} {}
@@ -83,7 +83,7 @@ private:
 public:
   type() = default;
 
-  template <typename T, typename... Ts> static type make_type(Ts &&...args) {
+  template <typename T, typename... Ts> static type make(Ts &&...args) {
     return type{std::unique_ptr<T>{new T{std::forward<Ts>(args)...}}};
   }
 
@@ -132,12 +132,12 @@ private:
 
 public:
   static const type &type_int() {
-    static const type obj = type::make_type<type_builtin>(builtin_type_class::E_BUILTIN_INT);
+    static const type obj = type::make<type_builtin>(builtin_type_class::E_BUILTIN_INT);
     return obj;
   }
 
   static const type &type_void() {
-    static const type obj = type::make_type<type_builtin>(builtin_type_class::E_BUILTIN_VOID);
+    static const type obj = type::make<type_builtin>(builtin_type_class::E_BUILTIN_VOID);
     return obj;
   }
 
