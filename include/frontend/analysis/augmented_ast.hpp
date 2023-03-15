@@ -10,14 +10,15 @@
 
 #pragma once
 
-#include "function_table.hpp"
-#include "usegraph.hpp"
-
 #include "frontend/ast/ast_container.hpp"
+#include "function_table.hpp"
+#include "graphs/directed_graph.hpp"
 
 #include <unordered_set>
 
 namespace paracl::frontend {
+
+using usegraph = graphs::basic_directed_graph<std::string, ast::function_definition *, void>;
 
 struct functions_analytics final {
   named_function_table m_named;

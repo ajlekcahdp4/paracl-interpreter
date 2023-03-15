@@ -116,7 +116,7 @@ public:
     auto &&scheduled = graphs::recursive_topo_sort(m_functions.m_usegraph);
     // Note the order of analyze(....) && valid to prevent short-circuiting to check all functions.
     for (auto &&function : scheduled) {
-      auto *def = function.m_definition;
+      auto *def = function.attr;
       if (!def) continue;
       if (m_functions.m_recursions.contains(def))
         valid = valid && m_semantic_analyzer.analyze(ast, m_functions, *def, errors, false, true);

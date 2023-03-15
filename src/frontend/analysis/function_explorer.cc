@@ -64,7 +64,7 @@ void function_explorer::explore(ast::function_call &ref) {
   if (!m_function_stack.empty()) {
     auto &&curr_func = m_function_stack.back();
     // Do not create recursive loops. These will get handled separately.
-    if (curr_func.m_name != ref.name()) m_analytics->m_usegraph.insert(curr_func, {std::string{ref.name()}, found});
+    if (curr_func.key != ref.name()) m_analytics->m_usegraph.insert(curr_func);
     else m_analytics->m_recursions.insert(found);
   } else {
     m_analytics->m_usegraph.insert({std::string{ref.name()}, found});
