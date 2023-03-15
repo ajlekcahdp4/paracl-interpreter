@@ -103,6 +103,7 @@ void codegen_visitor::generate(ast::statement_block &ref) {
   auto n_symbols = ref.symbol_table()->size();
 
   for (unsigned i = 0; i < n_symbols; ++i) {
+    // no need to increment there cause it is already done in begin_scope
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
 
@@ -189,7 +190,8 @@ void codegen_visitor::generate(ast::if_statement &ref) {
   m_symtab_stack.begin_scope(ref.control_block_symtab());
 
   for (unsigned i = 0; i < ref.control_block_symtab()->size(); ++i) {
-    emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
+    // no need to increment there cause it is already done in begin_scope
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
 
   if (!ref.else_block()) {
@@ -209,6 +211,7 @@ void codegen_visitor::generate(ast::while_statement &ref) {
   m_symtab_stack.begin_scope(ref.symbol_table());
 
   for (unsigned i = 0; i < ref.symbol_table()->size(); ++i) {
+    // no need to increment there cause it is already done in begin_scope
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
 

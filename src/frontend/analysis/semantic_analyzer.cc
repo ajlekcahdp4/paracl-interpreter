@@ -122,7 +122,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
   for (auto &&statement : ref) {
     assert(statement);
     apply(*statement);
-    if (i == size - 1) {
+    if ((i == size - 1) && !m_in_void_block) {
       set_state(semantic_analysis_state::E_RVALUE);
       auto type = ezvis::visit_tuple<types::shared_type, expressions_and_base>(
           paracl::utils::visitors{
@@ -135,11 +135,11 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
     ++i;
   }
 
-  if (!m_return_statements.empty()) {
+  if (!m_return_statements.empty() && !m_in_void_block) {
     check_return_types_matches(ref);
   }
 
-  if (!is_rvalue && !ref.is_type_set()) ref.set_type(m_types->m_void);
+  if (m_in_void_block || (!is_rvalue && !ref.is_type_set())) ref.set_type(m_types->m_void);
 
   m_return_statements.clear();
   m_scopes.end_scope();
@@ -150,9 +150,12 @@ void semantic_analyzer::analyze_node(ast::if_statement &ref) {
   apply(ref.cond());
   expect_type_eq(ref.cond(), *m_types->m_int);
 
+  auto block_state = m_in_void_block;
+  m_in_void_block = true;
   m_scopes.begin_scope(ref.true_symtab());
   apply(ref.true_block());
   m_scopes.end_scope();
+  m_in_void_block = block_state;
 
   if (ref.else_block() != nullptr) {
     m_scopes.begin_scope(ref.else_symtab());
@@ -169,7 +172,10 @@ void semantic_analyzer::analyze_node(ast::while_statement &ref) {
   apply(ref.cond());
   expect_type_eq(ref.cond(), *m_types->m_int);
 
+  auto block_state = m_in_void_block;
+  m_in_void_block = true;
   apply(ref.block());
+  m_in_void_block = block_state;
   m_scopes.end_scope();
 }
 

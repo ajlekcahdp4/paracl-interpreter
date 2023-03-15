@@ -45,6 +45,8 @@ private:
   bool m_in_function_body = false;
   bool m_first_recursive_traversal = false;
 
+  bool m_in_void_block = false;
+
   void set_state(semantic_analysis_state s) { current_state = s; }
   void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
 
