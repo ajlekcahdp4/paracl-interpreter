@@ -142,11 +142,11 @@ void codegen_visitor::generate(ast::statement_block &ref) {
     }
   }
 
-  // if (should_return) emit_with_decrement(vm_instruction_set::load_r0_desc);
+  if (should_return) emit_with_decrement(vm_instruction_set::load_r0_desc);
   for (uint32_t i = 0; i < n_symbols; ++i) {
     emit_pop();
   }
-  // if (should_return) emit_with_increment(vm_instruction_set::store_r0_desc);
+  if (should_return) emit_with_increment(vm_instruction_set::store_r0_desc);
 
   m_symtab_stack.end_scope();
 }

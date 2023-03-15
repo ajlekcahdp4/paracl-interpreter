@@ -35,7 +35,7 @@ namespace paracl::codegen {
 class codegen_stack_frame {
 private:
   struct stack_block {
-    unsigned m_top = 0;
+    int m_top = -1;
     std::unordered_map<std::string, unsigned> m_map;
   };
 
@@ -43,7 +43,7 @@ private:
 
 public:
   void begin_scope() {
-    auto block = stack_block{size()};
+    auto block = stack_block{size() > 0 ? static_cast<int>(size()) : 0};
     m_blocks.push_back(block);
   }
 
@@ -161,7 +161,7 @@ private:
 
   // clang-format off
   void increment_stack() { m_symtab_stack.push_dummy(); }
-  void decrement_stack() { assert(m_symtab_stack.size() > 0); m_symtab_stack.pop_dummy(); }
+  void decrement_stack() { assert(m_symtab_stack.size() >= 0); m_symtab_stack.pop_dummy(); }
   // clang-format on
 
 private:
