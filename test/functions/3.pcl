@@ -1,3 +1,0 @@
-func(n) : b { return 1; };
-
-print b(3);

@@ -121,8 +121,9 @@ void codegen_visitor::generate(ast::statement_block &ref) {
           std::find(ast_expression_types.begin(), ast_expression_types.end(), node_type) != ast_expression_types.end();
       bool is_assignment = (node_type == frontend::ast::ast_node_type::E_ASSIGNMENT_STATEMENT);
       bool is_statement_block = (node_type == frontend::ast::ast_node_type::E_STATEMENT_BLOCK);
+      bool is_return = (node_type == frontend::ast::ast_node_type::E_RETURN_STATEMENT);
       bool is_last_iteration = start == last;
-      bool pop_unused_result = (!is_last_iteration || !should_return) && is_raw_expression;
+      bool pop_unused_result = (!is_last_iteration || !should_return) && is_raw_expression && !is_return;
 
       if (is_assignment && pop_unused_result) {
         set_currently_statement();
@@ -141,16 +142,17 @@ void codegen_visitor::generate(ast::statement_block &ref) {
           emit_pop();
         }
       }
+      if (is_last_iteration && should_return && !is_return && is_raw_expression)
+        emit_with_decrement(vm_instruction_set::load_r0_desc);
     }
   }
 
-  if (should_return) emit_with_decrement(vm_instruction_set::load_r0_desc);
   for (unsigned i = 0; i < n_symbols; ++i) {
     emit_pop();
   }
-  if (should_return) emit_with_increment(vm_instruction_set::store_r0_desc);
 
   m_symtab_stack.end_scope();
+  if (should_return) emit_with_increment(vm_instruction_set::store_r0_desc);
 }
 
 void codegen_visitor::visit_if_no_else(ast::if_statement &ref) {
@@ -267,16 +269,21 @@ void codegen_visitor::generate(ast::function_call &ref) {
   bool is_return;
   if (ref.type != frontend::types::type_builtin::type_void()) {
     is_return = true;
-    auto index = lookup_or_insert_constant(0);
-    emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, index});
+    // auto index = lookup_or_insert_constant(0);
+    // emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, index});
   }
 
   const auto const_index = current_constant_index();
   m_return_address_constants.push_back({const_index, 0}); // Dummy address
   const auto ret_addr_index = m_return_address_constants.size() - 1;
-  emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
 
-  m_builder.emit_operation(encoded_instruction{vm_instruction_set::setup_call_desc});
+  m_symtab_stack.begin_scope();
+  emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, const_index}
+  ); // scope to isolate IP and SP
+
+  emit_with_increment(encoded_instruction{vm_instruction_set::setup_call_desc}
+  ); // for scope to be aligned with arguments positions
+  m_symtab_stack.begin_scope();
   auto &&n_args = ref.size();
   for (const auto &e : ref) {
     assert(e);
@@ -288,7 +295,7 @@ void codegen_visitor::generate(ast::function_call &ref) {
     auto relocate_index = m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_desc});
     m_relocations_function_calls.push_back({relocate_index, ref.m_def});
   } else {
-    int total_depth = m_symtab_stack.size() + 2 + (is_return ? 1 : 0);
+    int total_depth = m_symtab_stack.size() - 1 + (is_return ? 1 : 0);
     int index = m_symtab_stack.lookup_location(std::string{ref.name()});
     int rel_pos = index - total_depth;
 
@@ -297,11 +304,15 @@ void codegen_visitor::generate(ast::function_call &ref) {
   }
 
   m_return_address_constants.at(ret_addr_index).m_address = m_builder.current_loc();
+  m_symtab_stack.end_scope();
+  m_symtab_stack.end_scope();
+  if (is_return) emit_with_increment(encoded_instruction{vm_instruction_set::store_r0_desc});
 }
 
 void codegen_visitor::generate(frontend::ast::return_statement &ref) {
   if (!ref.empty()) {
     apply(ref.expr());
+    emit_with_decrement(vm_instruction_set::load_r0_desc);
   }
 
   for (unsigned i = 0; i < m_symtab_stack.size(); ++i) {
@@ -309,6 +320,8 @@ void codegen_visitor::generate(frontend::ast::return_statement &ref) {
   }
 
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
+  decrement_stack();
+  decrement_stack();
 }
 
 void codegen_visitor::generate(frontend::ast::function_definition_to_ptr_conv &ref) {
@@ -332,6 +345,9 @@ unsigned codegen_visitor::generate(frontend::ast::function_definition &ref) {
   }
 
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
+  decrement_stack();
+  decrement_stack();
+
   m_symtab_stack.end_scope();
 
   return function_pos;

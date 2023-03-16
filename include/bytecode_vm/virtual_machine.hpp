@@ -87,6 +87,8 @@ constexpr auto return_instr = return_desc >> [](auto &&ctx, auto &&) {
   else {
     auto sp = ctx.pop();
     ctx.set_sp(sp);
+    auto ip = ctx.pop();
+    ctx.set_ip(ip);
   }
 };
 
