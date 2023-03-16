@@ -39,6 +39,8 @@ public:
   void add_attachment(error_attachment attach) { m_attachments.push_back(std::move(attach)); }
 };
 
+using error_queue_type = std::vector<error_report>;
+
 class error_reporter {
 private:
   const source_input *m_source;

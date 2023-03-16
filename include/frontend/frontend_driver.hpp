@@ -83,7 +83,6 @@ private:
   std::unique_ptr<std::istringstream> m_iss;
   std::unique_ptr<parser_driver> m_parsing_driver;
 
-  semantic_analyzer m_semantic_analyzer;
   functions_analytics m_functions;
 
 public:
@@ -102,11 +101,14 @@ public:
     auto &&ast = m_parsing_driver->ast();
     if (!ast.get_root_ptr()) return true;
 
+    error_queue_type errors;
     function_explorer explorer;
-    std::vector<paracl::frontend::error_report> errors;
 
     auto valid = explorer.explore(ast, m_functions, errors);
     auto scheduled = graphs::recursive_topo_sort(m_functions.m_usegraph);
+
+    semantic_analyzer analyzer{m_functions};
+    analyzer.set_error_queue(errors);
 
     // Note the order of analyze(....) && valid to prevent short-circuiting to check all functions.
     for (auto start = scheduled.rbegin(), finish = scheduled.rend(); start != finish; ++start) {
@@ -116,13 +118,9 @@ public:
       auto attr = m_functions.m_named.lookup(def->name.value());
       bool is_recursive = (attr ? attr->recursive : false);
 
-      if (is_recursive) {
-        valid = m_semantic_analyzer.analyze(ast, m_functions, *def, errors, false, true) && valid;
-      }
-
-      valid = m_semantic_analyzer.analyze(ast, m_functions, *def, errors, false) && valid;
+      valid = analyzer.analyze_func(*def, is_recursive) && valid;
     }
-    valid = m_semantic_analyzer.analyze(ast, m_functions, *ast.get_root_ptr(), errors, true) && valid;
+    valid = analyzer.analyze_main(*ast.get_root_ptr()) && valid;
 
     for (const auto &e : errors) {
       m_reporter.report_pretty_error(e);

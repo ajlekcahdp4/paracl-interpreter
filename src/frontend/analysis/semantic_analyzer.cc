@@ -110,7 +110,7 @@ void semantic_analyzer::check_return_types_matches(ast::function_definition &ref
   if (ret_type) {
     for (const auto &st : m_return_statements) {
       assert(st && "[Dedug]: Broken statement pointer");
-      if (st->type == ret_type) continue;
+      if (st->type && st->type == ret_type) continue;
       on_error(st->loc());
     }
   }
@@ -118,7 +118,7 @@ void semantic_analyzer::check_return_types_matches(ast::function_definition &ref
   else {
     for (const auto &st : m_return_statements) {
       assert(st && "[Dedug]: Broken statement pointer");
-      if (st->type == first_type) continue;
+      if (st->type && st->type == first_type) continue;
       on_error(st->loc());
     }
   }
@@ -317,6 +317,32 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
   };
 
   report_error(error);
+}
+
+bool semantic_analyzer::analyze_main(ast::i_ast_node &ref) {
+  // If we should visit the main scope, then we won't enter a function_definition node and set this flag ourselves.
+  // This flag prevents the analyzer to go lower than 1 layer of functions;
+  m_in_function_body = true;
+  m_return_statements.clear();
+
+  apply(ref);
+  for (const auto &st : m_return_statements) {
+    expect_type_eq(*st, types::type_builtin::type_void());
+  }
+
+  return m_error_queue->empty();
+}
+
+bool semantic_analyzer::analyze_func(ast::function_definition &ref, bool is_recursive) {
+  m_type_errors_allowed = is_recursive;
+  m_return_statements.clear();
+
+  analyze_node(ref);
+  if (is_recursive) {
+    analyze_func(ref, false);
+  }
+
+  return m_error_queue->empty();
 }
 
 void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) {

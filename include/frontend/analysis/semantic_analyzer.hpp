@@ -28,12 +28,14 @@ namespace paracl::frontend {
 class semantic_analyzer final : public ezvis::visitor_base<ast::i_ast_node, semantic_analyzer, void> {
 private:
   symtab_stack m_scopes;
-
-  ast::ast_container *m_ast;
   functions_analytics *m_functions;
 
-  std::vector<error_report> *m_error_queue;
+public:
+private:
+  error_queue_type *m_error_queue;
+  error_queue_type m_default_error_queue;
 
+private:
   // Vector of return statements in the current functions.
   std::vector<const ast::return_statement *> m_return_statements;
 
@@ -118,23 +120,16 @@ public:
 
   EZVIS_VISIT_INVOKER(analyze_node);
 
-  bool analyze(
-      ast::ast_container &ast, functions_analytics &functions, ast::i_ast_node &start,
-      std::vector<error_report> &errors, bool in_main = false, bool in_recursive = false
-  ) {
-    // Set pointers to resources
-    m_error_queue = &errors;
-    m_ast = &ast;
-    m_functions = &functions;
+  bool analyze_main(ast::i_ast_node &);
+  bool analyze_func(ast::function_definition &ref, bool is_recursive);
 
-    // If we should visit the main scope, then we won't enter a function_definition node and set this flag ourselves.
-    // This flag prevents the analyzer to go lower than 1 layer of functions;
-    m_in_function_body = in_main;
-    m_type_errors_allowed = in_recursive;
+public:
+  semantic_analyzer() : m_error_queue{&m_default_error_queue} {}
+  semantic_analyzer(functions_analytics &functions) { m_functions = &functions; } // Temporary
 
-    apply(start);
-    return errors.empty();
-  }
+  void set_error_queue(std::vector<error_report> &errors) { m_error_queue = &errors; }
+  error_queue_type &get_error_queue() & { return *m_error_queue; }
+  void set_functions(functions_analytics &functions) { m_functions = &functions; }
 };
 
 } // namespace paracl::frontend
