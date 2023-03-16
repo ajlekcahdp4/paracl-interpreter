@@ -19,27 +19,29 @@
 
 namespace paracl::frontend {
 
-class named_function_table final {
-  std::unordered_map<std::string, ast::function_definition *> m_table;
+class function_table final {
+public:
+  struct function_attributes {
+    ast::function_definition *definition = nullptr;
+    bool recursive = false;
+  };
+
+private:
+  std::unordered_map<std::string, function_attributes> m_table;
 
 public:
-  ast::function_definition *lookup(std::string_view name) {
-    auto found = m_table.find(std::string{name});
-    if (found == m_table.end()) return nullptr;
+  std::optional<function_attributes> lookup(const std::string &name) {
+    auto found = m_table.find(name);
+    if (found == m_table.end()) return std::nullopt;
     return found->second;
   }
 
-  const ast::function_definition *lookup(std::string_view name) const {
-    auto found = m_table.find(std::string{name});
-    if (found == m_table.end()) return nullptr;
-    return found->second;
-  }
-
-  std::pair<ast::function_definition *, bool>
-  define_function(std::string_view name, ast::function_definition *definition) {
-    auto [iter, inserted] = m_table.emplace(std::make_pair(std::string{name}, definition));
+  std::pair<function_attributes, bool> define_function(const std::string &name, function_attributes attributes) {
+    auto [iter, inserted] = m_table.emplace(std::make_pair(name, attributes));
     return std::make_pair(iter->second, inserted);
   }
+
+  void set_recursive(const std::string &name) { m_table.at(name).recursive = true; }
 
   auto begin() { return m_table.begin(); }
   auto end() { return m_table.end(); }

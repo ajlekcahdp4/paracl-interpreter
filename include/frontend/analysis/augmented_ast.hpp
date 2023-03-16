@@ -21,9 +21,13 @@ namespace paracl::frontend {
 using usegraph = graphs::basic_directed_graph<std::string, ast::function_definition *, void>;
 
 struct functions_analytics final {
-  named_function_table m_named;
+  function_table m_named;
   usegraph m_usegraph;
-  std::unordered_set<ast::function_definition *> m_recursions;
+};
+
+class augmented_ast final {
+  ast::ast_container m_ast;
+  function_table m_functions;
 };
 
 } // namespace paracl::frontend

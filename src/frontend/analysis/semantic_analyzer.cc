@@ -37,7 +37,10 @@ void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
 
   auto &right_type = ref.right().type;
   if (!right_type) {
-    report_error("Type of the right side of the assignment is unknown or can't be deduced", ref.right().loc());
+    if (!m_type_errors_allowed) {
+      report_error("Type of the right side of the assignment is unknown or can't be deduced", ref.right().loc());
+    }
+
     reset_state();
     return;
   }
@@ -257,6 +260,8 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
   auto attr = m_scopes.lookup_symbol(name);
 
   const auto report = [&](auto &&loc) {
+    if (m_type_errors_allowed) return;
+
     error_report error = {
         {fmt::format("Call parameter type/count mismatch", name), ref.loc()}
     };
@@ -265,9 +270,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
     report_error(error);
   };
 
-  const auto match_expr_type = [&](auto *expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, arg.type.base()); };
-  const auto match_types = [&](auto *expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, arg.base()); };
-
+  const auto match_types = [&](auto expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, arg.base()); };
   const auto check_func_parameter_list = [&](auto &&type, auto &&loc, auto match) {
     if (std::mismatch(ref.begin(), ref.end(), type.cbegin(), type.cend(), match).first != ref.end() ||
         ref.size() != type.size()) {
@@ -283,13 +286,13 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
           {fmt::format("Ambiguous call of `{}`", name), ref.loc()}
       };
       report.add_attachment({fmt::format("[Info] Have variable `{}`", name), attr->m_definition->loc()});
-      report.add_attachment({fmt::format("[Info] Have function `{}`", name), function_found->loc()});
+      report.add_attachment({fmt::format("[Info] Have function `{}`", name), function_found->definition->loc()});
       report_error(report);
       return;
     }
 
-    if (check_func_parameter_list(*function_found, function_found->loc(), match_expr_type)) {
-      ref.type = function_found->type.return_type();
+    if (check_func_parameter_list(function_found->definition->type, function_found->definition->loc(), match_types)) {
+      ref.type = function_found->definition->type.return_type();
     }
 
     return;

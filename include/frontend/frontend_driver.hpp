@@ -109,12 +109,18 @@ public:
     auto scheduled = graphs::recursive_topo_sort(m_functions.m_usegraph);
 
     // Note the order of analyze(....) && valid to prevent short-circuiting to check all functions.
-    for (auto &&function : scheduled) {
-      auto *def = function.attr;
+    for (auto start = scheduled.rbegin(), finish = scheduled.rend(); start != finish; ++start) {
+      auto *def = start->attr;
       if (!def) continue;
-      valid =
-          m_semantic_analyzer.analyze(ast, m_functions, *def, errors, false, m_functions.m_recursions.contains(def)) &&
-          valid;
+
+      auto attr = m_functions.m_named.lookup(def->name.value());
+      bool is_recursive = (attr ? attr->recursive : false);
+
+      if (is_recursive) {
+        valid = m_semantic_analyzer.analyze(ast, m_functions, *def, errors, false, true) && valid;
+      }
+
+      valid = m_semantic_analyzer.analyze(ast, m_functions, *def, errors, false) && valid;
     }
     valid = m_semantic_analyzer.analyze(ast, m_functions, *ast.get_root_ptr(), errors, true) && valid;
 

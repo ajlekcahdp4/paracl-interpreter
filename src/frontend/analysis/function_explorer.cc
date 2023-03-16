@@ -24,13 +24,13 @@ namespace paracl::frontend {
 
 void function_explorer::explore(ast::function_definition &ref) {
   auto &&name_v = ref.name.value();
-  auto [ptr, inserted] = m_analytics->m_named.define_function(name_v, &ref);
+  auto [attr, inserted] = m_analytics->m_named.define_function(name_v, {&ref});
 
   if (!inserted) {
     auto report = error_report{
         {fmt::format("Redefinition of function `{}`", name_v), ref.loc()}
     };
-    report.add_attachment(error_attachment{fmt::format("[Note] Previously declared here:"), ptr->loc()});
+    report.add_attachment(error_attachment{fmt::format("[Note] Previously declared here:"), attr.definition->loc()});
     report_error(report);
     return;
   }
@@ -43,16 +43,17 @@ void function_explorer::explore(ast::function_definition &ref) {
 }
 
 void function_explorer::explore(ast::function_call &ref) {
-  auto *found = m_analytics->m_named.lookup(ref.name());
-  ref.m_def = found;
+  auto found = m_analytics->m_named.lookup(std::string{ref.name()});
+  auto def = (found ? found->definition : nullptr);
+  ref.m_def = def;
 
   if (!m_function_stack.empty()) {
     auto &&curr_func = m_function_stack.back();
     // Do not create recursive loops. These will get handled separately.
     if (curr_func.key != ref.name()) m_analytics->m_usegraph.insert(curr_func);
-    else m_analytics->m_recursions.insert(found);
+    else m_analytics->m_named.set_recursive(std::string{ref.name()});
   } else {
-    m_analytics->m_usegraph.insert({std::string{ref.name()}, found});
+    m_analytics->m_usegraph.insert({std::string{ref.name()}, def});
   }
 
   for (auto *param : ref) {

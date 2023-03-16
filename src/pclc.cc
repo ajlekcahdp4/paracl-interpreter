@@ -25,7 +25,7 @@ constexpr int k_exit_error = 2;
 
 } // namespace
 
-int main(int argc, char *argv[]) try {
+int main(int argc, char *argv[]) {
   std::string input_file_name;
   bool dump_binary = false;
 
@@ -111,8 +111,4 @@ int main(int argc, char *argv[]) try {
     std::cerr << "Encountered an unrecoverable error: " << e.what() << "\nExiting...\n";
     return k_exit_error;
   }
-
-} catch (std::exception &e) {
-  std::cerr << "Error: " << e.what() << "\n";
-  return k_exit_error;
 }

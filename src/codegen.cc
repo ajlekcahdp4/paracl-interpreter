@@ -363,7 +363,7 @@ void codegen_visitor::generate_all(
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
 
   for (auto &func : functions.m_named) {
-    generate(*func.second);
+    generate(*func.second.definition);
   }
 
   for (const auto &reloc : m_relocations_function_calls) {

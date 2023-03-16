@@ -120,7 +120,7 @@ public:
 
   bool analyze(
       ast::ast_container &ast, functions_analytics &functions, ast::i_ast_node &start,
-      std::vector<error_report> &errors, bool in_main = false, bool first_recursive = false
+      std::vector<error_report> &errors, bool in_main = false, bool in_recursive = false
   ) {
     // Set pointers to resources
     m_error_queue = &errors;
@@ -130,6 +130,8 @@ public:
     // If we should visit the main scope, then we won't enter a function_definition node and set this flag ourselves.
     // This flag prevents the analyzer to go lower than 1 layer of functions;
     m_in_function_body = in_main;
+    m_type_errors_allowed = in_recursive;
+
     apply(start);
     return errors.empty();
   }
