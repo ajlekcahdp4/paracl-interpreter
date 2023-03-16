@@ -137,15 +137,18 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
     bool is_last = (start == std::prev(finish));
     if (!is_last) continue;
 
-    auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
-        paracl::utils::visitors{
-            [](ast::i_expression &expr) { return expr.type; },
-            [&](ast::i_ast_node &) { return type_builtin::type_void(); }},
-        st
-    );
-
-    ref.type = type;
+    if (!m_in_void_block) {
+      auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
+          paracl::utils::visitors{
+              [](ast::i_expression &expr) { return expr.type; },
+              [&](ast::i_ast_node &) { return type_builtin::type_void(); }},
+          st
+      );
+      ref.type = type;
+    }
   }
+
+  if (m_in_void_block) ref.type = type_builtin::type_void();
 
   end_scope();
 }
@@ -155,6 +158,8 @@ void semantic_analyzer::analyze_node(ast::if_statement &ref) {
   apply(ref.cond());
   expect_type_eq(ref.cond(), type_builtin::type_int().base());
 
+  auto block_state = m_in_void_block; // save previous block state
+  m_in_void_block = true;
   begin_scope(*ref.true_symtab());
   apply(ref.true_block());
   end_scope();
@@ -164,6 +169,7 @@ void semantic_analyzer::analyze_node(ast::if_statement &ref) {
     apply(*ref.else_block());
     end_scope();
   }
+  m_in_void_block = block_state; // set block state to its previous value
 
   end_scope();
 }
@@ -173,7 +179,11 @@ void semantic_analyzer::analyze_node(ast::while_statement &ref) {
 
   apply(ref.cond());
   expect_type_eq(ref.cond(), type_builtin::type_int());
+
+  auto block_state = m_in_void_block; // save previous block state
+  m_in_void_block = true;
   apply(ref.block());
+  m_in_void_block = block_state; // set block state to its previous value
 
   end_scope();
 }
@@ -226,7 +236,11 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
   // The only other possibility for the reference is statement block.
   auto &st_block = static_cast<ast::statement_block &>(body);
 
+  auto block_state = m_in_void_block; // save previous block state
+  m_in_void_block = true;
   apply(st_block);
+  m_in_void_block = block_state; // set block state to its previous value
+
   check_return_types_matches(ref);
   end_scope();
 

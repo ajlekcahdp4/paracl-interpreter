@@ -48,6 +48,9 @@ private:
   bool m_type_errors_allowed = false; // Flag used to indicate that a type mismatch is not an error.
   // Set this flag to true when doing a first pass on recurisive functions.
 
+  bool m_in_void_block = false; // Flag used to indicate that we are in guaranteed to be void block (e.g. 'while' body,
+                                // 'if' body or function body)
+
 private:
   void set_state(semantic_analysis_state s) { current_state = s; }
   void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
