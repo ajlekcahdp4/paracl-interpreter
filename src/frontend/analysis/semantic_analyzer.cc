@@ -371,8 +371,12 @@ void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) 
 
 void semantic_analyzer::analyze_node(ast::return_statement &ref) {
   m_return_statements.push_back(&ref);
-  if (!ref.empty()) apply(ref.expr());
-  ref.type = ref.expr().type;
+  if (!ref.empty()) {
+    apply(ref.expr());
+    ref.type = ref.expr().type;
+  } else {
+    ref.type = types::type_builtin::type_void();
+  }
 }
 
 } // namespace paracl::frontend

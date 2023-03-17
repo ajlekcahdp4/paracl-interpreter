@@ -83,11 +83,6 @@ private:
     return expect_type_eq(ref, rhs.base());
   }
 
-  bool expect_type_eq_cond(const ast::i_expression &ref, const types::i_type &rhs, bool cond) {
-    if (cond) return expect_type_eq(ref, rhs);
-    return true;
-  }
-
 private:
   void check_return_types_matches(ast::function_definition &ref);
   void begin_scope(symtab &stab) { m_scopes.begin_scope(&stab); }
