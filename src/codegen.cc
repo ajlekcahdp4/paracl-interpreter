@@ -277,13 +277,11 @@ void codegen_visitor::generate(ast::function_call &ref) {
   m_return_address_constants.push_back({const_index, 0}); // Dummy address
   const auto ret_addr_index = m_return_address_constants.size() - 1;
 
-  m_symtab_stack.begin_scope();
-  emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, const_index}
-  ); // scope to isolate IP and SP
+  m_symtab_stack.begin_scope(); // scope to isolate IP and SP
+  emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
 
-  emit_with_increment(encoded_instruction{vm_instruction_set::setup_call_desc}
-  ); // for scope to be aligned with arguments positions
-  m_symtab_stack.begin_scope();
+  emit_with_increment(encoded_instruction{vm_instruction_set::setup_call_desc});
+
   auto &&n_args = ref.size();
   for (const auto &e : ref) {
     assert(e);
@@ -295,7 +293,7 @@ void codegen_visitor::generate(ast::function_call &ref) {
     auto relocate_index = m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_desc});
     m_relocations_function_calls.push_back({relocate_index, ref.m_def});
   } else {
-    int total_depth = m_symtab_stack.size() - 1 + (is_return ? 1 : 0);
+    int total_depth = m_symtab_stack.size() - n_args;
     int index = m_symtab_stack.lookup_location(std::string{ref.name()});
     int rel_pos = index - total_depth;
 
@@ -305,7 +303,6 @@ void codegen_visitor::generate(ast::function_call &ref) {
 
   m_return_address_constants.at(ret_addr_index).m_address = m_builder.current_loc();
   m_symtab_stack.end_scope();
-  m_symtab_stack.end_scope();
   if (is_return) emit_with_increment(encoded_instruction{vm_instruction_set::store_r0_desc});
 }
 
@@ -313,6 +310,11 @@ void codegen_visitor::generate(frontend::ast::return_statement &ref) {
   if (!ref.empty()) {
     apply(ref.expr());
     emit_with_decrement(vm_instruction_set::load_r0_desc);
+  }
+
+  // clean up local variables
+  for (unsigned i = 0; i < m_symtab_stack.size(); ++i) {
+    emit_pop();
   }
 
   for (unsigned i = 0; i < m_symtab_stack.size(); ++i) {
