@@ -35,7 +35,7 @@ public:
 };
 
 using constant_pool_type = std::vector<int>;
-using binary_code_buffer_type = std::vector<uint8_t>;
+using binary_code_buffer_type = std::vector<char>;
 
 class chunk {
 private:
@@ -43,7 +43,7 @@ private:
   constant_pool_type m_constant_pool;
 
 public:
-  using value_type = uint8_t;
+  using value_type = binary_code_buffer_type::value_type;
 
   chunk() = default;
 
@@ -57,8 +57,6 @@ public:
   template <typename T> void push_value(T val) { utils::write_little_endian(val, std::back_inserter(m_binary_code)); };
 
   void push_back(value_type code) { m_binary_code.push_back(code); }
-  void push_back_signed(int8_t val) { push_back(std::bit_cast<value_type>(val)); }
-
   void set_constant_pool(constant_pool_type constants) { m_constant_pool = std::move(constants); }
 
   auto binary_begin() const { return m_binary_code.cbegin(); }
@@ -162,10 +160,15 @@ template <typename t_desc> struct context {
   friend class virtual_machine<t_desc>;
 
 private:
-  std::vector<execution_value_type> m_execution_stack;
-  binary_code_buffer_type::const_iterator m_ip, m_ip_end;
+  using execution_stack_type = std::vector<execution_value_type>;
 
+  execution_stack_type m_execution_stack;
   chunk m_program_code;
+
+  binary_code_buffer_type::const_iterator m_ip, m_ip_end;
+  execution_stack_type::size_type m_sp = 0;
+  execution_value_type m_r0 = 0;
+
   bool m_halted = false;
 
 public:
@@ -176,13 +179,25 @@ public:
     m_ip_end = m_program_code.binary_end();
   }
 
-  auto ip() const { return m_ip; }
-  auto &at_stack(uint32_t index) & { return m_execution_stack.at(index); }
+  unsigned ip() const { return std::distance(m_program_code.binary_begin(), m_ip); }
+  unsigned sp() const { return m_sp; }
+  execution_value_type r0() const { return m_r0; }
 
-  void set_ip(uint32_t new_ip) {
+  auto &at_stack(unsigned index) & {
+    if (index >= m_execution_stack.size()) throw std::out_of_range{"Out of range index in at_stack"};
+    return m_execution_stack.at(index);
+  }
+
+  void set_ip(unsigned new_ip) {
     m_ip = m_program_code.binary_begin();
     std::advance(m_ip, new_ip);
   }
+
+  void set_sp(unsigned new_sp) { m_sp = new_sp; }
+  void set_r0(execution_value_type new_r0) { m_r0 = new_r0; }
+
+  auto stack_size() const { return m_execution_stack.size(); }
+  bool stack_empty() const { return m_execution_stack.empty(); }
 
   auto pop() {
     if (m_execution_stack.size() == 0) throw vm_error{"Bad stack pop"};
@@ -192,11 +207,9 @@ public:
   }
 
   void push(execution_value_type val) { m_execution_stack.push_back(val); }
-
   void halt() { m_halted = true; }
   bool is_halted() const { return m_halted; }
-
-  auto constant(uint32_t id) const { return m_program_code.constant_at(id); }
+  auto constant(unsigned id) const { return m_program_code.constant_at(id); }
 };
 
 template <typename... t_instructions> struct instruction_set_description {
@@ -219,6 +232,7 @@ public:
   virtual_machine(t_desc desc) : instruction_set{desc}, m_execution_context{} {}
 
   void set_program_code(chunk ch) { m_execution_context = std::move(ch); }
+  bool is_halted() const { return m_execution_context.is_halted(); }
 
   void execute_instruction() {
     auto &ctx = m_execution_context;
@@ -247,12 +261,10 @@ public:
       std::cerr << "Warning: execution finished abnormally: stack size = " << ctx.m_execution_stack.size() << "\n";
     }
   }
-
-  bool is_halted() const { return m_execution_context.is_halted(); }
 };
 
-inline std::vector<uint8_t> read_raw_data(std::istream &is) {
-  return std::vector<uint8_t>{std::istreambuf_iterator<char>{is}, std::istreambuf_iterator<char>{}};
+inline std::vector<char> read_raw_data(std::istream &is) {
+  return std::vector<char>{std::istreambuf_iterator<char>{is}, std::istreambuf_iterator<char>{}};
 }
 
 } // namespace paracl::bytecode_vm::decl_vm

@@ -11,7 +11,9 @@
 #pragma once
 
 #include "ezvis/ezvis.hpp"
+#include "frontend/types/types.hpp"
 #include "location.hpp"
+#include "utils/misc.hpp"
 
 namespace paracl::frontend::ast {
 
@@ -19,30 +21,54 @@ class i_ast_node : public ezvis::visitable_base<i_ast_node> {
 protected:
   location m_loc;
 
+protected:
+  i_ast_node(location l = location{}) : m_loc{l} {}
+
 public:
   EZVIS_VISITABLE();
   location loc() const { return m_loc; }
 
-  i_ast_node() = default;
-  i_ast_node(location l) : m_loc{l} {}
   virtual ~i_ast_node() {}
 };
 
-class i_ast_node;
-class assignment_statement;
+class i_expression : public i_ast_node {
+public:
+  types::generic_type type;
+
+public:
+  i_expression(location l = location{}, types::generic_type p_type = {}) : i_ast_node{l}, type{p_type} {}
+
+  std::string type_str() const {
+    if (!type) return "<undetermined>";
+    return type.to_string();
+  }
+};
+
+// Expresssions
 class binary_expression;
 class constant_expression;
-class if_statement;
-class print_statement;
 class read_expression;
-class statement_block;
+class assignment_statement;
+class statement_block; // Is a statement as well as an expression, just like assignment
 class unary_expression;
 class variable_expression;
+class function_call;
+class function_definition_to_ptr_conv;
+
+// Statements
+class if_statement;
+class print_statement;
 class while_statement;
+class function_definition;
+class return_statement;
+
 class error_node;
 
-using tuple_ast_nodes = std::tuple<
-    assignment_statement, binary_expression, constant_expression, if_statement, print_statement, read_expression,
-    statement_block, unary_expression, variable_expression, while_statement, error_node>;
+using tuple_expression_nodes = std::tuple<
+    assignment_statement, binary_expression, constant_expression, read_expression, statement_block, unary_expression,
+    variable_expression, function_call, function_definition_to_ptr_conv, return_statement>;
+
+using tuple_all_nodes = utils::tuple_add_types_t<
+    tuple_expression_nodes, if_statement, print_statement, while_statement, error_node, function_definition>;
 
 } // namespace paracl::frontend::ast

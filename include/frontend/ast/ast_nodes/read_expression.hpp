@@ -14,10 +14,11 @@
 
 namespace paracl::frontend::ast {
 
-class read_expression final : public i_ast_node {
-public:
+class read_expression final : public i_expression {
   EZVIS_VISITABLE();
-  read_expression(location l) : i_ast_node{l} {}
+
+public:
+  read_expression(location l) : i_expression{l, types::type_builtin::type_int()} {}
 };
 
 } // namespace paracl::frontend::ast

@@ -13,6 +13,7 @@
 #include "i_ast_node.hpp"
 
 #include <cassert>
+#include <exception>
 #include <stdexcept>
 
 namespace paracl::frontend::ast {
@@ -52,24 +53,21 @@ constexpr std::string_view binary_operation_to_string(binary_operation op) {
   }
 
   assert(0); // We really shouldn't get here. If we do, then someone has broken the enum class intentionally.
-  throw std::invalid_argument{"Broken enum"};
+  std::terminate();
 }
 
-class binary_expression final : public i_ast_node {
+class binary_expression final : public i_expression {
   binary_operation m_operation_type;
-  i_ast_node *m_left, *m_right;
+  i_expression *m_left, *m_right;
 
-public:
   EZVIS_VISITABLE();
 
-  binary_expression(binary_operation op_type, i_ast_node &left, i_ast_node &right, location l)
-      : i_ast_node{l}, m_operation_type{op_type}, m_left{&left}, m_right{&right} {
-    assert(m_left);
-    assert(m_right);
-  }
+public:
+  binary_expression(binary_operation op_type, i_expression &left, i_expression &right, location l)
+      : i_expression{l}, m_operation_type{op_type}, m_left{&left}, m_right{&right} {}
 
-  i_ast_node &left() const { return *m_left; }
-  i_ast_node &right() const { return *m_right; }
+  i_expression &left() const { return *m_left; }
+  i_expression &right() const { return *m_right; }
 
   binary_operation op_type() const { return m_operation_type; }
 };

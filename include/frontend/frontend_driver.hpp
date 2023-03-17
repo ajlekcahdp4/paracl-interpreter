@@ -1,9 +1,9 @@
 /*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
- * <tsimmerman.ss@phystech.edu>, wrote this file.  As long as you
- * retain this notice you can do whatever you want with this stuff. If we meet
- * some day, and you think this stuff is worth it, you can buy me a beer in
+ * <tsimmerman.ss@phystech.edu>, <alex.rom23@mail.ru> wrote this file.  As long
+ * as you retain this notice you can do whatever you want with this stuff. If we
+ * meet some day, and you think this stuff is worth it, you can buy me a beer in
  * return.
  * ----------------------------------------------------------------------------
  */
@@ -11,17 +11,33 @@
 #pragma once
 
 #include "bison_paracl_parser.hpp"
-#include "error.hpp"
-#include "frontend/ast/ast_container.hpp"
-#include "scanner.hpp"
+#include "frontend/analysis/function_explorer.hpp"
+#include "frontend/analysis/semantic_analyzer.hpp"
 
+#include "frontend/ast/ast_container.hpp"
+#include "frontend/error.hpp"
+#include "frontend/scanner.hpp"
+#include "frontend/source.hpp"
+#include "frontend/types/types.hpp"
+
+#include <graphs/directed_graph.hpp>
+
+#include <algorithm>
 #include <cassert>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <iterator>
+#include <memory>
+#include <ranges>
+#include <sstream>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 namespace paracl::frontend {
 
-class frontend_driver final {
+class parser_driver {
 private:
   scanner m_scanner;
   parser m_parser;
@@ -42,12 +58,12 @@ private:
   }
 
 public:
-  frontend_driver() : m_scanner{*this}, m_parser{m_scanner, *this} {}
+  parser_driver(std::string *filename) : m_scanner{*this, filename}, m_parser{m_scanner, *this} {}
 
   bool parse() { return m_parser.parse(); }
   void switch_input_stream(std::istream *is) { m_scanner.switch_streams(is, nullptr); }
 
-  template <typename t_node_type, typename... t_args> t_node_type *make_ast_node(t_args &&...args) {
+  template <typename t_node_type, typename... t_args> auto *make_ast_node(t_args &&...args) {
     return &m_ast.make_node<t_node_type>(std::forward<t_args>(args)...);
   }
 
@@ -55,7 +71,64 @@ public:
     m_ast.set_root_ptr(ptr);
   }
 
-  ast::ast_container take_ast() && { return std::move(m_ast); }
-  ast::ast_container take_ast() & { return m_ast; }
+  ast::ast_container &ast() & { return m_ast; }
+  ast::i_ast_node *get_ast_root_ptr() & { return m_ast.get_root_ptr(); }
 };
+
+class frontend_driver {
+private:
+  source_input m_source;
+  error_reporter m_reporter;
+
+  std::unique_ptr<std::istringstream> m_iss;
+  std::unique_ptr<parser_driver> m_parsing_driver;
+
+  functions_analytics m_functions;
+
+public:
+  frontend_driver(std::filesystem::path input_path)
+      : m_source{input_path}, m_reporter{m_source}, m_iss{std::make_unique<std::istringstream>(m_source.iss())},
+        m_parsing_driver{std::make_unique<parser_driver>(m_source.filename())} {
+    m_parsing_driver->switch_input_stream(m_iss.get());
+  }
+
+  const ast::ast_container &ast() const & { return m_parsing_driver->ast(); }
+  const functions_analytics &functions() const & { return m_functions; }
+
+  void parse() { m_parsing_driver->parse(); }
+
+  bool analyze() {
+    auto &&ast = m_parsing_driver->ast();
+    if (!ast.get_root_ptr()) return true;
+
+    error_queue_type errors;
+    function_explorer explorer;
+
+    auto valid = explorer.explore(ast, m_functions, errors);
+    auto scheduled = graphs::recursive_topo_sort(m_functions.m_usegraph);
+
+    semantic_analyzer analyzer{m_functions};
+    analyzer.set_error_queue(errors);
+    analyzer.set_ast(ast);
+
+    // Note the order of analyze(....) && valid to prevent short-circuiting to check all functions.
+    for (auto start = scheduled.rbegin(), finish = scheduled.rend(); start != finish; ++start) {
+      auto *def = start->attr;
+      if (!def) continue;
+
+      auto attr = m_functions.m_named.lookup(def->name.value());
+      bool is_recursive = (attr ? attr->recursive : false);
+
+      valid = analyzer.analyze_func(*def, is_recursive) && valid;
+    }
+    valid = analyzer.analyze_main(*ast.get_root_ptr()) && valid;
+
+    for (const auto &e : errors) {
+      m_reporter.report_pretty_error(e);
+    }
+
+    return valid;
+  }
+};
+
 } // namespace paracl::frontend

@@ -11,10 +11,14 @@
 #pragma once
 
 #include "ast_copier.hpp"
+#include "frontend/types/types.hpp"
 
 #include <cassert>
 #include <memory>
+#include <string>
+#include <string_view>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -55,11 +59,9 @@ public:
   ast_container &operator=(ast_container &&other) = default;
   ~ast_container() = default;
 
-  void set_root_ptr(i_ast_node *ptr) {
-    assert(ptr);
-    m_root = ptr;
-  }
-  i_ast_node *get_root_ptr() const { return m_root; }
+  void set_root_ptr(i_ast_node *ptr) { m_root = ptr; }
+
+  i_ast_node *get_root_ptr() const & { return m_root; }
 
   template <typename t_node_type, typename... t_args>
   t_node_type &make_node(t_args &&...args)

@@ -10,43 +10,80 @@
 
 #pragma once
 
+#include "frontend/ast/ast_nodes/i_ast_node.hpp"
+#include "frontend/types/types.hpp"
+
 #include <algorithm>
 #include <iostream>
+#include <numeric>
 #include <optional>
 #include <string>
-#include <unordered_set>
+#include <unordered_map>
 #include <vector>
 
 namespace paracl::frontend {
 
 class symtab final {
+public:
+  struct attributes {
+    unsigned m_loc;
+    ast::variable_expression *m_definition;
+  };
+
 private:
-  std::unordered_set<std::string> m_table;
+  std::unordered_map<std::string, attributes> m_table;
 
 public:
-  void declare(std::string_view name) { m_table.emplace(name); }
+  void declare(std::string_view name, ast::variable_expression *def) {
+    auto size = m_table.size();
+    m_table.emplace(name, attributes{static_cast<unsigned>(size), def});
+  }
+
   bool declared(std::string_view name) const { return m_table.count(std::string{name}); }
+  std::optional<attributes> get_attributes(std::string_view name) const {
+    auto found = m_table.find(std::string{name});
+    if (found == m_table.end()) return std::nullopt;
+    return found->second;
+  }
+
+  // Deprecated, prefer attributes func
+  std::optional<unsigned> location(std::string_view name) const {
+    auto found = m_table.find(std::string{name});
+    if (found == m_table.end()) return std::nullopt;
+    return found->second.m_loc;
+  }
 
   auto begin() const { return m_table.begin(); }
   auto end() const { return m_table.end(); }
   auto size() const { return m_table.size(); }
 };
 
-class symtab_stack final {
-private:
-  std::vector<symtab *> m_stack;
+class symtab_stack final : private std::vector<symtab *> {
 
 public:
-  void begin_scope(symtab *stab) { m_stack.push_back(stab); }
-  void end_scope() { m_stack.pop_back(); }
+  void begin_scope(symtab *stab) { vector::push_back(stab); }
+  void end_scope() { vector::pop_back(); }
 
-  std::optional<unsigned> declared(std::string_view name) const {
-    auto found = std::find_if(m_stack.begin(), m_stack.end(), [&name](auto &stab) { return stab->declared(name); });
-    if (found == m_stack.end()) return std::nullopt;
-    return std::distance(m_stack.begin(), found);
+  unsigned size() const {
+    return std::accumulate(vector::cbegin(), vector::cend(), 0, [](auto a, auto &&stab) { return a + stab->size(); });
   }
 
-  void declare(std::string_view name) { m_stack.back()->declare(name); }
+  unsigned lookup_scope(std::string_view name) const {
+    auto found = std::find_if(vector::crbegin(), vector::crend(), [&name](auto &stab) { return stab->declared(name); });
+    if (found == vector::crend()) {
+      throw std::logic_error{"Trying to look up scope of a variable not present in symbol table"};
+    }
+    return std::distance(vector::crbegin(), found);
+  }
+
+  std::optional<symtab::attributes> lookup_symbol(std::string_view name) const {
+    auto found = std::find_if(vector::crbegin(), vector::crend(), [&name](auto &stab) { return stab->declared(name); });
+    if (found == vector::crend()) return std::nullopt;
+    return (*found)->get_attributes(name);
+  }
+
+  bool declared(std::string_view name) const { return (lookup_symbol(name) ? true : false); }
+  void declare(std::string_view name, ast::variable_expression *def) { vector::back()->declare(name, def); }
 };
 
 } // namespace paracl::frontend

@@ -18,20 +18,20 @@
 
 namespace paracl::frontend::ast {
 
-class statement_block final : public i_ast_node {
-private:
-  symtab m_symtab;
-  std::vector<i_ast_node *> m_statements;
-
+class statement_block : public i_expression, private std::vector<i_ast_node *> {
 public:
+  symtab stab;
+
+private:
   EZVIS_VISITABLE();
 
+public:
   statement_block() = default;
-  statement_block(std::vector<i_ast_node *> vec, location l) : i_ast_node{l}, m_statements{vec} {}
+  statement_block(std::vector<i_ast_node *> vec, location l) : i_expression{l}, vector{vec} {}
 
   void append_statement(i_ast_node &statement) {
-    const bool empty = m_statements.empty();
-    m_statements.push_back(&statement);
+    const bool empty = vector::empty();
+    vector::push_back(&statement);
 
     if (empty) {
       m_loc = statement.loc();
@@ -40,11 +40,15 @@ public:
     }
   }
 
-  auto size() const { return m_statements.size(); }
-  auto begin() const { return m_statements.begin(); }
-  auto end() const { return m_statements.end(); }
-
-  symtab *symbol_table() { return &m_symtab; }
+  using vector::back;
+  using vector::begin;
+  using vector::cbegin;
+  using vector::cend;
+  using vector::crbegin;
+  using vector::crend;
+  using vector::end;
+  using vector::front;
+  using vector::size;
 };
 
 } // namespace paracl::frontend::ast

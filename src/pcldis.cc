@@ -1,16 +1,16 @@
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <ostream>
-#include <string>
-
 #include "bytecode_vm/bytecode_builder.hpp"
 #include "bytecode_vm/decl_vm.hpp"
 #include "bytecode_vm/disassembly.hpp"
 #include "bytecode_vm/opcodes.hpp"
 #include "bytecode_vm/virtual_machine.hpp"
 
-#include "popl.hpp"
+#include "popl/popl.hpp"
+
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <ostream>
+#include <string>
 
 int main(int argc, char *argv[]) {
   std::string input_file_name;
@@ -49,8 +49,10 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler disas{
-      paracl::bytecode_vm::instruction_set::paracl_isa};
+  using paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler;
+  namespace instruction_set = paracl::bytecode_vm::instruction_set;
+
+  chunk_complete_disassembler disas{instruction_set::paracl_isa};
 
   try {
     disas(std::cout, ch.value());

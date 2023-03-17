@@ -1,16 +1,16 @@
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <ostream>
-#include <string>
-
 #include "bytecode_vm/bytecode_builder.hpp"
 #include "bytecode_vm/decl_vm.hpp"
 #include "bytecode_vm/disassembly.hpp"
 #include "bytecode_vm/opcodes.hpp"
 #include "bytecode_vm/virtual_machine.hpp"
 
-#include "popl.hpp"
+#include "popl/popl.hpp"
+
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <ostream>
+#include <string>
 
 int main(int argc, char *argv[]) {
   std::string input_file_name;

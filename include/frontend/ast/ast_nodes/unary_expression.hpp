@@ -14,7 +14,7 @@
 #include "location.hpp"
 
 #include <cassert>
-
+#include <exception>
 namespace paracl::frontend::ast {
 
 enum class unary_operation {
@@ -34,22 +34,22 @@ constexpr std::string_view unary_operation_to_string(unary_operation op) {
 
   assert(0); // We really shouldn't get here. If we do, then someone has broken
              // the enum class intentionally.
-  throw std::invalid_argument{"Broken enum"};
+  std::terminate();
 }
 
-class unary_expression final : public i_ast_node {
+class unary_expression final : public i_expression {
 private:
   unary_operation m_operation_type;
-  i_ast_node *m_expr;
+  i_expression *m_expr;
 
-public:
   EZVIS_VISITABLE();
 
-  unary_expression(unary_operation op_type, i_ast_node &p_expr, location l)
-      : i_ast_node{l}, m_operation_type{op_type}, m_expr{&p_expr} {}
+public:
+  unary_expression(unary_operation op_type, i_expression &p_expr, location l)
+      : i_expression{l}, m_operation_type{op_type}, m_expr{&p_expr} {}
 
   unary_operation op_type() const { return m_operation_type; }
-  i_ast_node &expr() const { return *m_expr; }
+  i_expression &expr() const { return *m_expr; }
 };
 
 } // namespace paracl::frontend::ast

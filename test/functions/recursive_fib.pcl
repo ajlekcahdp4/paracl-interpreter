@@ -1,0 +1,15 @@
+func(x) : rfib {
+  res = 0;
+
+  if (x == 0) return 0;
+  if (x == 1) return 1;
+
+  res = rfib(x - 1) + rfib(x - 2);
+  return res;
+}
+
+while (1) {
+  x = ?;
+  if (x < 0) return;
+  print rfib(x);
+}

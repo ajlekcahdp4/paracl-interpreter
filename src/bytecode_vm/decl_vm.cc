@@ -11,7 +11,7 @@
 namespace paracl::bytecode_vm::decl_vm {
 
 constexpr unsigned magic_bytes_length = 6;
-constexpr std::array<uint8_t, magic_bytes_length> header = {0xB, 0x0, 0x0, 0xB, 0xE, 0xC};
+constexpr std::array<char, magic_bytes_length> header = {0xB, 0x0, 0x0, 0xB, 0xE, 0xC};
 
 std::optional<chunk> read_chunk(std::istream &is) {
   auto raw_bytes = read_raw_data(is);
@@ -25,27 +25,27 @@ std::optional<chunk> read_chunk(std::istream &is) {
   std::advance(first, magic_bytes_length);
   auto last = raw_bytes.end();
 
-  auto [count_constants, after_const_count_it] = utils::read_little_endian<uint32_t>(first, last);
+  auto [count_constants, after_const_count_it] = utils::read_little_endian<unsigned>(first, last);
   if (!count_constants) {
     std::cerr << "Invalid header\n";
     return std::nullopt;
   }
 
-  auto [length_binary, after_binary_length_it] = utils::read_little_endian<uint32_t>(after_const_count_it, last);
+  auto [length_binary, after_binary_length_it] = utils::read_little_endian<unsigned>(after_const_count_it, last);
   if (!length_binary) {
     std::cerr << "Invalid header\n";
     return std::nullopt;
   }
 
   if (raw_bytes.size() !=
-      magic_bytes_length + sizeof(uint32_t) * 2 + count_constants.value() * sizeof(int) + length_binary.value()) {
+      magic_bytes_length + sizeof(unsigned) * 2 + count_constants.value() * sizeof(int) + length_binary.value()) {
     std::cerr << "File size does not match\n";
     return std::nullopt;
   }
 
   first = after_binary_length_it;
   constant_pool_type pool;
-  for (uint32_t i = 0; i < count_constants.value(); ++i) {
+  for (unsigned i = 0; i < count_constants.value(); ++i) {
     auto [constant, iter] = utils::read_little_endian<int>(first, last);
     first = iter;
     pool.push_back(constant.value());
@@ -61,18 +61,18 @@ std::optional<chunk> read_chunk(std::istream &is) {
 void write_chunk(std::ostream &os, const chunk &ch) {
   // Write header with magic bytes.
   os.write(reinterpret_cast<const char *>(header.data()), header.size());
-  std::array<uint8_t, sizeof(uint32_t)> size_buffer;
+  std::array<char, sizeof(unsigned)> size_buffer;
 
   // Write number of constants
-  utils::write_little_endian<uint32_t>(ch.constants_size(), size_buffer.begin());
+  utils::write_little_endian<unsigned>(ch.constants_size(), size_buffer.begin());
   os.write(reinterpret_cast<const char *>(size_buffer.data()), size_buffer.size());
 
   // Write length of binary code (in bytes)
-  utils::write_little_endian<uint32_t>(ch.binary_size(), size_buffer.begin());
+  utils::write_little_endian<unsigned>(ch.binary_size(), size_buffer.begin());
   os.write(reinterpret_cast<const char *>(size_buffer.data()), size_buffer.size());
 
   // Write constants
-  std::vector<uint8_t> raw_constants;
+  std::vector<char> raw_constants;
   raw_constants.reserve(ch.constants_size() * sizeof(int));
 
   for (auto start = ch.constants_begin(), finish = ch.constants_end(); start != finish; ++start) {

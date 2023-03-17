@@ -15,12 +15,13 @@
 namespace paracl::frontend::ast {
 
 class print_statement final : public i_ast_node {
-  i_ast_node *m_expr;
+  i_expression *m_expr;
+
+  EZVIS_VISITABLE();
 
 public:
-  EZVIS_VISITABLE();
-  print_statement(i_ast_node &p_expr, location l) : i_ast_node{l}, m_expr{&p_expr} {}
-  i_ast_node &expr() const { return *m_expr; }
+  print_statement(i_expression &p_expr, location l) : i_ast_node{l}, m_expr{&p_expr} {}
+  i_expression &expr() const { return *m_expr; }
 };
 
 } // namespace paracl::frontend::ast

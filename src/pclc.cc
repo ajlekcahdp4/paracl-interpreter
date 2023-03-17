@@ -1,9 +1,3 @@
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <ostream>
-#include <string>
-
 #include "bytecode_vm/bytecode_builder.hpp"
 #include "bytecode_vm/decl_vm.hpp"
 #include "bytecode_vm/disassembly.hpp"
@@ -14,11 +8,24 @@
 #include "frontend/ast/ast_copier.hpp"
 #include "frontend/dumper.hpp"
 #include "frontend/frontend_driver.hpp"
-#include "frontend/semantic_analyzer.hpp"
 
-#include "popl.hpp"
+#include "popl/popl.hpp"
 
-int main(int argc, char *argv[]) {
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <ostream>
+#include <string>
+
+namespace {
+
+constexpr int k_exit_success = 0;
+constexpr int k_exit_failure = 1;
+constexpr int k_exit_error = 2;
+
+} // namespace
+
+int main(int argc, char *argv[]) try {
   std::string input_file_name;
   bool dump_binary = false;
 
@@ -34,72 +41,65 @@ int main(int argc, char *argv[]) {
 
   if (help_option->is_set()) {
     std::cout << op << "\n";
-    return 0;
+    return k_exit_success;
   }
 
   if (!input_file_option->is_set()) {
     std::cerr << "File not specified\n";
-    return 1;
+    return k_exit_failure;
   }
 
   dump_binary = disas_option->is_set();
-
   input_file_name = input_file_option->value();
-  std::ifstream input_file;
-
-  std::ios_base::iostate exception_mask = input_file.exceptions() | std::ios::failbit;
-  input_file.exceptions(exception_mask);
-
-  try {
-    input_file.open(input_file_name, std::ios::binary);
-  } catch (std::exception &e) {
-    std::cerr << "Error opening file: " << e.what() << "\n";
-    return 1;
-  }
-
-  paracl::frontend::frontend_driver drv{};
-  drv.switch_input_stream(&input_file);
+  paracl::frontend::frontend_driver drv{input_file_name};
   drv.parse();
 
-  auto parse_tree = drv.take_ast();
+  auto &parse_tree = drv.ast();
+
   if (!parse_tree.get_root_ptr()) {
-    return 0;
+    return k_exit_success;
   }
+
+  auto valid = drv.analyze();
 
   if (ast_dump_option->is_set()) {
     paracl::frontend::ast::ast_dump(*parse_tree.get_root_ptr(), std::cout);
-    return 0;
+    return k_exit_success;
   }
 
-  paracl::frontend::semantic_analyzer analyzer;
-  if (!analyzer.analyze(*parse_tree.get_root_ptr())) {
-    return 1;
+  if (!valid) {
+    return k_exit_failure;
   }
 
-  auto ch = paracl::codegen::generate_code(*parse_tree.get_root_ptr());
+  using paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler;
+  namespace instruction_set = paracl::bytecode_vm::instruction_set;
+
+  paracl::codegen::codegen_visitor generator;
+
+  generator.generate_all(drv.ast(), drv.functions());
+  auto ch = generator.to_chunk();
 
   if (dump_binary) {
-    paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler disas{
-        paracl::bytecode_vm::instruction_set::paracl_isa};
+    chunk_complete_disassembler disas{instruction_set::paracl_isa};
     disas(std::cout, ch);
-    return 0;
+    return k_exit_success;
   }
 
   if (output_file_option->is_set()) {
     std::string output_file_name = output_file_option->value();
     std::ofstream output_file;
 
-    output_file.exceptions(exception_mask);
+    output_file.exceptions(output_file.exceptions() | std::ios::badbit | std::ios::failbit);
 
     try {
       output_file.open(output_file_name, std::ios::binary);
     } catch (std::exception &e) {
       std::cerr << "Error opening output file: " << e.what() << "\n";
-      return 1;
+      return k_exit_failure;
     }
 
     write_chunk(output_file, ch);
-    return 0;
+    return k_exit_success;
   }
 
   auto vm = paracl::bytecode_vm::create_paracl_vm();
@@ -109,6 +109,9 @@ int main(int argc, char *argv[]) {
     vm.execute(true);
   } catch (std::exception &e) {
     std::cerr << "Encountered an unrecoverable error: " << e.what() << "\nExiting...\n";
-    return 1;
+    return k_exit_error;
   }
+} catch (std::exception &e) {
+  std::cerr << "Error: " << e.what() << "\n";
+  return k_exit_error;
 }

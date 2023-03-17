@@ -2,3 +2,5 @@ build/
 **.vscode/
 **.cache/
 **.tmp*
+**/FlexLexer.h
+**/*.png
