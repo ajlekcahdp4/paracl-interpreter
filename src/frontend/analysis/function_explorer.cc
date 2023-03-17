@@ -35,25 +35,37 @@ void function_explorer::explore(ast::function_definition &ref) {
     return;
   }
 
-  m_function_stack.push_back({name_v, &ref});
-  m_analytics->m_usegraph.insert({std::string{name_v}, &ref});
+  if (!m_function_stack.empty()) {
+    m_analytics->m_usegraph.insert({name_v, &ref}, m_function_stack.back());
+  } else {
+    m_analytics->m_usegraph.insert({name_v, &ref});
+  }
 
+  m_function_stack.push_back({name_v, &ref});
   apply(ref.body());
   m_function_stack.pop_back();
 }
 
 void function_explorer::explore(ast::function_call &ref) {
+  auto name_v = std::string{ref.name()};
   auto found = m_analytics->m_named.lookup(std::string{ref.name()});
   auto def = (found ? found->definition : nullptr);
   ref.m_def = def;
 
-  if (!m_function_stack.empty()) {
-    auto &&curr_func = m_function_stack.back();
-    // Do not create recursive loops. These will get handled separately.
-    if (curr_func.key != ref.name()) m_analytics->m_usegraph.insert(curr_func);
-    else m_analytics->m_named.set_recursive(std::string{ref.name()});
-  } else {
-    m_analytics->m_usegraph.insert({std::string{ref.name()}, def});
+  if (found) {
+    if (!m_function_stack.empty()) {
+      auto &&curr_func = m_function_stack.back();
+      // Do not create recursive loops. These will get handled separately.
+      if (curr_func.key != ref.name()) {
+        m_analytics->m_usegraph.insert({name_v, def}, m_function_stack.back());
+      } else {
+        m_analytics->m_named.set_recursive(std::string{ref.name()});
+      }
+    }
+
+    else {
+      m_analytics->m_usegraph.insert({name_v, def});
+    }
   }
 
   for (auto *param : ref) {
@@ -71,7 +83,7 @@ void function_explorer::explore(const ast::function_definition_to_ptr_conv &ref)
   }
 
   if (!m_function_stack.empty()) {
-    m_analytics->m_usegraph.insert(m_function_stack.back(), {name.value(), &def});
+    m_analytics->m_usegraph.insert({name.value(), &def}, m_function_stack.back());
   } else {
     m_analytics->m_usegraph.insert({name.value(), &def});
   }

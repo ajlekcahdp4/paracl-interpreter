@@ -154,6 +154,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref, bool function_bo
           st
       );
 
+      if (!type) break;
       // Implicit return case
       bool is_implicit_return =
           function_body && m_return_statements.empty() && type != types::type_builtin::type_void();
