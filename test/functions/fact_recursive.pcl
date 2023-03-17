@@ -6,4 +6,4 @@ fact = func (x) : factorial {
   return b;
 }
 
-print fact (2);
+print fact (?);

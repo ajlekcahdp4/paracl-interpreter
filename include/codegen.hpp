@@ -90,11 +90,6 @@ public:
     return m_blocks.back().m_top;
   }
 
-  unsigned size(int rel_pos) {
-    if (m_blocks.empty()) throw std::out_of_range{"Out of range index in size"};
-    return m_blocks[m_blocks.size() + rel_pos - 1].m_top;
-  }
-
   void clear() { m_blocks.clear(); }
 };
 

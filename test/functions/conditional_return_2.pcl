@@ -1,0 +1,14 @@
+func (x) : gt5 {
+  if (x <= 5 )
+  {
+    zero = 0;
+    also_zero = 0;
+    one_hundred_percent_zero = zero * also_zero + 0;
+    return one_hundred_percent_zero;
+  }
+  one = 1;
+  return one;
+}
+
+print gt5(5);
+print gt5(6);

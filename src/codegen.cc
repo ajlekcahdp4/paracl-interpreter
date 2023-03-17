@@ -269,8 +269,6 @@ void codegen_visitor::generate(ast::function_call &ref) {
   bool is_return;
   if (ref.type != frontend::types::type_builtin::type_void()) {
     is_return = true;
-    // auto index = lookup_or_insert_constant(0);
-    // emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, index});
   }
 
   const auto const_index = current_constant_index();
@@ -313,11 +311,8 @@ void codegen_visitor::generate(frontend::ast::return_statement &ref) {
   }
 
   // clean up local variables
-  for (unsigned i = 0; i < m_symtab_stack.size(); ++i) {
-    emit_pop();
-  }
-
-  for (unsigned i = 0; i < m_symtab_stack.size(); ++i) {
+  auto local_var_n = m_symtab_stack.size();
+  for (unsigned i = 0; i < local_var_n; ++i) {
     emit_pop();
   }
 
