@@ -45,6 +45,12 @@ void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
     return;
   }
 
+  if (right_type == types::type_builtin::type_void()) {
+    report_error("Type of the right side of the assignment can't be `void`", ref.right().loc());
+    reset_state();
+    return;
+  }
+
   for (auto &v : ref) {
     bool declared = analyze_node(v);
     if (right_type && !declared && !v.type) {
