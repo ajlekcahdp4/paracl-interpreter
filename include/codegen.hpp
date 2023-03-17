@@ -63,7 +63,7 @@ public:
 
   void push_var(const std::string &name) {
     auto &back = m_blocks.back();
-    auto res = back.m_map.insert({name, back.m_top++});
+    [[maybe_unused]] auto res = back.m_map.insert({name, back.m_top++});
     assert(res.second && "Reinserting var with the same label");
   }
 
@@ -72,7 +72,7 @@ public:
   unsigned lookup_location(const std::string &name) const {
     unsigned loc = 0;
 
-    auto found = std::find_if(m_blocks.crbegin(), m_blocks.crend(), [&name, &loc](auto &block) {
+    [[maybe_unused]] auto found = std::find_if(m_blocks.crbegin(), m_blocks.crend(), [&name, &loc](auto &block) {
       auto it = block.m_map.find(name);
       if (it == block.m_map.end()) return false;
       loc = it->second;
