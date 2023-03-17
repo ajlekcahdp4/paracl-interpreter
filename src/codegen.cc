@@ -266,7 +266,7 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
 }
 
 void codegen_visitor::generate(ast::function_call &ref) {
-  bool is_return;
+  bool is_return = false;
   if (ref.type != frontend::types::type_builtin::type_void()) {
     is_return = true;
   }
