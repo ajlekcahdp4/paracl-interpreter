@@ -21,7 +21,7 @@ class return_statement final : public i_expression {
 
 public:
   return_statement(i_expression *p_expr, location l)
-      : i_expression{l, p_expr ? types::generic_type{} : types::type_builtin::type_void()}, m_expr{p_expr} {}
+      : i_expression{l, p_expr ? p_expr->type : types::type_builtin::type_void()}, m_expr{p_expr} {}
 
   bool empty() const { return !m_expr; }
   i_expression &expr() const {

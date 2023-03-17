@@ -29,6 +29,7 @@ class semantic_analyzer final : public ezvis::visitor_base<ast::i_ast_node, sema
 private:
   symtab_stack m_scopes;
   functions_analytics *m_functions;
+  ast::ast_container *m_ast;
 
 public:
 private:
@@ -108,7 +109,7 @@ public:
   void analyze_node(ast::if_statement &);
   void analyze_node(ast::print_statement &);
 
-  void analyze_node(ast::statement_block &);
+  void analyze_node(ast::statement_block &, bool function_body = false);
   void analyze_node(ast::unary_expression &);
   bool analyze_node(ast::variable_expression &);
   void analyze_node(ast::while_statement &);
@@ -130,6 +131,7 @@ public:
   void set_error_queue(std::vector<error_report> &errors) { m_error_queue = &errors; }
   error_queue_type &get_error_queue() & { return *m_error_queue; }
   void set_functions(functions_analytics &functions) { m_functions = &functions; }
+  void set_ast(ast::ast_container &ast) { m_ast = &ast; }
 };
 
 } // namespace paracl::frontend

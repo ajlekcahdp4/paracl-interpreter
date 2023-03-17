@@ -133,11 +133,11 @@ void semantic_analyzer::check_return_types_matches(ast::function_definition &ref
 }
 
 using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
-void semantic_analyzer::analyze_node(ast::statement_block &ref) {
+void semantic_analyzer::analyze_node(ast::statement_block &ref, bool function_body) {
   begin_scope(ref.stab);
 
   ref.type = types::type_builtin::type_void();
-  for (auto start = ref.cbegin(), finish = ref.cend(); start != finish; ++start) {
+  for (auto start = ref.begin(), finish = ref.end(); start != finish; ++start) {
     auto ptr = *start;
     assert(ptr && "[Debug]: broken statement pointer in a block");
     auto &st = *ptr;
@@ -153,11 +153,25 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
               [&](ast::i_ast_node &) { return type_builtin::type_void(); }},
           st
       );
+
+      // Implicit return case
+      bool is_implicit_return =
+          function_body && m_return_statements.empty() && type != types::type_builtin::type_void();
+      if (is_implicit_return) {
+        assert(m_ast && "[Debug]: nullptr in m_ast");
+
+        auto expr_ptr = ezvis::visit_tuple<ast::i_expression *, ast::tuple_expression_nodes>(
+            [](ast::i_expression &expr) { return &expr; }, st
+        );
+        auto &ret = m_ast->make_node<ast::return_statement>(expr_ptr, expr_ptr->loc());
+
+        m_return_statements.push_back(&ret);
+        *start = &ret;
+      }
+
       ref.type = type;
     }
   }
-
-  if (m_in_void_block) ref.type = type_builtin::type_void();
 
   end_scope();
 }
@@ -246,8 +260,8 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
   auto &st_block = static_cast<ast::statement_block &>(body);
 
   auto block_state = m_in_void_block; // save previous block state
-  m_in_void_block = true;
-  apply(st_block);
+  m_in_void_block = false;            // To deduce type
+  analyze_node(st_block, true);
   m_in_void_block = block_state; // set block state to its previous value
 
   check_return_types_matches(ref);

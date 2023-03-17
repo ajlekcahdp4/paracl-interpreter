@@ -109,6 +109,7 @@ public:
 
     semantic_analyzer analyzer{m_functions};
     analyzer.set_error_queue(errors);
+    analyzer.set_ast(ast);
 
     // Note the order of analyze(....) && valid to prevent short-circuiting to check all functions.
     for (auto start = scheduled.rbegin(), finish = scheduled.rend(); start != finish; ++start) {
