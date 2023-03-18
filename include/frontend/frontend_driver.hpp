@@ -98,7 +98,7 @@ public:
   void parse() { m_parsing_driver->parse(); }
 
   bool analyze() {
-    auto &&ast = m_parsing_driver->ast();
+    auto &ast = m_parsing_driver->ast();
     if (!ast.get_root_ptr()) return true;
 
     error_queue_type errors;
@@ -120,17 +120,17 @@ public:
 
         auto attr = m_functions.m_named.lookup(def->name.value());
         bool is_recursive = (attr ? attr->recursive : false);
-        valid = analyzer.analyze_func(*def, is_recursive) && valid;
+        analyzer.analyze_func(*def, is_recursive);
       }
 
-      valid = analyzer.analyze_main(*ast.get_root_ptr()) && valid;
+      analyzer.analyze_main(*ast.get_root_ptr());
     }
 
     for (const auto &e : errors) {
       m_reporter.report_pretty_error(e);
     }
 
-    return valid;
+    return errors.empty();
   }
 };
 
