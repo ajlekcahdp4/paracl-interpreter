@@ -46,7 +46,10 @@ void codegen_visitor::generate(ast::variable_expression &ref) {
 
 void codegen_visitor::generate(ast::print_statement &ref) {
   reset_currently_statement();
+  auto block_state = m_in_void_block;
+  m_in_void_block = false;
   apply(ref.expr());
+  m_in_void_block = block_state;
   emit_with_decrement(vm_instruction_set::print_desc);
 }
 
@@ -73,11 +76,16 @@ void codegen_visitor::generate(ast::assignment_statement &ref) {
 }
 
 void codegen_visitor::generate(ast::binary_expression &ref) {
+  auto block_state = m_in_void_block;
+  m_in_void_block = false;
+
   reset_currently_statement();
   apply(ref.left());
 
   reset_currently_statement();
+
   apply(ref.right());
+  m_in_void_block = block_state;
 
   using bin_op = ast::binary_operation;
 
@@ -274,6 +282,9 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
   using unary_op = ast::unary_operation;
 
   reset_currently_statement();
+  auto block_state = m_in_void_block;
+  m_in_void_block = false;
+
   switch (ref.op_type()) {
   case unary_op::E_UN_OP_NEG: {
     emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
@@ -295,6 +306,7 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
   default: std::terminate();
   }
   }
+  m_in_void_block = block_state;
 }
 
 void codegen_visitor::generate(ast::function_call &ref) {

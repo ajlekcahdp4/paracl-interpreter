@@ -1,0 +1,4 @@
+a = {{{5;};};};
+b = {{return 1;};};
+print a;
+print b;
