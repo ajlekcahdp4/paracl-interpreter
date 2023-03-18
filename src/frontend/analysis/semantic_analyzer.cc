@@ -170,6 +170,8 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
       ref.type = type;
     }
   }
+  check_return_types_matches(ref.type, ref.loc());
+
   m_return_statements = old_returns;
 
   end_scope();
@@ -264,8 +266,6 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
   auto *old_returns = m_return_statements;
   m_return_statements = &st_block.return_statements;
   analyze_node(st_block);
-
-  check_return_types_matches(st_block.type, st_block.loc());
 
   ref.type.m_return_type = st_block.type;
   st_block.type = type_builtin::type_void();
