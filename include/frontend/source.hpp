@@ -43,7 +43,7 @@ private:
 
 public:
   source_input(const std::filesystem::path &input_path)
-      : m_filename{input_path}, m_file_source{utils::read_file(input_path)} {
+      : m_filename{input_path.string()}, m_file_source{utils::read_file(input_path)} {
     fill_lines();
   }
 
