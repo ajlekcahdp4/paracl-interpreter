@@ -21,6 +21,8 @@
 #include "frontend/symtab.hpp"
 #include "frontend/types/types.hpp"
 
+#include <fmt/format.h>
+
 #include <iostream>
 
 namespace paracl::frontend {
@@ -72,7 +74,17 @@ private:
 
     auto &&type = ref.type;
     if (!type || !(type == rhs)) {
-      report_error("Expression is not of type '" + rhs.to_string() + "'", ref.loc());
+
+      if (!type) {
+        report_error(fmt::format("Expression is not of expected type '{}'", rhs.to_string()), ref.loc());
+      }
+
+      else {
+        report_error(
+            fmt::format("Expression is of type '{}', expected '{}'", type.to_string(), rhs.to_string()), ref.loc()
+        );
+      }
+
       return false;
     }
 
