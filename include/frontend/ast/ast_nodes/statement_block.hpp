@@ -12,6 +12,7 @@
 
 #include "frontend/symtab.hpp"
 #include "i_ast_node.hpp"
+#include "return_statement.hpp"
 
 #include <cassert>
 #include <vector>
@@ -21,6 +22,7 @@ namespace paracl::frontend::ast {
 class statement_block : public i_expression, private std::vector<i_ast_node *> {
 public:
   symtab stab;
+  std::vector<const return_statement *> return_statements;
 
 private:
   EZVIS_VISITABLE();

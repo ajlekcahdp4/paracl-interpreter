@@ -3,8 +3,8 @@ func (x) : gt5 {
   {
     zero = 0;
     also_zero = 0;
-    one_hundred_percent_zero = zero * also_zero + 0;
-    return one_hundred_percent_zero;
+    one_hundered_percent_zero = zero * also_zero + 0;
+    return zero;
   }
   one = 1;
   return one;

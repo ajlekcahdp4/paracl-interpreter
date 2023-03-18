@@ -21,6 +21,8 @@
 #include "frontend/symtab.hpp"
 #include "frontend/types/types.hpp"
 
+#include <fmt/format.h>
+
 #include <iostream>
 
 namespace paracl::frontend {
@@ -38,7 +40,7 @@ private:
 
 private:
   // Vector of return statements in the current functions.
-  std::vector<const ast::return_statement *> m_return_statements;
+  std::vector<const ast::return_statement *> *m_return_statements = nullptr;
 
 private:
   enum class semantic_analysis_state {
@@ -72,7 +74,17 @@ private:
 
     auto &&type = ref.type;
     if (!type || !(type == rhs)) {
-      report_error("Expression is not of type '" + rhs.to_string() + "'", ref.loc());
+
+      if (!type) {
+        report_error(fmt::format("Expression is not of expected type '{}'", rhs.to_string()), ref.loc());
+      }
+
+      else {
+        report_error(
+            fmt::format("Expression is of type '{}', expected '{}'", type.to_string(), rhs.to_string()), ref.loc()
+        );
+      }
+
       return false;
     }
 
@@ -84,7 +96,7 @@ private:
   }
 
 private:
-  void check_return_types_matches(ast::function_definition &ref);
+  void check_return_types_matches(types::generic_type &type, location loc);
   void begin_scope(symtab &stab) { m_scopes.begin_scope(&stab); }
   void end_scope() { m_scopes.end_scope(); }
 
@@ -104,7 +116,7 @@ public:
   void analyze_node(ast::if_statement &);
   void analyze_node(ast::print_statement &);
 
-  void analyze_node(ast::statement_block &, bool function_body = false);
+  void analyze_node(ast::statement_block &);
   void analyze_node(ast::unary_expression &);
   bool analyze_node(ast::variable_expression &);
   void analyze_node(ast::while_statement &);
