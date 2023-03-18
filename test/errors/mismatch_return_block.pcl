@@ -5,7 +5,7 @@ a = {
     return c + d; 
   }
   foo = func () {return 1;}
-  return foo;
-  return b;
+  return foo; //return int func ()
+  return b; //return int
 }
 print a;

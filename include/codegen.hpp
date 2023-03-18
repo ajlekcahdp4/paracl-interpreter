@@ -90,6 +90,11 @@ public:
     return m_blocks.back().m_top;
   }
 
+  unsigned names() const {
+    if (m_blocks.empty()) return 0;
+    return m_blocks.back().m_map.size();
+  }
+
   void clear() { m_blocks.clear(); }
 };
 
@@ -129,6 +134,7 @@ private:
   codegen_stack_frame m_symtab_stack;
   builder_type m_builder;
   bool m_is_currently_statement = false;
+  bool m_in_void_block = false;
 
 private:
   void set_currently_statement() { m_is_currently_statement = true; }

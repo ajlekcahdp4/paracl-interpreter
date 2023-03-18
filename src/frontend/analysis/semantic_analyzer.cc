@@ -32,7 +32,10 @@ void semantic_analyzer::analyze_node(ast::unary_expression &ref) {
 
 void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
   set_state(semantic_analysis_state::E_RVALUE);
+  auto block_state = m_in_void_block;
+  m_in_void_block = false;
   apply(ref.right());
+  m_in_void_block = block_state;
   set_state(semantic_analysis_state::E_LVALUE);
 
   auto &right_type = ref.right().type;
@@ -88,7 +91,7 @@ void semantic_analyzer::analyze_node(ast::print_statement &ref) {
   reset_state();
 }
 
-void semantic_analyzer::check_return_types_matches(ast::function_definition &ref) {
+void semantic_analyzer::check_return_types_matches(types::generic_type &type, location loc) {
   bool valid = true;
 
   const auto on_error = [&](location loc) {
@@ -100,40 +103,35 @@ void semantic_analyzer::check_return_types_matches(ast::function_definition &ref
     valid = false;
   };
 
-  auto &ret_type = ref.type.m_return_type;
-  if (m_return_statements.empty()) {
+  auto &ret_type = type;
+  if (m_return_statements->empty()) {
     if (!ret_type || ret_type == types::type_builtin::type_void()) {
       ret_type = types::type_builtin::type_void();
       return;
     }
 
-    on_error(ref.loc());
+    on_error(loc);
     return;
   }
 
-  auto first_type = m_return_statements.front()->type;
+  auto &first_type = m_return_statements->front()->type;
 
-  if (ret_type) {
-    for (const auto &st : m_return_statements) {
-      assert(st && "[Dedug]: Broken statement pointer");
-      if (st->type && st->type == ret_type) continue;
-      on_error(st->loc());
-    }
+  for (const auto &st : *m_return_statements) {
+    assert(st && "[Dedug]: Broken statement pointer");
+    if (st->type && st->type == first_type) continue;
+    on_error(st->loc());
   }
 
-  else {
-    for (const auto &st : m_return_statements) {
-      assert(st && "[Dedug]: Broken statement pointer");
-      if (st->type && st->type == first_type) continue;
-      on_error(st->loc());
-    }
-  }
-
-  if (valid) ref.type.m_return_type = first_type;
+  if (valid) type = first_type;
 }
 
 using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
-void semantic_analyzer::analyze_node(ast::statement_block &ref, bool function_body) {
+void semantic_analyzer::analyze_node(ast::statement_block &ref) {
+  auto *old_returns = m_return_statements;
+  if (!m_in_void_block) {
+    m_return_statements = &ref.return_statements;
+    ref.return_statements.clear();
+  }
   begin_scope(ref.stab);
 
   ref.type = types::type_builtin::type_void();
@@ -156,8 +154,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref, bool function_bo
 
       if (!type) break;
       // Implicit return case
-      bool is_implicit_return =
-          function_body && m_return_statements.empty() && type != types::type_builtin::type_void();
+      bool is_implicit_return = ref.return_statements.empty() && type != types::type_builtin::type_void();
       if (is_implicit_return) {
         assert(m_ast && "[Debug]: nullptr in m_ast");
 
@@ -166,13 +163,14 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref, bool function_bo
         );
         auto &ret = m_ast->make_node<ast::return_statement>(expr_ptr, expr_ptr->loc());
 
-        m_return_statements.push_back(&ret);
+        ref.return_statements.push_back(&ret);
         *start = &ret;
       }
 
       ref.type = type;
     }
   }
+  m_return_statements = old_returns;
 
   end_scope();
 }
@@ -262,11 +260,19 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
 
   auto block_state = m_in_void_block; // save previous block state
   m_in_void_block = false;            // To deduce type
-  analyze_node(st_block, true);
-  m_in_void_block = block_state; // set block state to its previous value
 
-  check_return_types_matches(ref);
+  auto *old_returns = m_return_statements;
+  m_return_statements = &st_block.return_statements;
+  analyze_node(st_block);
+
+  check_return_types_matches(st_block.type, st_block.loc());
+
+  ref.type.m_return_type = st_block.type;
+  st_block.type = type_builtin::type_void();
   end_scope();
+
+  m_return_statements = old_returns;
+  m_in_void_block = block_state; // set block state to its previous value
 
   m_in_function_body = false; // Exit
 }
@@ -344,11 +350,17 @@ bool semantic_analyzer::analyze_main(ast::i_ast_node &ref) {
   // If we should visit the main scope, then we won't enter a function_definition node and set this flag ourselves.
   // This flag prevents the analyzer to go lower than 1 layer of functions;
   m_in_function_body = true;
-  m_return_statements.clear();
 
+  auto node_type = identify_node(ref);
+
+  m_in_void_block = false;
   apply(ref);
-  for (const auto &st : m_return_statements) {
-    expect_type_eq(*st, types::type_builtin::type_void());
+
+  if (node_type == ast::ast_node_type::E_STATEMENT_BLOCK) {
+    auto &&main_block = static_cast<ast::statement_block &>(ref);
+    for (const auto &st : main_block.return_statements) {
+      expect_type_eq(*st, types::type_builtin::type_void());
+    }
   }
 
   return m_error_queue->empty();
@@ -356,7 +368,6 @@ bool semantic_analyzer::analyze_main(ast::i_ast_node &ref) {
 
 bool semantic_analyzer::analyze_func(ast::function_definition &ref, bool is_recursive) {
   m_type_errors_allowed = is_recursive;
-  m_return_statements.clear();
 
   analyze_node(ref);
   if (is_recursive) {
@@ -371,7 +382,7 @@ void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) 
 }
 
 void semantic_analyzer::analyze_node(ast::return_statement &ref) {
-  m_return_statements.push_back(&ref);
+  m_return_statements->push_back(&ref);
   if (!ref.empty()) {
     apply(ref.expr());
     ref.type = ref.expr().type;
