@@ -100,7 +100,22 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
 }
 
 void codegen_visitor::generate(ast::statement_block &ref) {
-  bool should_return = ref.type && ref.type != frontend::types::type_builtin::type_void();
+  bool should_return = !m_in_void_block && ref.type && ref.type != frontend::types::type_builtin::type_void();
+
+  unsigned ret_addr_index = 0;
+  unsigned prev_stack_size = m_prev_stack_size;
+  if (should_return) {
+    const auto const_index = current_constant_index();
+    m_return_address_constants.push_back({const_index, 0}); // Dummy address
+    ret_addr_index = m_return_address_constants.size() - 1;
+
+    m_symtab_stack.begin_scope(); // scope to isolate IP and SP
+    emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
+
+    emit_with_increment(encoded_instruction{vm_instruction_set::setup_call_desc});
+
+    m_prev_stack_size = m_symtab_stack.size();
+  }
 
   m_symtab_stack.begin_scope(&ref.stab);
 
@@ -123,7 +138,6 @@ void codegen_visitor::generate(ast::statement_block &ref) {
       const auto is_raw_expression =
           std::find(ast_expression_types.begin(), ast_expression_types.end(), node_type) != ast_expression_types.end();
       bool is_assignment = (node_type == frontend::ast::ast_node_type::E_ASSIGNMENT_STATEMENT);
-      bool is_statement_block = (node_type == frontend::ast::ast_node_type::E_STATEMENT_BLOCK);
       bool is_return = (node_type == frontend::ast::ast_node_type::E_RETURN_STATEMENT);
       bool is_last_iteration = start == last;
       bool pop_unused_result = (!is_last_iteration || !should_return) && is_raw_expression && !is_return;
@@ -156,7 +170,13 @@ void codegen_visitor::generate(ast::statement_block &ref) {
   }
 
   m_symtab_stack.end_scope();
-  if (should_return) emit_with_increment(vm_instruction_set::store_r0_desc);
+
+  if (should_return) {
+    m_return_address_constants.at(ret_addr_index).m_address = m_builder.current_loc();
+    m_prev_stack_size = prev_stack_size;
+    m_symtab_stack.end_scope(); // end scope for IP and SP
+    emit_with_increment(vm_instruction_set::store_r0_desc);
+  }
 }
 
 void codegen_visitor::visit_if_no_else(ast::if_statement &ref) {
@@ -282,7 +302,6 @@ void codegen_visitor::generate(ast::function_call &ref) {
   if (ref.type && ref.type != frontend::types::type_builtin::type_void()) {
     is_return = true;
   }
-
   const auto const_index = current_constant_index();
   m_return_address_constants.push_back({const_index, 0}); // Dummy address
   const auto ret_addr_index = m_return_address_constants.size() - 1;
@@ -323,17 +342,13 @@ void codegen_visitor::generate(frontend::ast::return_statement &ref) {
   }
 
   // clean up local variables
-  unsigned local_var_n = 0;
-  if (m_in_void_block) local_var_n = m_symtab_stack.size();
-  else local_var_n = m_symtab_stack.names();
-
+  unsigned local_var_n = m_symtab_stack.size() - m_prev_stack_size;
   for (unsigned i = 0; i < local_var_n; ++i) {
     emit_pop();
   }
 
-  if (m_in_void_block) {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-  }
+  m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
+
   decrement_stack();
   decrement_stack();
 }

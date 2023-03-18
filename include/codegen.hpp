@@ -133,8 +133,11 @@ private:
   const frontend::functions_analytics *m_functions;
   codegen_stack_frame m_symtab_stack;
   builder_type m_builder;
+
+  unsigned m_prev_stack_size = 0;
+
   bool m_is_currently_statement = false;
-  bool m_in_void_block = false;
+  bool m_in_void_block = true;
 
 private:
   void set_currently_statement() { m_is_currently_statement = true; }
