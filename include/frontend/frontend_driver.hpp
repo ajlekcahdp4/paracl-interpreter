@@ -20,7 +20,7 @@
 #include "frontend/source.hpp"
 #include "frontend/types/types.hpp"
 
-#include <graphs/directed_graph.hpp>
+#include "graphs/directed_graph.hpp"
 
 #include <algorithm>
 #include <cassert>

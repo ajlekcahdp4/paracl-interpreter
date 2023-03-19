@@ -283,7 +283,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
   }
 
   auto name = ref.name();
-  auto function_found = m_functions->m_named.lookup(std::string{name});
+  auto function_found = m_functions->m_named.lookup(name);
   auto attr = m_scopes.lookup_symbol(name);
 
   const auto report = [&](auto &&loc) {

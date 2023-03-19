@@ -12,6 +12,7 @@
 
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
 #include "frontend/types/types.hpp"
+#include "utils/transparent.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -27,11 +28,12 @@ class symtab final {
 public:
   struct attributes {
     unsigned m_loc;
-    ast::variable_expression *m_definition;
+    ast::variable_expression *m_definition = nullptr;
   };
 
 private:
-  std::unordered_map<std::string, attributes> m_table;
+  using map_type = utils::transparent::string_unordered_map<attributes>;
+  map_type m_table;
 
 public:
   void declare(std::string_view name, ast::variable_expression *def) {
@@ -39,16 +41,16 @@ public:
     m_table.emplace(name, attributes{static_cast<unsigned>(size), def});
   }
 
-  bool declared(std::string_view name) const { return m_table.count(std::string{name}); }
+  bool declared(std::string_view name) const { return m_table.count(name); }
   std::optional<attributes> get_attributes(std::string_view name) const {
-    auto found = m_table.find(std::string{name});
+    auto found = m_table.find(name);
     if (found == m_table.end()) return std::nullopt;
     return found->second;
   }
 
   // Deprecated, prefer attributes func
   std::optional<unsigned> location(std::string_view name) const {
-    auto found = m_table.find(std::string{name});
+    auto found = m_table.find(name);
     if (found == m_table.end()) return std::nullopt;
     return found->second.m_loc;
   }

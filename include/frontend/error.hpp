@@ -10,9 +10,9 @@
 
 #pragma once
 
+#include "frontend/source.hpp"
 #include "location.hpp"
 
-#include "frontend/source.hpp"
 #include <fmt/core.h>
 
 #include <string>

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "frontend/ast/ast_nodes.hpp"
+#include "utils/transparent.hpp"
 
 #include <string>
 #include <string_view>
@@ -27,21 +28,25 @@ public:
   };
 
 private:
-  std::unordered_map<std::string, function_attributes> m_table;
+  using map_type = utils::transparent::string_unordered_map<function_attributes>;
+  map_type m_table;
 
 public:
-  std::optional<function_attributes> lookup(const std::string &name) {
+  std::optional<function_attributes> lookup(std::string_view name) {
     auto found = m_table.find(name);
     if (found == m_table.end()) return std::nullopt;
     return found->second;
   }
 
-  std::pair<function_attributes, bool> define_function(const std::string &name, function_attributes attributes) {
-    auto [iter, inserted] = m_table.emplace(std::make_pair(name, attributes));
+  std::pair<function_attributes, bool> define_function(std::string_view name, function_attributes attributes) {
+    auto [iter, inserted] = m_table.emplace(name, attributes);
     return std::make_pair(iter->second, inserted);
   }
 
-  void set_recursive(const std::string &name) { m_table.at(name).recursive = true; }
+  void set_recursive(const std::string &name) {
+    m_table.at(name).recursive = true;
+    // For some reason ::at does not work well with transparent comparators
+  }
 
   auto begin() { return m_table.begin(); }
   auto end() { return m_table.end(); }

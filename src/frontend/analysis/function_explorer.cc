@@ -36,9 +36,9 @@ void function_explorer::explore(ast::function_definition &ref) {
   }
 
   if (!m_function_stack.empty()) {
-    m_analytics->m_usegraph.insert({name_v, &ref}, m_function_stack.back());
+    m_analytics->m_usegraph.insert(usegraph::value_type{name_v, &ref}, m_function_stack.back());
   } else {
-    m_analytics->m_usegraph.insert({name_v, &ref});
+    m_analytics->m_usegraph.insert(usegraph::value_type{name_v, &ref});
   }
 
   m_function_stack.push_back({name_v, &ref});
@@ -48,7 +48,7 @@ void function_explorer::explore(ast::function_definition &ref) {
 
 void function_explorer::explore(ast::function_call &ref) {
   auto name_v = std::string{ref.name()};
-  auto found = m_analytics->m_named.lookup(std::string{ref.name()});
+  auto found = m_analytics->m_named.lookup(name_v);
   auto def = (found ? found->definition : nullptr);
   ref.m_def = def;
 
@@ -57,14 +57,14 @@ void function_explorer::explore(ast::function_call &ref) {
       auto &&curr_func = m_function_stack.back();
       // Do not create recursive loops. These will get handled separately.
       if (curr_func.key != ref.name()) {
-        m_analytics->m_usegraph.insert({name_v, def}, m_function_stack.back());
+        m_analytics->m_usegraph.insert(usegraph::value_type{name_v, def}, m_function_stack.back());
       } else {
-        m_analytics->m_named.set_recursive(std::string{ref.name()});
+        m_analytics->m_named.set_recursive(name_v);
       }
     }
 
     else {
-      m_analytics->m_usegraph.insert({name_v, def});
+      m_analytics->m_usegraph.insert(usegraph::value_type{name_v, def});
     }
   }
 
@@ -83,9 +83,9 @@ void function_explorer::explore(const ast::function_definition_to_ptr_conv &ref)
   }
 
   if (!m_function_stack.empty()) {
-    m_analytics->m_usegraph.insert({name.value(), &def}, m_function_stack.back());
+    m_analytics->m_usegraph.insert(usegraph::value_type{name.value(), &def}, m_function_stack.back());
   } else {
-    m_analytics->m_usegraph.insert({name.value(), &def});
+    m_analytics->m_usegraph.insert(usegraph::value_type{name.value(), &def});
   }
 
   apply(def);

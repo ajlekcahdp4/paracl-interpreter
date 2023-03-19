@@ -15,8 +15,12 @@
 
 namespace paracl::utils {
 
-template <std::input_iterator input_it, std::output_iterator<typename input_it::value_type> output_it, typename t_pred>
-input_it copy_while(input_it first, input_it last, output_it o_first, t_pred pred) {
+template <std::input_iterator input_it>
+input_it copy_while(
+    input_it first, input_it last,
+    std::output_iterator<typename std::iterator_traits<input_it>::value_type> auto o_first,
+    std::invocable<typename std::iterator_traits<input_it>::value_type> auto pred
+) {
   for (; first != last; ++first) {
     if (!pred(*first)) break;
     *o_first = *first;

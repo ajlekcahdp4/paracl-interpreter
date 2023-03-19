@@ -10,6 +10,9 @@
 
 #pragma once
 
+#include "bytecode_vm/decl_vm.hpp"
+#include "utils/serialization.hpp"
+
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -19,14 +22,11 @@
 #include <optional>
 #include <stdexcept>
 
-#include "bytecode_vm/decl_vm.hpp"
-#include "utils/serialization.hpp"
-
 namespace paracl::bytecode_vm::decl_vm::disassembly {
 
 class constant_pool_disassembler {
 public:
-  template <typename t_stream> t_stream &operator()(t_stream &os, auto start, auto finish) const {
+  auto &operator()(auto &os, std::input_iterator auto start, std::input_iterator auto finish) const {
     os << ".constant_pool\n";
 
     for (constant_pool_type::size_type i = 0; start != finish; ++start, ++i) {
@@ -43,7 +43,7 @@ public:
   chunk_binary_disassembler(const t_instr_set &isa) : instruction_set{isa} {}
 
 public:
-  void operator()(auto &os, auto &first, auto last) const {
+  void operator()(auto &os, std::forward_iterator auto &first, std::forward_iterator auto last) const {
     if (first == last) {
       throw std::runtime_error{"Unexpectedly reached the end of range"};
     }
@@ -61,12 +61,11 @@ public:
   }
 
 public:
-  template <typename t_stream> t_stream &operator()(t_stream &os, const chunk &chk) const {
+  auto &operator()(auto &os, const chunk &ch) const {
     os << ".code\n";
 
-    auto start = chk.binary_begin();
-
-    for (auto first = chk.binary_begin(), last = chk.binary_end(); first != last;) {
+    auto start = ch.binary_begin();
+    for (auto first = ch.binary_begin(), last = ch.binary_end(); first != last;) {
       utils::padded_hex_printer(os, std::distance(start, first)) << " ";
       operator()(os, first, last);
       os << "\n";
@@ -82,7 +81,7 @@ template <typename t_instr_set> class chunk_complete_disassembler {
 public:
   chunk_complete_disassembler(t_instr_set isa) : binary_disas{isa} {}
 
-  template <typename t_stream> t_stream &operator()(t_stream &os, const chunk &chk) const {
+  auto &operator()(auto &os, const chunk &chk) const {
     constant_pool_disassembler{}(os, chk.constants_begin(), chk.constants_end());
     os << "\n";
     binary_disas(os, chk);

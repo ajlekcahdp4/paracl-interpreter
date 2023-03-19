@@ -20,7 +20,7 @@
 
 namespace paracl::frontend::ast {
 
-class variable_expression final : public i_expression {
+class variable_expression : public i_expression {
   std::string m_name;
 
 public:

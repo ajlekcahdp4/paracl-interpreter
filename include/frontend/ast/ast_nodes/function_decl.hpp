@@ -23,7 +23,7 @@
 
 namespace paracl::frontend::ast {
 
-class function_definition final : public i_ast_node, private std::vector<variable_expression> {
+class function_definition : public i_ast_node, private std::vector<variable_expression> {
 public:
   // An optional function name. Those functions that don't have a name will be called anonymous functions
   std::optional<std::string> name;
