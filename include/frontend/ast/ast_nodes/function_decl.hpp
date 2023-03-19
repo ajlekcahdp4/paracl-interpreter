@@ -45,10 +45,10 @@ private:
     return types::type_composite_function{arg_types, return_type};
   }
 
+  EZVIS_VISITABLE();
+
 public:
   types::type_composite_function type;
-
-  EZVIS_VISITABLE();
 
   function_definition(
       std::optional<std::string> p_name, i_ast_node &body, location l, std::vector<variable_expression> vars = {},
@@ -56,6 +56,7 @@ public:
   )
       : i_ast_node{l}, vector{std::move(vars)}, name{p_name}, m_block{&body}, type{make_func_type(return_type)} {}
 
+public:
   using vector::begin;
   using vector::cbegin;
   using vector::cend;

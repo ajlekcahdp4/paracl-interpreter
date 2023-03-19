@@ -25,9 +25,4 @@ struct functions_analytics final {
   usegraph m_usegraph;
 };
 
-class augmented_ast final {
-  ast::ast_container m_ast;
-  function_table m_functions;
-};
-
 } // namespace paracl::frontend

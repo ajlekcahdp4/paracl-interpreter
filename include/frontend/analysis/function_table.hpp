@@ -32,7 +32,7 @@ private:
   map_type m_table;
 
 public:
-  std::optional<function_attributes> lookup(std::string_view name) {
+  std::optional<function_attributes> lookup(std::string_view name) const {
     auto found = m_table.find(name);
     if (found == m_table.end()) return std::nullopt;
     return found->second;

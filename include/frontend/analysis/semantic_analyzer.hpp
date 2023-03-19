@@ -61,15 +61,15 @@ private:
   void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
 
 private:
-  void report_error(std::string msg, location loc) const {
+  void report_error(std::string msg, location loc) {
     m_error_queue->push_back({
         error_kind{msg, loc}
     });
   }
 
-  void report_error(error_report report) const { m_error_queue->push_back(std::move(report)); }
+  void report_error(error_report report) { m_error_queue->push_back(std::move(report)); }
 
-  bool expect_type_eq(const ast::i_expression &ref, const types::i_type &rhs) const {
+  bool expect_type_eq(const ast::i_expression &ref, const types::i_type &rhs) {
     if (m_type_errors_allowed) return false;
 
     auto &&type = ref.type;
@@ -91,7 +91,7 @@ private:
     return true;
   }
 
-  bool expect_type_eq(const ast::i_expression &ref, const types::generic_type &rhs) const {
+  bool expect_type_eq(const ast::i_expression &ref, const types::generic_type &rhs) {
     return expect_type_eq(ref, rhs.base());
   }
 
