@@ -19,11 +19,11 @@
 
 namespace paracl::utils {
 
-template <class... Ts> struct visitors : Ts... {
+template <typename... Ts> struct visitors : Ts... {
   using Ts::operator()...;
 };
 
-template <class... Ts> visitors(Ts...) -> visitors<Ts...>;
+template <typename... Ts> visitors(Ts...) -> visitors<Ts...>;
 
 template <typename t_tuple> struct variant_from_tuple;
 template <typename... Ts> struct variant_from_tuple<std::tuple<Ts...>> {

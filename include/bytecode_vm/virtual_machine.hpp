@@ -10,16 +10,16 @@
 
 #pragma once
 
+#include "bytecode_vm/decl_vm.hpp"
+#include "bytecode_vm/opcodes.hpp"
+#include "utils/serialization.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <limits>
 
 #include <iostream>
 #include <stdexcept>
-
-#include "bytecode_vm/decl_vm.hpp"
-#include "bytecode_vm/opcodes.hpp"
-#include "utils/serialization.hpp"
 
 namespace paracl::bytecode_vm::instruction_set {
 

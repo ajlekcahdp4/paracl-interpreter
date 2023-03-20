@@ -18,25 +18,28 @@
 #include "bytecode_vm/opcodes.hpp"
 #include "bytecode_vm/virtual_machine.hpp"
 
-#include "frontend/analysis/augmented_ast.hpp"
+#include "frontend/analysis/function_table.hpp"
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
-
 #include "frontend/symtab.hpp"
+#include "utils/transparent.hpp"
 
 #include <algorithm>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 namespace paracl::codegen {
 
 class codegen_stack_frame {
 private:
+  using map_type = utils::transparent::string_unordered_map<unsigned>;
+
   struct stack_block {
     int m_top = -1;
-    std::unordered_map<std::string, unsigned> m_map;
+    map_type m_map;
   };
 
   std::vector<stack_block> m_blocks;
@@ -61,15 +64,15 @@ public:
     m_blocks.pop_back();
   }
 
-  void push_var(const std::string &name) {
+  void push_var(std::string_view name) {
     auto &back = m_blocks.back();
-    [[maybe_unused]] auto res = back.m_map.insert({name, back.m_top++});
+    [[maybe_unused]] auto res = back.m_map.emplace(name, back.m_top++);
     assert(res.second && "Reinserting var with the same label");
   }
 
   void pop_dummy() { m_blocks.back().m_top--; }
 
-  unsigned lookup_location(const std::string &name) const {
+  unsigned lookup_location(std::string_view name) const {
     unsigned loc = 0;
 
     [[maybe_unused]] auto found = std::find_if(m_blocks.crbegin(), m_blocks.crend(), [&name, &loc](auto &block) {

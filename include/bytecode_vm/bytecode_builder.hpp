@@ -10,22 +10,21 @@
 
 #pragma once
 
+#include "decl_vm.hpp"
+#include "utils/misc.hpp"
+#include "utils/serialization.hpp"
+
 #include <array>
+#include <concepts>
 #include <cstdint>
 #include <iterator>
 #include <numeric>
 #include <stdexcept>
 #include <string_view>
-#include <utility>
-
 #include <tuple>
+#include <utility>
 #include <variant>
 #include <vector>
-
-#include "decl_vm.hpp"
-
-#include "utils/misc.hpp"
-#include "utils/serialization.hpp"
 
 namespace paracl::bytecode_vm::builder {
 
@@ -35,11 +34,11 @@ template <typename t_desc> struct encoded_instruction {
 
   attribute_types m_attr;
 
-  template <std::size_t I> void encode_attributes(auto iter) const {
+  template <auto I> void encode_attributes(std::output_iterator<char> auto iter) const {
     paracl::utils::write_little_endian<std::tuple_element_t<I, attribute_types>>(std::get<I>(m_attr), iter);
   }
 
-  template <std::size_t... I> void encode_attributes(auto iter, std::index_sequence<I...>) const {
+  template <auto... I> void encode_attributes(std::output_iterator<char> auto iter, std::index_sequence<I...>) const {
     (encode_attributes<I>(iter), ...);
   }
 
@@ -47,9 +46,10 @@ public:
   auto get_size() const { return t_desc::get_size(); }
   auto get_opcode() const { return t_desc::get_opcode(); }
 
-  void encode(auto iter) const {
+  void encode(std::output_iterator<char> auto iter) const {
     *iter = t_desc::get_opcode();
-    encode_attributes(iter, std::make_index_sequence<std::tuple_size_v<attribute_types>>{});
+    auto seq = std::make_index_sequence<std::tuple_size_v<attribute_types>>{};
+    encode_attributes(iter, seq);
   }
 
   encoded_instruction(t_desc)
@@ -73,30 +73,29 @@ public:
       utils::variant_from_tuple_t<encoded_tuple_from_desc_tuple_t<typename t_instruction_set::instruction_tuple_type>>;
 
 private:
-  std::vector<instruction_variant_type> m_code;
+  using instruction_vec = std::vector<instruction_variant_type>;
+  instruction_vec m_code;
   unsigned m_cur_loc = 0;
 
 public:
   bytecode_builder() = default;
 
-  template <typename t_desc> unsigned emit_operation(t_desc description) {
-    return emit_operation(encoded_instruction{description});
-  }
-
-  template <typename t_desc> unsigned emit_operation(encoded_instruction<t_desc> instruction) {
+  template <typename T> unsigned emit_operation(encoded_instruction<T> instruction) {
     m_code.push_back(instruction_variant_type{instruction});
     m_cur_loc += instruction.get_size();
     return m_code.size() - 1;
   }
 
-  template <typename as_desc> decltype(auto) get_as(as_desc, std::size_t index) {
+  unsigned emit_operation(auto description) { return emit_operation(encoded_instruction{description}); }
+
+  template <typename as_desc> auto &get_as(as_desc, std::size_t index) & {
     return std::get<encoded_instruction<as_desc>>(m_code.at(index));
   }
 
   decl_vm::chunk to_chunk() const {
     decl_vm::chunk ch;
 
-    auto iter = std::back_inserter(ch);
+    std::output_iterator<char> auto iter = std::back_inserter(ch);
     for (const auto &v : m_code) {
       std::visit([iter](auto &&var) { var.encode(iter); }, v);
     }

@@ -13,7 +13,7 @@
 #include "ezvis/ezvis.hpp"
 #include "location.hpp"
 
-#include "frontend/analysis/augmented_ast.hpp"
+#include "frontend/analysis/function_table.hpp"
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/ast/ast_nodes.hpp"
 
@@ -33,7 +33,6 @@ private:
   functions_analytics *m_functions;
   ast::ast_container *m_ast;
 
-public:
 private:
   error_queue_type *m_error_queue;
   error_queue_type m_default_error_queue;
@@ -61,15 +60,15 @@ private:
   void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
 
 private:
-  void report_error(std::string msg, location loc) const {
+  void report_error(std::string msg, location loc) {
     m_error_queue->push_back({
         error_kind{msg, loc}
     });
   }
 
-  void report_error(error_report report) const { m_error_queue->push_back(std::move(report)); }
+  void report_error(error_report report) { m_error_queue->push_back(std::move(report)); }
 
-  bool expect_type_eq(const ast::i_expression &ref, const types::i_type &rhs) const {
+  bool expect_type_eq(const ast::i_expression &ref, const types::i_type &rhs) {
     if (m_type_errors_allowed) return false;
 
     auto &&type = ref.type;
@@ -91,7 +90,7 @@ private:
     return true;
   }
 
-  bool expect_type_eq(const ast::i_expression &ref, const types::generic_type &rhs) const {
+  bool expect_type_eq(const ast::i_expression &ref, const types::generic_type &rhs) {
     return expect_type_eq(ref, rhs.base());
   }
 
@@ -136,9 +135,9 @@ public:
   semantic_analyzer(functions_analytics &functions) { m_functions = &functions; } // Temporary
 
   void set_error_queue(std::vector<error_report> &errors) { m_error_queue = &errors; }
-  error_queue_type &get_error_queue() & { return *m_error_queue; }
   void set_functions(functions_analytics &functions) { m_functions = &functions; }
   void set_ast(ast::ast_container &ast) { m_ast = &ast; }
+  error_queue_type &get_error_queue() & { return *m_error_queue; }
 };
 
 } // namespace paracl::frontend

@@ -20,7 +20,7 @@
 #include "frontend/source.hpp"
 #include "frontend/types/types.hpp"
 
-#include <graphs/directed_graph.hpp>
+#include "graphs/directed_graph.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -104,27 +104,24 @@ public:
     error_queue_type errors;
     function_explorer explorer;
 
-    auto valid = explorer.explore(ast, m_functions, errors);
+    explorer.explore(ast, m_functions, errors);
+    auto scheduled = graphs::recursive_topo_sort(m_functions.m_usegraph);
 
-    if (valid) {
-      auto scheduled = graphs::recursive_topo_sort(m_functions.m_usegraph);
+    semantic_analyzer analyzer{m_functions};
+    analyzer.set_error_queue(errors);
+    analyzer.set_ast(ast);
 
-      semantic_analyzer analyzer{m_functions};
-      analyzer.set_error_queue(errors);
-      analyzer.set_ast(ast);
+    // Note the order of analyze(....) && valid to prevent short-circuiting to check all functions.
+    for (auto start = scheduled.crbegin(), finish = scheduled.crend(); start != finish; ++start) {
+      auto *def = start->attr;
+      if (!def) continue;
 
-      // Note the order of analyze(....) && valid to prevent short-circuiting to check all functions.
-      for (auto start = scheduled.crbegin(), finish = scheduled.crend(); start != finish; ++start) {
-        auto *def = start->attr;
-        if (!def) continue;
-
-        auto attr = m_functions.m_named.lookup(def->name.value());
-        bool is_recursive = (attr ? attr->recursive : false);
-        analyzer.analyze_func(*def, is_recursive);
-      }
-
-      analyzer.analyze_main(*ast.get_root_ptr());
+      auto attr = m_functions.m_named.lookup(def->name.value());
+      bool is_recursive = (attr ? attr->recursive : false);
+      analyzer.analyze_func(*def, is_recursive);
     }
+
+    analyzer.analyze_main(*ast.get_root_ptr());
 
     for (const auto &e : errors) {
       m_reporter.report_pretty_error(e);

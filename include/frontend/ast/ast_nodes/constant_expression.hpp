@@ -14,8 +14,8 @@
 
 namespace paracl::frontend::ast {
 
-class constant_expression final : public i_expression { // Inherit from i_expression but dont pass trivial builtin type
-                                                        // by shared ptr. Should fix in the future
+class constant_expression : public i_expression { // Inherit from i_expression but dont pass trivial builtin type
+                                                  // by shared ptr. Should fix in the future
   int m_val;
 
   EZVIS_VISITABLE();

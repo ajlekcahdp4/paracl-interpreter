@@ -18,9 +18,10 @@
 
 namespace paracl::frontend::ast {
 
-class assignment_statement final : public i_expression {
+class assignment_statement : public i_expression {
 private:
-  std::vector<variable_expression> m_lefts;
+  using lhs_vec = std::vector<variable_expression>;
+  lhs_vec m_lefts;
   i_expression *m_right;
 
   EZVIS_VISITABLE();

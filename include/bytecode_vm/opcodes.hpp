@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include <cstdint>
-
 namespace paracl::bytecode_vm {
 
 // clang-format off

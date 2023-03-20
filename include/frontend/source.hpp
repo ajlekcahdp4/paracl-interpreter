@@ -26,7 +26,8 @@ namespace paracl::frontend {
 
 class source_input {
 private:
-  std::string m_filename; // Name of the source file
+  std::unique_ptr<std::string> m_filename; // Name of the source file
+  // Unique pointer to keep the underlying pointer the same, even when the object is moved from.
 
 private:
   std::string m_file_source; // Raw file representation as a string
@@ -43,7 +44,7 @@ private:
 
 public:
   source_input(const std::filesystem::path &input_path)
-      : m_filename{input_path.string()}, m_file_source{utils::read_file(input_path)} {
+      : m_filename{std::make_unique<std::string>(input_path.string())}, m_file_source{utils::read_file(input_path)} {
     fill_lines();
   }
 
@@ -53,7 +54,8 @@ public:
   }
 
   // Can't make this const qualified, because bison location requires it be a modifiable pointer for whatever reason.
-  std::string *filename() & { return &m_filename; }
+  // Note that the string is allocated on the heap to avoid issues with default constructors.
+  std::string *filename() & { return m_filename.get(); }
   std::istringstream iss() const & { return std::istringstream{m_file_source}; }
 };
 

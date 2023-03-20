@@ -14,7 +14,7 @@
 
 namespace paracl::frontend::ast {
 
-class return_statement final : public i_expression {
+class return_statement : public i_expression {
   i_expression *m_expr;
 
   EZVIS_VISITABLE();

@@ -167,6 +167,7 @@ public:
   bool is_equal(const i_type &rhs) const override {
     if (m_type_tag != rhs.get_class()) return false;
     const auto &cast_rhs = static_cast<const type_composite_function &>(rhs);
+    if (!m_return_type || !cast_rhs.m_return_type) return false;
     return (
         m_return_type == cast_rhs.m_return_type && vector::size() == cast_rhs.size() &&
         std::equal(cbegin(), cend(), cast_rhs.cbegin())

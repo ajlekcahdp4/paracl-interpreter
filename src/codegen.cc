@@ -40,7 +40,7 @@ void codegen_visitor::generate(ast::read_expression &ref) {
 }
 
 void codegen_visitor::generate(ast::variable_expression &ref) {
-  auto index = m_symtab_stack.lookup_location(std::string{ref.name()});
+  auto index = m_symtab_stack.lookup_location(ref.name());
   emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, index});
 }
 
@@ -62,13 +62,13 @@ void codegen_visitor::generate(ast::assignment_statement &ref) {
 
   const auto last_it = std::prev(ref.rend());
   for (auto start = ref.rbegin(), finish = last_it; start != finish; ++start) {
-    const auto left_index = m_symtab_stack.lookup_location(std::string{start->name()});
+    const auto left_index = m_symtab_stack.lookup_location(start->name());
     emit_with_decrement(encoded_instruction{vm_instruction_set::mov_local_rel_desc, left_index});
     emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, left_index});
   }
 
   // Last iteration:
-  const auto left_index = m_symtab_stack.lookup_location(std::string{last_it->name()});
+  const auto left_index = m_symtab_stack.lookup_location(last_it->name());
   emit_with_decrement(encoded_instruction{vm_instruction_set::mov_local_rel_desc, left_index});
   if (emit_push) {
     emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, left_index});
@@ -335,7 +335,7 @@ void codegen_visitor::generate(ast::function_call &ref) {
     m_relocations_function_calls.push_back({relocate_index, ref.m_def});
   } else {
     int total_depth = m_symtab_stack.size() - n_args;
-    int index = m_symtab_stack.lookup_location(std::string{ref.name()});
+    int index = m_symtab_stack.lookup_location(ref.name());
     int rel_pos = index - total_depth;
 
     emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, rel_pos});
@@ -377,7 +377,7 @@ unsigned codegen_visitor::generate(frontend::ast::function_definition &ref) {
   m_curr_function = &ref;
   m_symtab_stack.begin_scope();
   for (auto &&var : ref) {
-    m_symtab_stack.push_var(std::string{var.name()});
+    m_symtab_stack.push_var(var.name());
   }
 
   const auto function_pos = m_builder.current_loc();

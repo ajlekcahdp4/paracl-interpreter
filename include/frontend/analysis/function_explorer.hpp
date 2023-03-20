@@ -10,8 +10,7 @@
 
 #pragma once
 
-#include "frontend/analysis/augmented_ast.hpp"
-
+#include "frontend/analysis/function_table.hpp"
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
 

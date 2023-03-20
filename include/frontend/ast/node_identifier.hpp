@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "ast_nodes/i_ast_node.hpp"
 #include "ezvis/ezvis.hpp"
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
 
@@ -56,16 +55,6 @@ template <> inline ast_node_type get_ast_node_type<variable_expression>() { retu
 template <> inline ast_node_type get_ast_node_type<return_statement>() { return ast_node_type::E_RETURN_STATEMENT; }
 template <> inline ast_node_type get_ast_node_type<function_definition_to_ptr_conv>() { return ast_node_type::E_FUNCTION_DEFINITION_TO_PTR_CONV; }
 // clang-format on
-
-template <typename t_tuple> struct identify_helper {};
-template <typename... t_nodes> struct identify_helper<std::tuple<t_nodes...>> {
-  static auto identify(const i_ast_node &base) {
-    return ezvis::visit<ast_node_type, t_nodes...>(
-        [](auto &&node) { return detail::get_ast_node_type<std::remove_cvref_t<decltype(node)>>(); }, base
-    );
-  }
-};
-
 } // namespace detail
 
 constexpr auto ast_expression_types = std::array{
@@ -81,12 +70,14 @@ constexpr auto ast_expression_types = std::array{
 };
 
 inline ast_node_type identify_node(const i_ast_node &base) {
-  return detail::identify_helper<ast::tuple_all_nodes>::identify(base);
+  return ezvis::visit_tuple<ast_node_type, ast::tuple_all_nodes>(
+      [](auto &&node) { return detail::get_ast_node_type<std::remove_cvref_t<decltype(node)>>(); }, base
+  );
 }
 
 inline ast_node_type identify_node(const i_ast_node *base) {
   assert(base);
-  return detail::identify_helper<ast::tuple_all_nodes>::identify(*base);
+  return identify_node(*base);
 }
 
 } // namespace paracl::frontend::ast

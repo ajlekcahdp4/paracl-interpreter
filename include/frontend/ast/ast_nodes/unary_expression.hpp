@@ -15,6 +15,7 @@
 
 #include <cassert>
 #include <exception>
+
 namespace paracl::frontend::ast {
 
 enum class unary_operation {
@@ -37,7 +38,7 @@ constexpr std::string_view unary_operation_to_string(unary_operation op) {
   std::terminate();
 }
 
-class unary_expression final : public i_expression {
+class unary_expression : public i_expression {
 private:
   unary_operation m_operation_type;
   i_expression *m_expr;

@@ -10,22 +10,22 @@
 
 #pragma once
 
+#include "utils/algorithm.hpp"
+#include "utils/misc.hpp"
+#include "utils/serialization.hpp"
+
 #include <array>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <numeric>
 #include <stdexcept>
 #include <string_view>
-
 #include <tuple>
 #include <type_traits>
 #include <variant>
 #include <vector>
-
-#include "utils/algorithm.hpp"
-#include "utils/misc.hpp"
-#include "utils/serialization.hpp"
 
 namespace paracl::bytecode_vm::decl_vm {
 
@@ -50,11 +50,15 @@ public:
   chunk(binary_code_buffer_type p_bin, constant_pool_type p_const)
       : m_binary_code{std::move(p_bin)}, m_constant_pool{std::move(p_const)} {}
 
-  template <std::input_iterator binary_it, std::input_iterator constant_it>
-  chunk(binary_it bin_begin, binary_it bin_end, constant_it const_begin, constant_it const_end)
+  chunk(
+      std::input_iterator auto bin_begin, std::input_iterator auto bin_end, std::input_iterator auto const_begin,
+      std::input_iterator auto const_end
+  )
       : m_binary_code{bin_begin, bin_end}, m_constant_pool{const_begin, const_end} {}
 
-  template <typename T> void push_value(T val) { utils::write_little_endian(val, std::back_inserter(m_binary_code)); };
+  template <typename T> void push_value(T &&val) {
+    utils::write_little_endian(std::forward<T>(val), std::back_inserter(m_binary_code));
+  };
 
   void push_back(value_type code) { m_binary_code.push_back(code); }
   void set_constant_pool(constant_pool_type constants) { m_constant_pool = std::move(constants); }
@@ -94,7 +98,7 @@ template <opcode_underlying_type ident, typename... Ts> struct instruction_desc 
 
   constexpr auto operator>>(auto action) const { return instruction{*this, action}; }
 
-  template <size_t... I> static void pretty_print(auto &os, const attribute_types &tuple, std::index_sequence<I...>) {
+  template <auto... I> static void pretty_print(auto &os, const attribute_types &tuple, std::index_sequence<I...>) {
     auto print_list_element = [&os, &tuple](auto i) {
       os << (i == 0 ? "" : ", "), utils::padded_hex_printer(os, std::get<i>(tuple));
     };
@@ -116,7 +120,7 @@ template <typename t_desc, typename t_action> struct instruction {
   using description_type = t_desc;
   using attribute_tuple_type = typename description_type::attribute_types;
 
-  const t_desc description;
+  const description_type description;
   t_action action = nullptr;
 
   constexpr instruction(t_desc p_description, t_action p_action) : description{p_description}, action{p_action} {}
@@ -134,26 +138,27 @@ template <typename t_desc, typename t_action> struct instruction {
     attribute_tuple_type attributes;
   };
 
-  template <std::size_t I>
-  static std::tuple_element_t<I, attribute_tuple_type> decode_attribute(auto &first, auto last) {
+  template <auto I> static std::tuple_element_t<I, attribute_tuple_type> decode_attribute(auto &first, auto last) {
     auto [val, iter] = paracl::utils::read_little_endian<std::tuple_element_t<I, attribute_tuple_type>>(first, last);
     if (!val) throw vm_error{"Decoding error"};
     first = iter;
     return val.value();
   }
 
-  template <std::size_t... I>
-  static attribute_tuple_type decode_attributes(auto &first, auto last, std::index_sequence<I...>) {
+  template <auto... I>
+  static attribute_tuple_type
+  decode_attributes(std::forward_iterator auto &first, std::forward_iterator auto last, std::index_sequence<I...>) {
     return std::make_tuple(decode_attribute<I>(first, last)...);
   }
 
-  decoded_instruction decode(auto &first, auto last) const {
-    return decoded_instruction{
-        this, decode_attributes(first, last, std::make_index_sequence<std::tuple_size_v<attribute_tuple_type>>{})};
+  decoded_instruction decode(std::forward_iterator auto &first, std::forward_iterator auto last) const {
+    auto seq = std::make_index_sequence<std::tuple_size_v<attribute_tuple_type>>{};
+    auto attributes = decode_attributes(first, last, seq);
+    return decoded_instruction{this, attributes};
   }
 };
 
-template <typename t_desc> class virtual_machine;
+template <typename> class virtual_machine;
 using execution_value_type = int;
 
 template <typename t_desc> struct context {
@@ -181,6 +186,13 @@ public:
 
   unsigned ip() const { return std::distance(m_program_code.binary_begin(), m_ip); }
   unsigned sp() const { return m_sp; }
+
+  void set_sp(unsigned new_sp) { m_sp = new_sp; }
+  void set_r0(execution_value_type new_r0) { m_r0 = new_r0; }
+
+  auto stack_size() const { return m_execution_stack.size(); }
+  bool stack_empty() const { return m_execution_stack.empty(); }
+
   execution_value_type r0() const { return m_r0; }
 
   auto &at_stack(unsigned index) & {
@@ -192,12 +204,6 @@ public:
     m_ip = m_program_code.binary_begin();
     std::advance(m_ip, new_ip);
   }
-
-  void set_sp(unsigned new_sp) { m_sp = new_sp; }
-  void set_r0(execution_value_type new_r0) { m_r0 = new_r0; }
-
-  auto stack_size() const { return m_execution_stack.size(); }
-  bool stack_empty() const { return m_execution_stack.empty(); }
 
   auto pop() {
     if (m_execution_stack.size() == 0) throw vm_error{"Bad stack pop"};
@@ -219,7 +225,7 @@ template <typename... t_instructions> struct instruction_set_description {
   static constexpr auto max_table_size = std::numeric_limits<opcode_underlying_type>::max() + 1;
   std::array<instruction_variant_type, max_table_size> instruction_lookup_table;
 
-  instruction_set_description(const t_instructions &...instructions) : instruction_lookup_table{std::monostate{}} {
+  instruction_set_description(const t_instructions &...instructions) : instruction_lookup_table{} {
     ((instruction_lookup_table[instructions.get_opcode()] = std::addressof(instructions)), ...);
   }
 };
@@ -263,8 +269,9 @@ public:
   }
 };
 
-inline std::vector<char> read_raw_data(std::istream &is) {
-  return std::vector<char>{std::istreambuf_iterator<char>{is}, std::istreambuf_iterator<char>{}};
+inline auto read_raw_data(std::istream &is) {
+  using iter_type = std::istreambuf_iterator<char>;
+  return std::vector<char>{iter_type{is}, iter_type{}};
 }
 
 } // namespace paracl::bytecode_vm::decl_vm

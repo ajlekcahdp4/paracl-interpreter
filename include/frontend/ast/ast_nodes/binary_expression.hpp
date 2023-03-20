@@ -56,7 +56,7 @@ constexpr std::string_view binary_operation_to_string(binary_operation op) {
   std::terminate();
 }
 
-class binary_expression final : public i_expression {
+class binary_expression : public i_expression {
   binary_operation m_operation_type;
   i_expression *m_left, *m_right;
 
