@@ -11,6 +11,7 @@
 #pragma once
 
 #include "frontend/ast/ast_nodes.hpp"
+#include "graphs/directed_graph.hpp"
 #include "utils/transparent.hpp"
 
 #include <string>
@@ -40,7 +41,7 @@ public:
 
   std::pair<function_attributes, bool> define_function(std::string_view name, function_attributes attributes) {
     auto [iter, inserted] = m_table.emplace(name, attributes);
-    return std::make_pair(iter->second, inserted);
+    return std::pair{iter->second, inserted};
   }
 
   void set_recursive(const std::string &name) {
@@ -53,6 +54,13 @@ public:
   auto begin() const { return m_table.cbegin(); }
   auto end() const { return m_table.cend(); }
   auto size() const { return m_table.size(); }
+};
+
+using usegraph = graphs::basic_directed_graph<std::string, ast::function_definition *, void>;
+
+struct functions_analytics final {
+  function_table m_named;
+  usegraph m_usegraph;
 };
 
 } // namespace paracl::frontend

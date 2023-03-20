@@ -32,9 +32,7 @@ struct string_equal {
 
 struct string_hash {
   using is_transparent = string_equal;
-  bool operator()(const convertible_to_string_view auto &val) const {
-    return std::hash<std::string_view>{}(static_cast<std::string_view>(val));
-  }
+  bool operator()(const convertible_to_string_view auto &val) const { return std::hash<std::string_view>{}(val); }
 };
 
 template <typename T> using string_unordered_map = std::unordered_map<std::string, T, string_hash, string_equal>;

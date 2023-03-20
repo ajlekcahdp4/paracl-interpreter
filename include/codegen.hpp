@@ -18,7 +18,7 @@
 #include "bytecode_vm/opcodes.hpp"
 #include "bytecode_vm/virtual_machine.hpp"
 
-#include "frontend/analysis/augmented_ast.hpp"
+#include "frontend/analysis/function_table.hpp"
 #include "frontend/ast/ast_container.hpp"
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
 #include "frontend/symtab.hpp"

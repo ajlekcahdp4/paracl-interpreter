@@ -55,13 +55,13 @@ public:
     return found->second.m_loc;
   }
 
+public:
   auto begin() const { return m_table.begin(); }
   auto end() const { return m_table.end(); }
   auto size() const { return m_table.size(); }
 };
 
 class symtab_stack final : private std::vector<symtab *> {
-
 public:
   void begin_scope(symtab *stab) { vector::push_back(stab); }
   void end_scope() { vector::pop_back(); }
@@ -81,6 +81,7 @@ public:
   std::optional<symtab::attributes> lookup_symbol(std::string_view name) const {
     auto found = std::find_if(vector::crbegin(), vector::crend(), [&name](auto &stab) { return stab->declared(name); });
     if (found == vector::crend()) return std::nullopt;
+    assert(*found && "[Debug]: symbol table stack broken");
     return (*found)->get_attributes(name);
   }
 

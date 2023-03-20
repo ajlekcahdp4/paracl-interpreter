@@ -52,8 +52,8 @@ std::pair<std::optional<T>, iter> read_little_endian(iter first, iter last) {
   auto size = sizeof(T);
   first = copy_while(first, last, input_iter, [&size](auto) { return size && size--; });
 
-  if (size != 0) return std::make_pair(std::nullopt, first);
-  return std::make_pair(std::bit_cast<T>(raw_bytes), first);
+  if (size != 0) return std::pair{std::nullopt, first};
+  return std::pair{std::bit_cast<T>(raw_bytes), first};
 }
 
 template <integral_or_floating T> void write_little_endian(T val, std::output_iterator<char> auto oput) {
