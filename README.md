@@ -84,7 +84,7 @@ This interpreter relies on GNU Bison and Flex. You have to have them installed t
 
 ### Linux
 ```sh
-git submodule init && git submodule update --recursive
+git submodule update --recursive --init
 cmake -S ./ -B build/ -DCMAKE_BUILD_TYPE=Release
 cd build/
 make -j12
