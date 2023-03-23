@@ -243,11 +243,12 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
 
   begin_scope(ref.param_stab);
 
-  auto &&body = ref.body();
+  auto &body = ref.body();
   auto body_type = ast::identify_node(body);
+
   assert(
-      body_type == ast::ast_node_type::E_ERROR_NODE ||
-      body_type == ast::ast_node_type::E_STATEMENT_BLOCK && "Broken statement block pointer"
+      ((body_type == ast::ast_node_type::E_ERROR_NODE) || (body_type == ast::ast_node_type::E_STATEMENT_BLOCK)) &&
+      "Broken statement block pointer"
   );
 
   if (body_type == ast::ast_node_type::E_ERROR_NODE) {

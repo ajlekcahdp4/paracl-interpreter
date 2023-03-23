@@ -16,7 +16,7 @@ set(CONSTEXPR_DEPTH_LIMIT 4096)
 if(MSVC)
   add_compile_options(/W2)
 else()
-  add_compile_options(-Wall -fconstexpr-depth=${CONSTEXPR_DEPTH_LIMIT})
+  add_compile_options(-Wall -Wextra -fconstexpr-depth=${CONSTEXPR_DEPTH_LIMIT})
 endif()
 
 option(PROFILE OFF)
@@ -66,8 +66,7 @@ add_flex_bison_dependency(scanner parser)
 
 set(PARACL_COMPILER_SOURCES
     src/frontend/dumper.cc src/frontend/analysis/function_explorer.cc
-    src/frontend/analysis/semantic_analyzer.cc src/frontend/ast_copier.cc
-    src/codegen.cc)
+    src/frontend/analysis/semantic_analyzer.cc src/frontend/ast_copier.cc)
 
 add_library(
   paracl_compiler STATIC ${PARACL_COMPILER_SOURCES} ${BISON_parser_OUTPUTS}

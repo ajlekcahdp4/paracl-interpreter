@@ -38,7 +38,9 @@ template <typename t_desc> struct encoded_instruction {
     paracl::utils::write_little_endian<std::tuple_element_t<I, attribute_types>>(std::get<I>(m_attr), iter);
   }
 
-  template <auto... I> void encode_attributes(std::output_iterator<char> auto iter, std::index_sequence<I...>) const {
+  // [[maybe_unused]] to silence false-positive errors by GCC
+  template <auto... I>
+  void encode_attributes([[maybe_unused]] std::output_iterator<char> auto iter, std::index_sequence<I...>) const {
     (encode_attributes<I>(iter), ...);
   }
 

@@ -21,8 +21,13 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace paracl::bytecode_vm::instruction_set {
+namespace paracl::bytecode_vm {
 
+// Once again, force internal linkage by putting all of this in an anonymous namespace. Just to be safe. constexpr
+// global variables are const, and const implies internal linkage, but still... Better safe than sorry.
+namespace {
+
+namespace instruction_set {
 using decl_vm::instruction_desc;
 
 // push_const: Pushes a constant from the constant pool onto the stack
@@ -205,7 +210,7 @@ constexpr auto conditional_jump = [](auto &&ctx, auto &&attr, bool cond) {
 
 constexpr auto jmp_instr = jmp_desc >> [](auto &&ctx, auto &&attr) { conditional_jump(ctx, attr, true); };
 
-constexpr auto jmp_dynamic_instr = jmp_dynamic_desc >> [](auto &&ctx, auto &&attr) {
+constexpr auto jmp_dynamic_instr = jmp_dynamic_desc >> [](auto &&ctx, auto &&) {
   auto first = ctx.pop();
   ctx.set_ip(first);
 };
@@ -225,12 +230,12 @@ constexpr auto jmp_false_instr = jmp_false_desc >> [](auto &&ctx, auto &&attr) {
   conditional_jump(ctx, attr, !first);
 };
 
-constexpr auto setup_call_instr = setup_call_desc >> [](auto &&ctx, auto &&attr) {
+constexpr auto setup_call_instr = setup_call_desc >> [](auto &&ctx, auto &&) {
   auto cur_sp = ctx.sp();
   ctx.push(cur_sp);
 };
 
-constexpr auto push_sp_instr = push_sp_desc >> [](auto &&ctx, auto &&attr) {
+constexpr auto push_sp_instr = push_sp_desc >> [](auto &&ctx, auto &&) {
   auto cur_sp = ctx.sp();
   ctx.push(cur_sp);
 };
@@ -240,14 +245,14 @@ constexpr auto update_sp_instr = update_sp_desc >> [](auto &&ctx, auto &&attr) {
   ctx.set_sp(new_sp);
 };
 
-constexpr auto load_r0_instr = load_r0_desc >> [](auto &&ctx, auto &&attr) {
+constexpr auto load_r0_instr = load_r0_desc >> [](auto &&ctx, auto &&) {
   auto val = ctx.pop();
   ctx.set_r0(val);
 };
 
-constexpr auto store_r0_instr = store_r0_desc >> [](auto &&ctx, auto &&attr) { ctx.push(ctx.r0()); };
+constexpr auto store_r0_instr = store_r0_desc >> [](auto &&ctx, auto &&) { ctx.push(ctx.r0()); };
 
-static const auto paracl_isa = decl_vm::instruction_set_description(
+constexpr auto paracl_isa = decl_vm::instruction_set_description(
     push_const_instr, return_instr, pop_instr, add_instr, sub_instr, mul_instr, div_instr, mod_instr, and_instr,
     or_instr, cmp_eq_instr, cmp_ne_instr, cmp_gt_instr, cmp_ls_instr, cmp_ge_instr, cmp_le_instr, print_instr,
     push_read, mov_local_rel_instr, push_local_rel_instr, jmp_instr, jmp_true_instr, jmp_false_instr, not_instr,
@@ -255,12 +260,14 @@ static const auto paracl_isa = decl_vm::instruction_set_description(
     store_r0_instr
 );
 
-} // namespace paracl::bytecode_vm::instruction_set
+} // namespace instruction_set
 
-namespace paracl::bytecode_vm {
-
-inline auto create_paracl_vm() {
+[[maybe_unused]] auto create_paracl_vm() {
   return decl_vm::virtual_machine<decltype(instruction_set::paracl_isa)>{instruction_set::paracl_isa};
 }
 
+} // namespace
+
 } // namespace paracl::bytecode_vm
+
+namespace paracl::bytecode_vm {} // namespace paracl::bytecode_vm

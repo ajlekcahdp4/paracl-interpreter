@@ -55,7 +55,7 @@ namespace paracl::frontend {
 #include <string>
 #include <sstream>
 
-static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_scanner, paracl::frontend::parser_driver &p_driver) {
+static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_scanner, paracl::frontend::parser_driver &) {
   return p_scanner.get_next_token();
 }
 

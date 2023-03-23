@@ -120,9 +120,11 @@ template <typename t_desc, typename t_action> struct instruction {
   using description_type = t_desc;
   using attribute_tuple_type = typename description_type::attribute_types;
 
+public:
   const description_type description;
   t_action action = nullptr;
 
+public:
   constexpr instruction(t_desc p_description, t_action p_action) : description{p_description}, action{p_action} {}
   constexpr auto get_name() const { return description.get_name(); }
   constexpr auto get_opcode() const { return description.get_opcode(); }
@@ -147,7 +149,7 @@ template <typename t_desc, typename t_action> struct instruction {
 
   template <auto... I>
   static attribute_tuple_type
-  decode_attributes(std::forward_iterator auto &first, std::forward_iterator auto last, std::index_sequence<I...>) {
+  decode_attributes(std::forward_iterator auto &first, [[maybe_unused]] std::forward_iterator auto last, std::index_sequence<I...>) {
     return std::make_tuple(decode_attribute<I>(first, last)...);
   }
 
@@ -225,8 +227,9 @@ template <typename... t_instructions> struct instruction_set_description {
   static constexpr auto max_table_size = std::numeric_limits<opcode_underlying_type>::max() + 1;
   std::array<instruction_variant_type, max_table_size> instruction_lookup_table;
 
-  instruction_set_description(const t_instructions &...instructions) : instruction_lookup_table{} {
-    ((instruction_lookup_table[instructions.get_opcode()] = std::addressof(instructions)), ...);
+  constexpr instruction_set_description(const t_instructions &...instructions) : instruction_lookup_table{} {
+    ((instruction_lookup_table[instructions.get_opcode()] = instruction_variant_type{std::addressof(instructions)}),
+     ...);
   }
 };
 
@@ -235,7 +238,7 @@ template <typename t_desc> class virtual_machine {
   context<t_desc> m_execution_context;
 
 public:
-  virtual_machine(t_desc desc) : instruction_set{desc}, m_execution_context{} {}
+  constexpr virtual_machine(t_desc desc) : instruction_set{desc}, m_execution_context{} {}
 
   void set_program_code(chunk ch) { m_execution_context = std::move(ch); }
   bool is_halted() const { return m_execution_context.is_halted(); }
