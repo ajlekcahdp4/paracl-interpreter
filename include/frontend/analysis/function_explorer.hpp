@@ -41,7 +41,7 @@ private:
 public:
   function_explorer() = default;
 
-  EZVIS_VISIT_CT(to_visit);
+  EZVIS_VISIT_CT(to_visit)
 
   void explore(const ast::binary_expression &ref) {
     apply(ref.right());

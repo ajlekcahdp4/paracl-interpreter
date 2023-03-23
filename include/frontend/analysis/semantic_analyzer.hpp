@@ -100,7 +100,7 @@ private:
   void end_scope() { m_scopes.end_scope(); }
 
 public:
-  EZVIS_VISIT_CT(ast::tuple_all_nodes);
+  EZVIS_VISIT_CT(ast::tuple_all_nodes)
 
   void analyze_node(ast::error_node &ref) { report_error(ref.error_msg(), ref.loc()); }
 

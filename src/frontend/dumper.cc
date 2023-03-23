@@ -47,7 +47,7 @@ private:
 public:
   ast_dumper() = default;
 
-  EZVIS_VISIT_CT(to_visit);
+  EZVIS_VISIT_CT(to_visit)
 
   void dump_node(const assignment_statement &ref);
   void dump_node(const binary_expression &ref);
