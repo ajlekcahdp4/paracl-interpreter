@@ -31,15 +31,30 @@ if(SANITIZE)
   add_link_options(-fsanitize=undefined -fno-omit-frame-pointer)
 endif()
 
+include(FetchContent)
+
+FetchContent_Declare(graphs
+GIT_REPOSITORY "https://github.com/ajlekcahdp4/graphs.git"
+GIT_TAG         origin/main
+)
+FetchContent_Declare(ezvis
+GIT_REPOSITORY "https://github.com/serjzimmerman/ezvis.git"
+GIT_TAG         origin/main
+
+)
+FetchContent_Declare(fmt
+GIT_REPOSITORY "https://github.com/fmtlib/fmt.git"
+GIT_TAG         origin/master
+)
+
+FetchContent_MakeAvailable(graphs ezvis fmt)
+
 # Tools
 find_package(FLEX REQUIRED)
 find_package(BISON 3.5 REQUIRED)
 
 # External libraries
 add_subdirectory(3rd-party/popl EXCLUDE_FROM_ALL)
-add_subdirectory(3rd-party/fmt EXCLUDE_FROM_ALL)
-add_subdirectory(3rd-party/ezvis EXCLUDE_FROM_ALL)
-add_subdirectory(3rd-party/graphs EXCLUDE_FROM_ALL)
 
 # Compiler source
 set(BYTECODE_VM_SOURCES src/bytecode_vm/decl_vm.cc)
