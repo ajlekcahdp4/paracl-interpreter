@@ -170,7 +170,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
       ref.type = type;
     }
   }
-  check_return_types_matches(ref.type, ref.loc());
+  if (!m_in_void_block) check_return_types_matches(ref.type, ref.loc());
 
   m_return_statements = old_returns;
 

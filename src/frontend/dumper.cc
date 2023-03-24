@@ -211,7 +211,7 @@ void ast_dumper::dump_node(const function_call &ref) {
 }
 
 void ast_dumper::dump_node(const function_definition_to_ptr_conv &ref) {
-  print_declare_node(ref, "<function def to ptr implicit conversion>");
+  print_declare_node(ref, "<function def to ptr conversion>");
   print_bind_node(ref, ref.definition());
   add_next(ref.definition());
 }
