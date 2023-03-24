@@ -44,7 +44,7 @@ private:
   using map_type = utils::transparent::string_unordered_map<unsigned>;
 
   struct stack_block {
-    int m_top;
+    unsigned m_top;
     map_type m_map;
   };
 
@@ -52,7 +52,7 @@ private:
 
 public:
   void begin_scope() {
-    auto block = stack_block{static_cast<int>(size()), map_type{}};
+    auto block = stack_block{size(), map_type{}};
     m_blocks.push_back(block);
   }
 
@@ -538,13 +538,10 @@ void codegen_visitor::generate(frontend::ast::return_statement &ref) {
   // clean up local variables
   unsigned local_var_n = m_symtab_stack.size() - m_prev_stack_size;
   for (unsigned i = 0; i < local_var_n; ++i) {
-    emit_pop();
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
   }
 
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-
-  decrement_stack();
-  decrement_stack();
 }
 
 void codegen_visitor::generate(frontend::ast::function_definition_to_ptr_conv &ref) {
@@ -571,8 +568,6 @@ unsigned codegen_visitor::generate_function(frontend::ast::function_definition &
   }
 
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-  decrement_stack();
-  decrement_stack();
 
   m_symtab_stack.end_scope();
 
