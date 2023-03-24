@@ -44,7 +44,7 @@ private:
   using map_type = utils::transparent::string_unordered_map<unsigned>;
 
   struct stack_block {
-    int m_top;
+    unsigned m_top;
     map_type m_map;
   };
 
@@ -52,7 +52,7 @@ private:
 
 public:
   void begin_scope() {
-    auto block = stack_block{static_cast<int>(size()), map_type{}};
+    auto block = stack_block{size(), map_type{}};
     m_blocks.push_back(block);
   }
 
@@ -76,7 +76,10 @@ public:
     assert(res.second && "Reinserting var with the same label");
   }
 
-  void pop_dummy() { m_blocks.back().m_top--; }
+  void pop_dummy() {
+    assert(m_blocks.size() && m_blocks.back().m_top > 0 && "Ending nonexistent scope");
+    m_blocks.back().m_top--;
+  }
 
   unsigned lookup_location(std::string_view name) const {
     unsigned loc = 0;
@@ -189,7 +192,7 @@ private:
       frontend::ast::if_statement, frontend::ast::print_statement, frontend::ast::read_expression,
       frontend::ast::statement_block, frontend::ast::unary_expression, frontend::ast::variable_expression,
       frontend::ast::while_statement, frontend::ast::function_call, frontend::ast::return_statement,
-      frontend::ast::function_definition_to_ptr_conv, frontend::ast::i_ast_node>;
+      frontend::ast::function_definition_to_ptr_conv>;
 
 public:
   EZVIS_VISIT_CT(to_visit);
@@ -210,11 +213,9 @@ public:
   void generate(frontend::ast::return_statement &);
   void generate(frontend::ast::function_definition_to_ptr_conv &);
 
-  void generate(const frontend::ast::i_ast_node &) {}
-  unsigned generate(frontend::ast::function_definition &);
-
   EZVIS_VISIT_INVOKER(generate);
 
+  unsigned generate_function(frontend::ast::function_definition &);
   void generate_all(const frontend::ast::ast_container &ast, const frontend::functions_analytics &functions);
   bytecode_vm::decl_vm::chunk to_chunk();
 };
@@ -310,8 +311,7 @@ void codegen_visitor::generate(ast::statement_block &ref) {
 
     m_symtab_stack.begin_scope(); // scope to isolate IP and SP
     emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
-
-    emit_with_increment(encoded_instruction{vm_instruction_set::setup_call_desc});
+    emit_with_increment(vm_instruction_set::setup_call_desc);
 
     m_prev_stack_size = m_symtab_stack.size();
   }
@@ -502,11 +502,10 @@ void codegen_visitor::generate(ast::function_call &ref) {
 
   m_symtab_stack.begin_scope(); // scope to isolate IP and SP
   emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
-
-  emit_with_increment(encoded_instruction{vm_instruction_set::setup_call_desc});
+  emit_with_increment(vm_instruction_set::setup_call_desc);
 
   auto &&n_args = ref.size();
-  for (const auto &e : ref) {
+  for (auto &&e : ref) {
     assert(e);
     apply(*e);
   }
@@ -515,10 +514,11 @@ void codegen_visitor::generate(ast::function_call &ref) {
   if (ref.m_def) {
     auto relocate_index = m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_desc});
     m_relocations_function_calls.push_back({relocate_index, ref.m_def});
-  } else {
+  }
+
+  else {
     int total_depth = m_symtab_stack.size() - n_args;
-    int index = m_symtab_stack.lookup_location(ref.name());
-    int rel_pos = index - total_depth;
+    int rel_pos = m_symtab_stack.lookup_location(ref.name()) - total_depth;
 
     emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, rel_pos});
     emit_with_decrement(vm_instruction_set::jmp_dynamic_desc);
@@ -538,13 +538,10 @@ void codegen_visitor::generate(frontend::ast::return_statement &ref) {
   // clean up local variables
   unsigned local_var_n = m_symtab_stack.size() - m_prev_stack_size;
   for (unsigned i = 0; i < local_var_n; ++i) {
-    emit_pop();
+    m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
   }
 
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-
-  decrement_stack();
-  decrement_stack();
 }
 
 void codegen_visitor::generate(frontend::ast::function_definition_to_ptr_conv &ref) {
@@ -553,7 +550,7 @@ void codegen_visitor::generate(frontend::ast::function_definition_to_ptr_conv &r
   emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
 }
 
-unsigned codegen_visitor::generate(frontend::ast::function_definition &ref) {
+unsigned codegen_visitor::generate_function(frontend::ast::function_definition &ref) {
   m_symtab_stack.clear();
 
   m_curr_function = &ref;
@@ -562,9 +559,8 @@ unsigned codegen_visitor::generate(frontend::ast::function_definition &ref) {
     m_symtab_stack.push_var(var.name());
   }
 
-  const auto function_pos = m_builder.current_loc();
+  auto &&function_pos = m_builder.current_loc();
   m_function_defs.insert({&ref, function_pos});
-
   apply(ref.body());
 
   for (unsigned i = 0; i < ref.param_symtab().size(); ++i) {
@@ -572,8 +568,6 @@ unsigned codegen_visitor::generate(frontend::ast::function_definition &ref) {
   }
 
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-  decrement_stack();
-  decrement_stack();
 
   m_symtab_stack.end_scope();
 
@@ -602,19 +596,22 @@ void codegen_visitor::generate_all(
   m_return_address_constants.clear();
   m_functions = &functions;
 
-  apply(*ast.get_root_ptr()); // Last instruction is ret
-  m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-
-  for (auto &func : functions.m_named) {
-    generate(*func.second.definition);
+  if (ast.get_root_ptr()) {
+    apply(*ast.get_root_ptr()); // Last instruction is ret
   }
 
-  for (const auto &reloc : m_relocations_function_calls) {
+  m_builder.emit_operation(vm_instruction_set::return_desc);
+  for (auto &&[name, attr] : functions.m_named) {
+    assert(attr.definition && "[Debug] Attribute definition pointer can't be nullptr");
+    generate_function(*attr.definition);
+  }
+
+  for (auto &&reloc : m_relocations_function_calls) {
     auto &relocate_instruction = m_builder.get_as(vm_instruction_set::jmp_desc, reloc.m_reloc_index);
     relocate_instruction.m_attr = m_function_defs.at(reloc.m_func_ptr);
   }
 
-  for (auto &dynjmp : m_dynamic_jumps_constants) {
+  for (auto &&dynjmp : m_dynamic_jumps_constants) {
     assert(dynjmp.m_func_ptr);
     dynjmp.m_address = m_function_defs.at(dynjmp.m_func_ptr);
   }
@@ -626,15 +623,15 @@ paracl::bytecode_vm::decl_vm::chunk codegen_visitor::to_chunk() {
   std::vector<int> constants;
   constants.resize(current_constant_index());
 
-  for (const auto &v : m_constant_map) {
-    constants[v.second] = v.first;
+  for (auto &&[constant, index] : m_constant_map) {
+    constants[index] = constant;
   }
 
-  for (const auto &v : m_return_address_constants) {
+  for (auto &&v : m_return_address_constants) {
     constants[v.m_index] = v.m_address;
   }
 
-  for (const auto &v : m_dynamic_jumps_constants) {
+  for (auto &&v : m_dynamic_jumps_constants) {
     constants[v.m_index] = v.m_address;
   }
 
