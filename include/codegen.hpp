@@ -150,7 +150,6 @@ private:
   unsigned m_prev_stack_size = 0;
 
   bool m_is_currently_statement = false;
-  bool m_in_void_block = true;
 
 private:
   void set_currently_statement() { m_is_currently_statement = true; }
@@ -246,19 +245,13 @@ void codegen_visitor::generate(ast::variable_expression &ref) {
 
 void codegen_visitor::generate(ast::print_statement &ref) {
   reset_currently_statement();
-  auto block_state = m_in_void_block;
-  m_in_void_block = false;
   apply(ref.expr());
-  m_in_void_block = block_state;
   emit_with_decrement(vm_instruction_set::print_desc);
 }
 
 void codegen_visitor::generate(ast::assignment_statement &ref) {
   const bool emit_push = !is_currently_statement();
-  auto block_state = m_in_void_block;
-  m_in_void_block = false;
   apply(ref.right());
-  m_in_void_block = block_state;
 
   const auto last_it = std::prev(ref.rend());
   for (auto start = ref.rbegin(), finish = last_it; start != finish; ++start) {
@@ -276,8 +269,6 @@ void codegen_visitor::generate(ast::assignment_statement &ref) {
 }
 
 void codegen_visitor::generate(ast::binary_expression &ref) {
-  auto block_state = m_in_void_block;
-  m_in_void_block = false;
 
   reset_currently_statement();
   apply(ref.left());
@@ -285,7 +276,6 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
   reset_currently_statement();
 
   apply(ref.right());
-  m_in_void_block = block_state;
 
   using bin_op = ast::binary_operation;
 
@@ -308,7 +298,7 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
 }
 
 void codegen_visitor::generate(ast::statement_block &ref) {
-  bool should_return = !m_in_void_block && ref.type && ref.type != frontend::types::type_builtin::type_void();
+  bool should_return = ref.type && ref.type != frontend::types::type_builtin::type_void();
 
   unsigned ret_addr_index = 0;
   unsigned prev_stack_size = m_prev_stack_size;
@@ -431,14 +421,11 @@ void codegen_visitor::generate(ast::if_statement &ref) {
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
 
-  auto block_state = m_in_void_block; // save previous block state
-  m_in_void_block = true;
   if (!ref.else_block()) {
     visit_if_no_else(ref);
   } else {
     visit_if_with_else(ref);
   }
-  m_in_void_block = block_state; // set block state to its previous value
 
   for (unsigned i = 0; i < ref.control_block_symtab()->size(); ++i) {
     emit_pop();
@@ -462,10 +449,7 @@ void codegen_visitor::generate(ast::while_statement &ref) {
   auto index_jmp_to_after_loop = emit_with_decrement(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
   set_currently_statement();
 
-  auto block_state = m_in_void_block; // save previous block state
-  m_in_void_block = true;
   apply(ref.block());
-  m_in_void_block = block_state; // set block state to its previous value
 
   m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_desc, while_location_start});
 
@@ -483,8 +467,6 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
   using unary_op = ast::unary_operation;
 
   reset_currently_statement();
-  auto block_state = m_in_void_block;
-  m_in_void_block = false;
 
   switch (ref.op_type()) {
   case unary_op::E_UN_OP_NEG: {
@@ -507,7 +489,6 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
   default: std::terminate();
   }
   }
-  m_in_void_block = block_state;
 }
 
 void codegen_visitor::generate(ast::function_call &ref) {
@@ -584,10 +565,7 @@ unsigned codegen_visitor::generate(frontend::ast::function_definition &ref) {
   const auto function_pos = m_builder.current_loc();
   m_function_defs.insert({&ref, function_pos});
 
-  auto block_state = m_in_void_block;
-  m_in_void_block = true;
   apply(ref.body());
-  m_in_void_block = block_state; // set block state to its previous value
 
   for (unsigned i = 0; i < ref.param_symtab().size(); ++i) {
     emit_pop();
