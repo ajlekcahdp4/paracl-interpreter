@@ -76,7 +76,10 @@ public:
     assert(res.second && "Reinserting var with the same label");
   }
 
-  void pop_dummy() { m_blocks.back().m_top--; }
+  void pop_dummy() {
+    assert(m_blocks.size() && "Ending nonexistent scope");
+    m_blocks.back().m_top--;
+  }
 
   unsigned lookup_location(std::string_view name) const {
     unsigned loc = 0;
