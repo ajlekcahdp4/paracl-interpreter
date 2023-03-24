@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.14)
 project(paracl)
 
 option(INSOURCEBUILD OFF)
@@ -37,10 +37,12 @@ FetchContent_Declare(
   graphs
   GIT_REPOSITORY "https://github.com/ajlekcahdp4/graphs.git"
   GIT_TAG origin/main)
+
 FetchContent_Declare(
   ezvis
   GIT_REPOSITORY "https://github.com/serjzimmerman/ezvis.git"
   GIT_TAG origin/main)
+
 FetchContent_Declare(
   fmt
   GIT_REPOSITORY "https://github.com/fmtlib/fmt.git"
