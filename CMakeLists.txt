@@ -33,19 +33,18 @@ endif()
 
 include(FetchContent)
 
-FetchContent_Declare(graphs
-GIT_REPOSITORY "https://github.com/ajlekcahdp4/graphs.git"
-GIT_TAG         origin/main
-)
-FetchContent_Declare(ezvis
-GIT_REPOSITORY "https://github.com/serjzimmerman/ezvis.git"
-GIT_TAG         origin/main
-
-)
-FetchContent_Declare(fmt
-GIT_REPOSITORY "https://github.com/fmtlib/fmt.git"
-GIT_TAG         origin/master
-)
+FetchContent_Declare(
+  graphs
+  GIT_REPOSITORY "https://github.com/ajlekcahdp4/graphs.git"
+  GIT_TAG origin/main)
+FetchContent_Declare(
+  ezvis
+  GIT_REPOSITORY "https://github.com/serjzimmerman/ezvis.git"
+  GIT_TAG origin/main)
+FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY "https://github.com/fmtlib/fmt.git"
+  GIT_TAG origin/master)
 
 FetchContent_MakeAvailable(graphs ezvis fmt)
 
