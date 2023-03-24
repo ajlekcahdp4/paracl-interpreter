@@ -77,7 +77,7 @@ public:
   }
 
   void pop_dummy() {
-    assert(m_blocks.size() && "Ending nonexistent scope");
+    assert(m_blocks.size() && m_blocks.back().m_top > 0 && "Ending nonexistent scope");
     m_blocks.back().m_top--;
   }
 
