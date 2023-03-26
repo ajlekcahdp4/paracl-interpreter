@@ -66,9 +66,13 @@ public:
   void begin_scope(symtab &stab) { vector::push_back(&stab); }
   void end_scope() { vector::pop_back(); }
 
-  unsigned size() const {
-    return std::accumulate(vector::cbegin(), vector::cend(), 0, [](auto a, auto &&stab) { return a + stab->size(); });
+  vector::size_type size() const {
+    return std::accumulate(vector::cbegin(), vector::cend(), std::size_t{0}, [](auto a, auto &&stab) {
+      return a + stab->size();
+    });
   }
+
+  vector::size_type blocks() const { return vector::size(); }
 
   unsigned lookup_scope(std::string_view name) const {
     auto found = std::find_if(vector::crbegin(), vector::crend(), [&name](auto &stab) { return stab->declared(name); });

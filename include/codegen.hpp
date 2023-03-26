@@ -57,7 +57,6 @@ public:
   }
 
   void begin_scope(frontend::symtab &stab) {
-    assert(stab);
     begin_scope();
 
     for (const auto &v : stab) {
