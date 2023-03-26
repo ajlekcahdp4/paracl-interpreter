@@ -8,9 +8,9 @@ tmpfile=$(mktemp /tmp/paracl-temp.tmp.XXXXXX)
 for file in $current_folder/*.pcl; do
   echo -n "Testing ${green}${file}${reset} ... "
   if [ -f "${file}.in" ]; then
-    $1 -i $file < ${file}.in > $tmpfile
+    $1 $file < ${file}.in > $tmpfile
   else 
-    $1 -i $file > $tmpfile
+    $1 $file > $tmpfile
   fi
 
   if diff -Z ${file}.ans $tmpfile; then

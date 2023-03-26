@@ -9,12 +9,17 @@
 #include "frontend/dumper.hpp"
 #include "frontend/frontend_driver.hpp"
 
+#include <fmt/core.h>
+#include <fmt/format.h>
+
 #include "popl/popl.hpp"
 
+#include <concepts>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 
 namespace {
@@ -25,6 +30,8 @@ constexpr int k_exit_error = 2;
 
 } // namespace
 
+namespace utils = paracl::utils;
+
 int main(int argc, char *argv[]) try {
   std::string input_file_name;
   bool dump_binary = false;
@@ -33,24 +40,29 @@ int main(int argc, char *argv[]) try {
 
   auto help_option = op.add<popl::Switch>("h", "help", "Print this help message");
   auto ast_dump_option = op.add<popl::Switch>("a", "ast-dump", "Dump AST");
-  auto input_file_option = op.add<popl::Value<std::string>>("i", "input", "Specify input file");
+  auto input_file_option = op.add<popl::Implicit<std::string>>("i", "input", "Specify input file", "");
   auto output_file_option = op.add<popl::Value<std::string>>("o", "output", "Specify output file for compiled program");
-  auto disas_option = op.add<popl::Switch>("d", "disas", "Disassemble generated code (does not run the program)");
+  auto disas_option =
+      op.add<popl::Switch>("d", "disas", "Disassemble generated code (does not run the program)", &dump_binary);
 
   op.parse(argc, argv);
 
   if (help_option->is_set()) {
-    std::cout << op << "\n";
+    fmt::println("{}", op.help());
     return k_exit_success;
   }
 
   if (!input_file_option->is_set()) {
-    std::cerr << "File not specified\n";
-    return k_exit_failure;
+    if (op.non_option_args().size() != 1) {
+      fmt::println(stderr, "Input file not specified");
+      return k_exit_failure;
+    }
+
+    input_file_name = op.non_option_args().front();
+  } else {
+    input_file_name = input_file_option->value();
   }
 
-  dump_binary = disas_option->is_set();
-  input_file_name = input_file_option->value();
   paracl::frontend::frontend_driver drv{input_file_name};
   drv.parse();
 
@@ -75,7 +87,6 @@ int main(int argc, char *argv[]) try {
   namespace instruction_set = paracl::bytecode_vm::instruction_set;
 
   paracl::codegen::codegen_visitor generator;
-
   generator.generate_all(drv.ast(), drv.functions());
   auto ch = generator.to_chunk();
 
@@ -88,30 +99,16 @@ int main(int argc, char *argv[]) try {
   if (output_file_option->is_set()) {
     std::string output_file_name = output_file_option->value();
     std::ofstream output_file;
-
-    output_file.exceptions(output_file.exceptions() | std::ios::badbit | std::ios::failbit);
-
-    try {
-      output_file.open(output_file_name, std::ios::binary);
-    } catch (std::exception &e) {
-      std::cerr << "Error opening output file: " << e.what() << "\n";
-      return k_exit_failure;
-    }
-
+    utils::try_open_file(output_file, output_file_name, std::ios::binary);
     write_chunk(output_file, ch);
     return k_exit_success;
   }
 
   auto vm = paracl::bytecode_vm::create_paracl_vm();
   vm.set_program_code(std::move(ch));
+  vm.execute(true);
 
-  try {
-    vm.execute(true);
-  } catch (std::exception &e) {
-    std::cerr << "Encountered an unrecoverable error: " << e.what() << "\nExiting...\n";
-    return k_exit_error;
-  }
 } catch (std::exception &e) {
-  std::cerr << "Error: " << e.what() << "\n";
+  fmt::println(stderr, "Error: {}", e.what());
   return k_exit_error;
 }

@@ -21,6 +21,8 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <fmt/core.h>
+
 namespace paracl::bytecode_vm {
 
 // Once again, force internal linkage by putting all of this in an anonymous namespace. Just to be safe. constexpr
@@ -184,7 +186,7 @@ constexpr auto cmp_le_instr = cmp_le_desc >> [](auto &&ctx, auto &&) {
 
 constexpr auto print_instr = print_desc >> [](auto &&ctx, auto &&) {
   auto first = ctx.pop();
-  std::cout << std::dec << first << "\n";
+  fmt::println("{:d}", first);
 };
 
 constexpr auto push_read = push_read_desc >> [](auto &&ctx, auto &&) {

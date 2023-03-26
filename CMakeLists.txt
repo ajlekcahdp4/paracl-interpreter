@@ -65,11 +65,11 @@ target_include_directories(bytecode_vm PUBLIC include)
 target_compile_features(bytecode_vm PUBLIC cxx_std_20)
 
 add_executable(pcldis src/pcldis.cc)
-target_link_libraries(pcldis popl bytecode_vm)
+target_link_libraries(pcldis popl bytecode_vm fmt::fmt)
 
 add_executable(pclvm src/pclvm.cc)
 target_compile_features(pclvm PRIVATE cxx_std_20)
-target_link_libraries(pclvm popl bytecode_vm)
+target_link_libraries(pclvm popl bytecode_vm fmt::fmt)
 
 bison_target(
   parser src/frontend/parser/parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.y.cc
@@ -91,7 +91,7 @@ add_library(
 target_include_directories(paracl_compiler PUBLIC include
                                                   ${CMAKE_CURRENT_BINARY_DIR})
 
-target_link_libraries(paracl_compiler PUBLIC ezvis graphs fmt)
+target_link_libraries(paracl_compiler PUBLIC ezvis graphs fmt::fmt)
 target_compile_features(paracl_compiler PUBLIC cxx_std_20)
 
 add_executable(pclc src/pclc.cc)
