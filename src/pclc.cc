@@ -33,7 +33,8 @@ int main(int argc, char *argv[]) try {
   auto help_option = op.add<popl::Switch>("h", "help", "Print this help message");
   auto ast_dump_option = op.add<popl::Switch>("a", "ast-dump", "Dump AST");
   auto input_file_option = op.add<popl::Implicit<std::string>>("i", "input", "Specify input file", "");
-  auto output_file_option = op.add<popl::Value<std::string>>("o", "output", "Specify output file for compiled program");
+  auto output_file_option =
+      op.add<popl::Implicit<std::string>>("o", "output", "Specify output file for compiled program", "a.out");
   auto disas_option =
       op.add<popl::Switch>("d", "disas", "Disassemble generated code (does not run the program)", &dump_binary);
 
