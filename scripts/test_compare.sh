@@ -23,9 +23,9 @@ for file in $current_folder/*.pcl; do
 
   $1 $file -o $binfile
   if [ -f "${file}.in" ]; then
-    $3 -i $binfile < ${file}.in > $ansfile
+    $3 $binfile < ${file}.in > $ansfile
   else 
-    $3 -i $binfile > $ansfile
+    $3 $binfile > $ansfile
   fi
 
   if diff -Z ${file}.ans $ansfile; then

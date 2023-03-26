@@ -1,18 +1,18 @@
-#include "bytecode_vm/bytecode_builder.hpp"
-#include "bytecode_vm/decl_vm.hpp"
-#include "bytecode_vm/disassembly.hpp"
-#include "bytecode_vm/opcodes.hpp"
-#include "bytecode_vm/virtual_machine.hpp"
+/*
+ * ----------------------------------------------------------------------------
+ * "THE BEER-WARE LICENSE" (Revision 42):
+ * <tsimmerman.ss@phystech.edu>, <alex.rom23@mail.ru> wrote this file.  As long
+ * as you retain this notice you can do whatever you want with this stuff. If we
+ * meet some day, and you think this stuff is worth it, you can buy us a beer in
+ * return.
+ * ----------------------------------------------------------------------------
+ */
 
-#include "codegen.hpp"
-#include "frontend/ast/ast_copier.hpp"
 #include "frontend/dumper.hpp"
 #include "frontend/frontend_driver.hpp"
 
-#include <fmt/core.h>
-#include <fmt/format.h>
-
-#include "popl/popl.hpp"
+#include "codegen.hpp"
+#include "common.hpp"
 
 #include <concepts>
 #include <filesystem>
@@ -21,14 +21,6 @@
 #include <ostream>
 #include <stdexcept>
 #include <string>
-
-namespace {
-
-constexpr int k_exit_success = 0;
-constexpr int k_exit_failure = 1;
-constexpr int k_exit_error = 2;
-
-} // namespace
 
 namespace utils = paracl::utils;
 
@@ -52,22 +44,17 @@ int main(int argc, char *argv[]) try {
     return k_exit_success;
   }
 
-  if (!input_file_option->is_set()) {
-    if (op.non_option_args().size() != 1) {
-      fmt::println(stderr, "Input file not specified");
-      return k_exit_failure;
-    }
-
-    input_file_name = op.non_option_args().front();
+  if (auto res = read_input_file(*input_file_option, op); res.has_value()) {
+    input_file_name = *res;
   } else {
-    input_file_name = input_file_option->value();
+    return k_exit_failure;
   }
 
   paracl::frontend::frontend_driver drv{input_file_name};
   drv.parse();
 
   auto &parse_tree = drv.ast();
-  auto valid = drv.analyze();
+  bool valid = drv.analyze();
 
   if (ast_dump_option->is_set()) {
     paracl::frontend::ast::ast_dump(parse_tree.get_root_ptr(), std::cout);
@@ -76,16 +63,12 @@ int main(int argc, char *argv[]) try {
 
   if (!valid) return k_exit_failure;
 
-  using paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler;
-  namespace instruction_set = paracl::bytecode_vm::instruction_set;
-
   paracl::codegen::codegen_visitor generator;
   generator.generate_all(drv.ast(), drv.functions());
   auto ch = generator.to_chunk();
 
   if (dump_binary) {
-    chunk_complete_disassembler disas{instruction_set::paracl_isa};
-    disas(std::cout, ch);
+    disassemble_chunk(ch);
     return k_exit_success;
   }
 
@@ -97,11 +80,9 @@ int main(int argc, char *argv[]) try {
     return k_exit_success;
   }
 
-  auto vm = paracl::bytecode_vm::create_paracl_vm();
-  vm.set_program_code(std::move(ch));
-  vm.execute(true);
+  execute_chunk(ch);
 
 } catch (std::exception &e) {
   fmt::println(stderr, "Error: {}", e.what());
-  return k_exit_error;
+  return k_exit_failure;
 }
