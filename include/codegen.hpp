@@ -599,7 +599,7 @@ void codegen_visitor::generate_all(
   }
 
   m_builder.emit_operation(vm_instruction_set::return_desc);
-  for (auto &&[name, attr] : functions.m_named) {
+  for (auto &&[name, attr] : functions.named_functions) {
     assert(attr.definition && "Attribute definition pointer can't be nullptr");
     generate_function(*attr.definition);
   }

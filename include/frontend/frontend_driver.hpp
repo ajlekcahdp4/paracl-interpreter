@@ -105,7 +105,7 @@ public:
     function_explorer explorer;
 
     explorer.explore(ast, m_functions, errors);
-    auto scheduled = graphs::recursive_topo_sort(m_functions.m_usegraph);
+    auto scheduled = graphs::recursive_topo_sort(m_functions.usegraph);
 
     semantic_analyzer analyzer{m_functions};
     analyzer.set_error_queue(errors);
@@ -116,7 +116,7 @@ public:
       auto *def = start->attr;
       if (!def) continue;
 
-      auto attr = m_functions.m_named.lookup(def->name.value());
+      auto attr = m_functions.named_functions.lookup(def->name.value());
       bool is_recursive = (attr ? attr->recursive : false);
       analyzer.analyze_func(*def, is_recursive);
     }

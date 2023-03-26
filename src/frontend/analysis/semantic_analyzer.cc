@@ -269,7 +269,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
   }
 
   auto name = ref.name();
-  auto function_found = m_functions->m_named.lookup(name);
+  auto function_found = m_functions->named_functions.lookup(name);
   auto attr = m_scopes.lookup_symbol(name);
 
   const auto report = [&](auto &&loc) {
@@ -336,17 +336,20 @@ bool semantic_analyzer::analyze_main(ast::i_ast_node &ref) {
   // If we should visit the main scope, then we won't enter a function_definition node and set this flag ourselves.
   // This flag prevents the analyzer to go lower than 1 layer of functions;
   m_in_function_body = true;
-
-  auto node_type = identify_node(ref);
-
   m_in_void_block = false;
-  apply(ref);
 
-  if (node_type == ast::ast_node_type::E_STATEMENT_BLOCK) {
-    auto &&main_block = static_cast<ast::statement_block &>(ref);
+  if (auto node_type = identify_node(ref); node_type == ast::ast_node_type::E_STATEMENT_BLOCK) {
+    auto &main_block = static_cast<ast::statement_block &>(ref);
+    m_functions->global_stab = &main_block.stab;
+    analyze_node(main_block);
+
     for (const auto &st : main_block.return_statements) {
       expect_type_eq(*st, types::type_builtin::type_void());
     }
+  }
+
+  else {
+    apply(ref);
   }
 
   return m_error_queue->empty();

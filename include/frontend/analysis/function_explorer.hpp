@@ -28,7 +28,7 @@ namespace paracl::frontend {
 
 class function_explorer final : public ezvis::visitor_base<ast::i_ast_node, function_explorer, void> {
 private:
-  std::vector<usegraph::value_type> m_function_stack;
+  std::vector<usegraph_type::value_type> m_function_stack;
 
 private:
   std::vector<error_report> *m_error_queue; // Diagnostics
