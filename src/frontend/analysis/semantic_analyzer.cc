@@ -113,7 +113,8 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
   begin_scope(ref.stab);
 
   auto *old_returns = m_return_statements;
-  if (!in_raw_block()) {
+
+  if (in_value_block()) {
     m_return_statements = &ref.return_statements;
     ref.return_statements.clear();
   }
@@ -128,7 +129,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
     bool is_last = (start == std::prev(finish));
     if (!is_last) continue;
 
-    if (!in_raw_block()) {
+    if (in_value_block()) {
       auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
           paracl::utils::visitors{
               [](ast::i_expression &expr) { return expr.type; },
@@ -155,7 +156,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
     }
   }
 
-  if (!in_raw_block()) check_return_types_matches(ref.type, ref.loc());
+  if (in_value_block()) check_return_types_matches(ref.type, ref.loc());
 
   m_return_statements = old_returns;
 
