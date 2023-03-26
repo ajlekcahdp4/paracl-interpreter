@@ -63,6 +63,7 @@ set(BYTECODE_VM_SOURCES src/bytecode_vm/decl_vm.cc)
 add_library(bytecode_vm STATIC ${BYTECODE_VM_SOURCES})
 target_include_directories(bytecode_vm PUBLIC include)
 target_compile_features(bytecode_vm PUBLIC cxx_std_20)
+target_link_libraries(bytecode_vm PUBLIC fmt::fmt)
 
 add_executable(pcldis src/pcldis.cc)
 target_link_libraries(pcldis popl bytecode_vm)
@@ -91,7 +92,7 @@ add_library(
 target_include_directories(paracl_compiler PUBLIC include
                                                   ${CMAKE_CURRENT_BINARY_DIR})
 
-target_link_libraries(paracl_compiler PUBLIC ezvis graphs fmt)
+target_link_libraries(paracl_compiler PUBLIC ezvis graphs fmt::fmt)
 target_compile_features(paracl_compiler PUBLIC cxx_std_20)
 
 add_executable(pclc src/pclc.cc)

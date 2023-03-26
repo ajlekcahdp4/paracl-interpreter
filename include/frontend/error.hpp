@@ -1,9 +1,9 @@
 /*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
- * <tsimmerman.ss@phystech.edu>, wrote this file.  As long as you
- * retain this notice you can do whatever you want with this stuff. If we meet
- * some day, and you think this stuff is worth it, you can buy me a beer in
+ * <tsimmerman.ss@phystech.edu>, <alex.rom23@mail.ru> wrote this file.  As long
+ * as you retain this notice you can do whatever you want with this stuff. If we
+ * meet some day, and you think this stuff is worth it, you can buy us a beer in
  * return.
  * ----------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ public:
   void report_pretty_error(error_report report) {
     report_pretty_error(report.m_primary_error);
     for (const auto &attach : report.m_attachments) {
-      std::cout << "\n";
+      fmt::println("");
       print_message_location(attach.m_info_message, attach.m_loc);
     }
   }

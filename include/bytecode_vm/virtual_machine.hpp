@@ -1,9 +1,9 @@
 /*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
- * <tsimmerman.ss@phystech.edu>, wrote this file.  As long as you
- * retain this notice you can do whatever you want with this stuff. If we meet
- * some day, and you think this stuff is worth it, you can buy me a beer in
+ * <tsimmerman.ss@phystech.edu>, <alex.rom23@mail.ru> wrote this file.  As long
+ * as you retain this notice you can do whatever you want with this stuff. If we
+ * meet some day, and you think this stuff is worth it, you can buy us a beer in
  * return.
  * ----------------------------------------------------------------------------
  */
@@ -20,6 +20,8 @@
 
 #include <iostream>
 #include <stdexcept>
+
+#include <fmt/core.h>
 
 namespace paracl::bytecode_vm {
 
@@ -184,7 +186,7 @@ constexpr auto cmp_le_instr = cmp_le_desc >> [](auto &&ctx, auto &&) {
 
 constexpr auto print_instr = print_desc >> [](auto &&ctx, auto &&) {
   auto first = ctx.pop();
-  std::cout << std::dec << first << "\n";
+  fmt::println("{:d}", first);
 };
 
 constexpr auto push_read = push_read_desc >> [](auto &&ctx, auto &&) {

@@ -1,9 +1,9 @@
 /*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
- * <tsimmerman.ss@phystech.edu>, wrote this file.  As long as you
- * retain this notice you can do whatever you want with this stuff. If we meet
- * some day, and you think this stuff is worth it, you can buy me a beer in
+ * <tsimmerman.ss@phystech.edu>, <alex.rom23@mail.ru> wrote this file.  As long
+ * as you retain this notice you can do whatever you want with this stuff. If we
+ * meet some day, and you think this stuff is worth it, you can buy us a beer in
  * return.
  * ----------------------------------------------------------------------------
  */
@@ -11,6 +11,8 @@
 #pragma once
 
 #include "utils/algorithm.hpp"
+
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <array>
@@ -64,23 +66,47 @@ template <integral_or_floating T> void write_little_endian(T val, std::output_it
 }
 
 struct padded_hex {
-  auto &operator()(auto &os, auto val, unsigned padding = 8, char fill = '0') const {
-    os << "0x" << std::setfill(fill) << std::setw(padding) << std::hex << val;
-    return os;
+  auto &operator()(auto &os, std::integral auto val, std::size_t padding = 8) const {
+    const auto format_string = fmt::format("{{:#0{}x}}", padding + 2);
+    return os << fmt::vformat(format_string, fmt::make_format_args(val));
   }
 };
 
-constexpr auto padded_hex_printer = padded_hex{};
+constexpr padded_hex padded_hex_printer;
 
 auto pointer_to_uintptr(auto *pointer) {
   return std::bit_cast<uintptr_t>(pointer);
 }
 
+// clang-format off
+template <typename T>
+concept is_ifstream = requires (T stream) {
+  { [] <typename CharType, typename Traits> (std::basic_ifstream<CharType, Traits> &) {} (stream) };
+};
+
+template <typename T>
+concept is_ofstream = requires (T stream) {
+  { [] <typename CharType, typename Traits> (std::basic_ofstream<CharType, Traits> &) {} (stream) };
+};
+
+template <typename T>
+concept is_fstream = requires (std::remove_cvref_t<T> stream) {
+  requires is_ifstream<T> || is_ofstream<T>;
+};
+// clang-format on
+
+inline void try_open_file(is_fstream auto &file, const std::filesystem::path &path, std::ios_base::openmode mode) {
+  file.exceptions(file.exceptions() | std::ios::badbit | std::ios::failbit);
+  try {
+    file.open(path, mode);
+  } catch (std::exception &e) {
+    throw std::runtime_error{fmt::format("Could not open file `{}`: ", path.string(), e.what())};
+  }
+}
+
 inline std::string read_file(const std::filesystem::path &input_path) {
   std::ifstream ifs;
-  ifs.exceptions(ifs.exceptions() | std::ios::failbit | std::ios::badbit);
-  ifs.open(input_path, std::ios::binary);
-
+  try_open_file(ifs, input_path, std::ios::in);
   std::stringstream ss;
   ss << ifs.rdbuf();
   return ss.str();

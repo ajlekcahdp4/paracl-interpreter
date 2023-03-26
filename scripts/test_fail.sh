@@ -7,7 +7,7 @@ for file in $current_folder/*.pcl; do
   echo -n "Testing ${green}${file}${reset} ... "
   
   # If return code is not 0, then in means errors were detected
-  $1 -i $file  > /dev/null
+  $1 $file  > /dev/null
   code=$?
 
   if [[ $code -eq 0 || $code -eq 2 ]]; then

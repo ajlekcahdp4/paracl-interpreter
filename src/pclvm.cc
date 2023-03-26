@@ -1,10 +1,14 @@
-#include "bytecode_vm/bytecode_builder.hpp"
-#include "bytecode_vm/decl_vm.hpp"
-#include "bytecode_vm/disassembly.hpp"
-#include "bytecode_vm/opcodes.hpp"
-#include "bytecode_vm/virtual_machine.hpp"
+/*
+ * ----------------------------------------------------------------------------
+ * "THE BEER-WARE LICENSE" (Revision 42):
+ * <tsimmerman.ss@phystech.edu>, <alex.rom23@mail.ru> wrote this file.  As long
+ * as you retain this notice you can do whatever you want with this stuff. If we
+ * meet some day, and you think this stuff is worth it, you can buy us a beer in
+ * return.
+ * ----------------------------------------------------------------------------
+ */
 
-#include "popl/popl.hpp"
+#include "common.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -12,52 +16,37 @@
 #include <ostream>
 #include <string>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) try {
   std::string input_file_name;
 
   popl::OptionParser op("Allowed options");
   auto help_option = op.add<popl::Switch>("h", "help", "Print this help message");
-  auto input_file_option = op.add<popl::Value<std::string>>("i", "input", "Specify input file");
+  auto input_file_option = op.add<popl::Implicit<std::string>>("i", "input", "Specify input file", "");
   op.parse(argc, argv);
 
   if (help_option->is_set()) {
-    std::cout << op << "\n";
-    return 0;
+    fmt::println("{}", op.help());
+    return k_exit_success;
   }
 
-  if (!input_file_option->is_set()) {
-    std::cerr << "File not specified\n";
-    return 1;
+  if (auto res = read_input_file(*input_file_option, op); res.has_value()) {
+    input_file_name = *res;
+  } else {
+    return k_exit_failure;
   }
 
-  input_file_name = input_file_option->value();
   std::ifstream input_file;
-
-  std::ios_base::iostate exception_mask = input_file.exceptions() | std::ios::failbit;
-  input_file.exceptions(exception_mask);
-
-  try {
-    input_file.open(input_file_name, std::ios::binary);
-  } catch (std::exception &e) {
-    std::cerr << "Error opening file: " << e.what() << "\n";
-    return 1;
-  }
+  paracl::utils::try_open_file(input_file, input_file_name, std::ios::binary);
 
   auto ch = paracl::bytecode_vm::decl_vm::read_chunk(input_file);
   if (!ch) {
-    std::cerr << "Encountered an unrecoverable error, existing...\n";
-    return 1;
+    fmt::println(stderr, "Could not read input binary");
+    return k_exit_failure;
   }
+  execute_chunk(*ch);
 
-  auto vm = paracl::bytecode_vm::create_paracl_vm();
-  vm.set_program_code(std::move(ch.value()));
-
-  try {
-    vm.execute();
-  } catch (std::exception &e) {
-    std::cerr << "Encountered an unrecoverable error: " << e.what() << "\nExiting...\n";
-    return 1;
-  }
-
-  return 0;
+  return k_exit_success;
+} catch (std::exception &e) {
+  fmt::println(stderr, "Error: {}", e.what());
+  return k_exit_failure;
 }

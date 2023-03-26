@@ -1,9 +1,9 @@
 /*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
- * <tsimmerman.ss@phystech.edu>, wrote this file.  As long as you
- * retain this notice you can do whatever you want with this stuff. If we meet
- * some day, and you think this stuff is worth it, you can buy me a beer in
+ * <tsimmerman.ss@phystech.edu>, <alex.rom23@mail.ru> wrote this file.  As long
+ * as you retain this notice you can do whatever you want with this stuff. If we
+ * meet some day, and you think this stuff is worth it, you can buy us a beer in
  * return.
  * ----------------------------------------------------------------------------
  */
@@ -86,14 +86,14 @@ private:
   }
 
 public:
-  std::string ast_dump(const i_ast_node &root) {
+  std::string ast_dump(const i_ast_node *root) {
     std::string output;
     auto iterator = std::back_inserter(output);
 
     m_iter = &iterator;
     m_queue.clear();
-    add_next(root);
 
+    if (root) add_next(*root);
     fmt::format_to(iterator, "digraph abstract_syntax_tree {{\n");
     while (auto ptr = take_next()) {
       apply(*ptr);
@@ -216,7 +216,7 @@ void ast_dumper::dump_node(const function_definition_to_ptr_conv &ref) {
   add_next(ref.definition());
 }
 
-std::string ast_dump_str(const i_ast_node &node) {
+std::string ast_dump_str(const i_ast_node *node) {
   ast_dumper dumper;
   return dumper.ast_dump(node);
 }

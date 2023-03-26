@@ -107,40 +107,40 @@ There is a standalone VM executable _pclvm_ which is used to run the bytecode fi
 
 build/pclc --help
 # Allowed options:
-#  -h, --help        Print this help message
-#  -a, --ast-dump    Dump AST
-#  -i, --input arg   Specify input file
-#  -o, --output arg  Specify output file for compiled program
-#  -d, --disas       Disassemble generated code (does not run the program)
+#  -h, --help                   Print this help message
+#  -a, --ast-dump               Dump AST
+#  -i, --input [=arg(=)]        Specify input file
+#  -o, --output [=arg(=a.out)]  Specify output file for compiled program
+#  -d, --disas                  Disassemble generated code (does not run the program)
 
 # Example usage:
-build/pclc -i examples/scan.pcl
+build/pclc examples/scan.pcl
 
 # Or alternatively: 
-build/pclc -i examples/fib.pcl -o a.out
-build/pclvm -i a.out
+build/pclc examples/fib_simple.pcl -o
+build/pclvm a.out
 
 # To dump the disassembled code:
-build/pclc -i examples/print_read.pcl -d
+build/pclc examples/read.pcl -d
 # .constant_pool
 # 0x00000000 = { 0 }
-
+#
 # .code
 # 0x00000000 push_const [ 0x00000000 ]
 # 0x00000005 push_read
-# 0x00000006 mov_local [ 0x00000000 ]
-# 0x0000000b push_local [ 0x00000000 ]
+# 0x00000006 mov_local_rel [ 0x00000000 ]
+# 0x0000000b push_local_rel [ 0x00000000 ]
 # 0x00000010 print
 # 0x00000011 pop
 # 0x00000012 ret
 
 # Or:
-build/pcldis -i a.out
+build/pcldis a.out
 ```
 
 It is also possible to view the parse tree before semantic analysis. To do this you have to provide -a flag:
 
 ```sh
-build/pclc -i examples/fib.pcl -a > fib.dump
+build/pclc examples/fib_simple.pcl -a > fib.dump
 dot -Tpng fib.dump > fib.png
 ```
