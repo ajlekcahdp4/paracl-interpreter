@@ -31,10 +31,8 @@ void semantic_analyzer::analyze_node(ast::unary_expression &ref) {
 }
 
 void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
-  auto block_state = m_in_void_block;
-  m_in_void_block = false;
+  next_value_block();
   apply(ref.right());
-  m_in_void_block = block_state;
 
   auto &right_type = ref.right().type;
   if (!right_type) {
@@ -112,12 +110,13 @@ void semantic_analyzer::check_return_types_matches(types::generic_type &type, lo
 
 using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
 void semantic_analyzer::analyze_node(ast::statement_block &ref) {
+  begin_scope(ref.stab);
+
   auto *old_returns = m_return_statements;
-  if (!m_in_void_block) {
+  if (!in_raw_block()) {
     m_return_statements = &ref.return_statements;
     ref.return_statements.clear();
   }
-  begin_scope(ref.stab);
 
   ref.type = types::type_builtin::type_void();
   for (auto start = ref.begin(), finish = ref.end(); start != finish; ++start) {
@@ -129,7 +128,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
     bool is_last = (start == std::prev(finish));
     if (!is_last) continue;
 
-    if (!m_in_void_block) {
+    if (!in_raw_block()) {
       auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
           paracl::utils::visitors{
               [](ast::i_expression &expr) { return expr.type; },
@@ -155,7 +154,8 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
       ref.type = type;
     }
   }
-  if (!m_in_void_block) check_return_types_matches(ref.type, ref.loc());
+
+  if (!in_raw_block()) check_return_types_matches(ref.type, ref.loc());
 
   m_return_statements = old_returns;
 
@@ -167,18 +167,17 @@ void semantic_analyzer::analyze_node(ast::if_statement &ref) {
   apply(ref.cond());
   expect_type_eq(ref.cond(), type_builtin::type_int().base());
 
-  auto block_state = m_in_void_block; // save previous block state
-  m_in_void_block = true;
+  next_raw_block();
   begin_scope(ref.true_symtab());
   apply(ref.true_block());
   end_scope();
 
-  if (ref.else_block() != nullptr) {
+  if (ref.else_block()) {
+    next_raw_block();
     begin_scope(ref.else_symtab());
     apply(*ref.else_block());
     end_scope();
   }
-  m_in_void_block = block_state; // set block state to its previous value
 
   end_scope();
 }
@@ -189,10 +188,8 @@ void semantic_analyzer::analyze_node(ast::while_statement &ref) {
   apply(ref.cond());
   expect_type_eq(ref.cond(), type_builtin::type_int());
 
-  auto block_state = m_in_void_block; // save previous block state
-  m_in_void_block = true;
+  next_raw_block();
   apply(ref.block());
-  m_in_void_block = block_state; // set block state to its previous value
 
   end_scope();
 }
@@ -224,42 +221,33 @@ using expressions_and_return =
 
 void semantic_analyzer::analyze_node(ast::function_definition &ref) {
   if (m_in_function_body) return;
+  begin_scope(ref.param_stab);
   m_in_function_body = true; // Set flag
 
-  begin_scope(ref.param_stab);
-
-  auto &body = ref.body();
-  auto body_type = ast::identify_node(body);
-
-  assert(
-      ((body_type == ast::ast_node_type::E_ERROR_NODE) || (body_type == ast::ast_node_type::E_STATEMENT_BLOCK)) &&
-      "Broken statement block pointer"
+  auto block_ptr = ezvis::visit<ast::statement_block *, ast::error_node, ast::statement_block>(
+      paracl::utils::visitors{
+          [&](const ast::error_node &e) {
+            analyze_node(e);
+            return nullptr;
+          },
+          [](ast::statement_block &s) { return &s; }},
+      ref.body()
   );
 
-  if (body_type == ast::ast_node_type::E_ERROR_NODE) {
-    apply(body);                // Visit error node
-    m_in_function_body = false; // Exit
-    end_scope();
-    return;
+  auto &block_ref = *block_ptr;
+  if (block_ptr) {
+    next_value_block();
+    auto *old_returns = m_return_statements;
+    m_return_statements = &block_ref.return_statements;
+    analyze_node(block_ref);
+
+    ref.type.m_return_type = block_ref.type;
+    block_ref.type = type_builtin::type_void();
+
+    m_return_statements = old_returns;
   }
 
-  // The only other possibility for the reference is statement block.
-  auto &st_block = static_cast<ast::statement_block &>(body);
-
-  auto block_state = m_in_void_block; // save previous block state
-  m_in_void_block = false;            // To deduce type
-
-  auto *old_returns = m_return_statements;
-  m_return_statements = &st_block.return_statements;
-  analyze_node(st_block);
-
-  ref.type.m_return_type = st_block.type;
-  st_block.type = type_builtin::type_void();
   end_scope();
-
-  m_return_statements = old_returns;
-  m_in_void_block = block_state; // set block state to its previous value
-
   m_in_function_body = false; // Exit
 }
 
@@ -336,20 +324,26 @@ bool semantic_analyzer::analyze_main(ast::i_ast_node &ref) {
   // If we should visit the main scope, then we won't enter a function_definition node and set this flag ourselves.
   // This flag prevents the analyzer to go lower than 1 layer of functions;
   m_in_function_body = true;
-  m_in_void_block = false;
+  next_value_block();
 
-  if (auto node_type = identify_node(ref); node_type == ast::ast_node_type::E_STATEMENT_BLOCK) {
-    auto &main_block = static_cast<ast::statement_block &>(ref);
+  auto block_ptr = ezvis::visit<ast::statement_block *, ast::error_node, ast::statement_block>(
+      paracl::utils::visitors{
+          [&](const ast::error_node &e) {
+            analyze_node(e);
+            return nullptr;
+          },
+          [](ast::statement_block &s) { return &s; }},
+      ref
+  );
+
+  if (block_ptr) {
+    auto &main_block = *block_ptr;
     m_functions->global_stab = &main_block.stab;
     analyze_node(main_block);
 
     for (const auto &st : main_block.return_statements) {
       expect_type_eq(*st, types::type_builtin::type_void());
     }
-  }
-
-  else {
-    apply(ref);
   }
 
   return m_error_queue->empty();

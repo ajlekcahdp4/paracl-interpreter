@@ -23,7 +23,7 @@
 
 #include <fmt/format.h>
 
-#include <iostream>
+#include <stack>
 
 namespace paracl::frontend {
 
@@ -32,6 +32,9 @@ private:
   symtab_stack m_scopes;
   functions_analytics *m_functions;
   ast::ast_container *m_ast;
+
+  using raw_block_stack = std::stack<bool>;
+  raw_block_stack m_raw_block_stack;
 
 private:
   error_queue_type *m_error_queue;
@@ -45,9 +48,7 @@ private:
   bool m_in_function_body = false;
   bool m_type_errors_allowed = false; // Flag used to indicate that a type mismatch is not an error.
   // Set this flag to true when doing a first pass on recurisive functions.
-
-  bool m_in_void_block = false; // Flag used to indicate that we are in guaranteed to be void block (e.g. 'while' body,
-                                // 'if' body or function body)
+  bool m_next_raw_block = false;
 
 private:
   void report_error(std::string msg, location loc) {
@@ -86,13 +87,32 @@ private:
 
 private:
   void check_return_types_matches(types::generic_type &type, location loc);
-  void begin_scope(symtab &stab) { m_scopes.begin_scope(stab); }
-  void end_scope() { m_scopes.end_scope(); }
+
+  void begin_scope(symtab &stab) {
+    m_scopes.begin_scope(stab);
+    m_raw_block_stack.push(m_next_raw_block);
+  }
+
+  void end_scope() {
+    m_scopes.end_scope();
+    m_raw_block_stack.pop();
+    m_next_raw_block = false;
+  }
+
+  bool in_raw_block() const {
+    if (m_raw_block_stack.empty()) return false;
+    return m_raw_block_stack.top();
+  }
+
+  bool in_value_block() const { return !in_raw_block(); }
+
+  void next_raw_block() { m_next_raw_block = true; }
+  void next_value_block() { m_next_raw_block = false; }
 
 public:
   EZVIS_VISIT_CT(ast::tuple_all_nodes)
 
-  void analyze_node(ast::error_node &ref) { report_error(ref.error_msg(), ref.loc()); }
+  void analyze_node(const ast::error_node &ref) { report_error(ref.error_msg(), ref.loc()); }
 
   // clang-format off
   void analyze_node(ast::read_expression &) {}

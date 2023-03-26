@@ -25,7 +25,7 @@ private:
 
 public:
   error_node(std::string_view msg, location l) : i_expression{l}, m_error_message{msg} {};
-  std::string error_msg() { return m_error_message; }
+  std::string error_msg() const { return m_error_message; }
 };
 
 } // namespace paracl::frontend::ast
