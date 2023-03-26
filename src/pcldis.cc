@@ -4,7 +4,12 @@
 #include "bytecode_vm/opcodes.hpp"
 #include "bytecode_vm/virtual_machine.hpp"
 
+#include "utils/serialization.hpp"
+
 #include "popl/popl.hpp"
+
+#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <filesystem>
 #include <fstream>
@@ -12,7 +17,24 @@
 #include <ostream>
 #include <string>
 
-int main(int argc, char *argv[]) {
+namespace {
+
+constexpr int k_exit_success = 0;
+constexpr int k_exit_failure = 1;
+constexpr int k_exit_error = 2;
+
+void disassemble_chunk(const paracl::bytecode_vm::decl_vm::chunk &ch) {
+  using paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler;
+  namespace instruction_set = paracl::bytecode_vm::instruction_set;
+  chunk_complete_disassembler disas{instruction_set::paracl_isa};
+  disas(std::cout, ch);
+}
+
+} // namespace
+
+namespace utils = paracl::utils;
+
+int main(int argc, char *argv[]) try {
   std::string input_file_name;
 
   popl::OptionParser op("Allowed options");
@@ -21,45 +43,34 @@ int main(int argc, char *argv[]) {
   op.parse(argc, argv);
 
   if (help_option->is_set()) {
-    std::cout << op << "\n";
-    return 0;
+    fmt::println("{}", op.help());
+    return k_exit_success;
   }
 
   if (!input_file_option->is_set()) {
-    std::cerr << "File doesn't exist\n";
-    return 1;
+    if (op.non_option_args().size() != 1) {
+      fmt::println(stderr, "Input file not specified");
+      return k_exit_failure;
+    }
+
+    input_file_name = op.non_option_args().front();
+  } else {
+    input_file_name = input_file_option->value();
   }
 
-  input_file_name = input_file_option->value();
   std::ifstream input_file;
-
-  std::ios_base::iostate exception_mask = input_file.exceptions() | std::ios::failbit;
-  input_file.exceptions(exception_mask);
-
-  try {
-    input_file.open(input_file_name, std::ios::binary);
-  } catch (std::exception &e) {
-    std::cerr << "Error opening file: " << e.what() << "\n";
-    return 1;
-  }
+  utils::try_open_file(input_file, input_file_name, std::ios::binary);
 
   auto ch = paracl::bytecode_vm::decl_vm::read_chunk(input_file);
   if (!ch) {
-    std::cerr << "Encountered an unrecoverable error, existing...\n";
-    return 1;
+    fmt::println(stderr, "Could not read input binary");
+    return k_exit_failure;
   }
 
-  using paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler;
-  namespace instruction_set = paracl::bytecode_vm::instruction_set;
+  disassemble_chunk(*ch);
+  return k_exit_success;
 
-  chunk_complete_disassembler disas{instruction_set::paracl_isa};
-
-  try {
-    disas(std::cout, ch.value());
-  } catch (std::exception &e) {
-    std::cerr << "Encountered an unrecoverable error: " << e.what() << "\nExiting...\n";
-    return 1;
-  }
-
-  return 0;
+} catch (std::exception &e) {
+  fmt::println(stderr, "Error: {}", e.what());
+  return k_exit_error;
 }

@@ -67,21 +67,14 @@ int main(int argc, char *argv[]) try {
   drv.parse();
 
   auto &parse_tree = drv.ast();
-
-  if (!parse_tree.get_root_ptr()) {
-    return k_exit_success;
-  }
-
   auto valid = drv.analyze();
 
   if (ast_dump_option->is_set()) {
-    paracl::frontend::ast::ast_dump(*parse_tree.get_root_ptr(), std::cout);
+    paracl::frontend::ast::ast_dump(parse_tree.get_root_ptr(), std::cout);
     return k_exit_success;
   }
 
-  if (!valid) {
-    return k_exit_failure;
-  }
+  if (!valid) return k_exit_failure;
 
   using paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler;
   namespace instruction_set = paracl::bytecode_vm::instruction_set;

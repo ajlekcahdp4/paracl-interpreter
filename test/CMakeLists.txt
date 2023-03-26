@@ -1,23 +1,18 @@
-add_test(NAME test.paracl.external
-         COMMAND ${BASH_PROGRAM} ${SCRIPTS_DIR}/test_compare.sh
-                 "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/external)
+function(add_pass_test TEST_NAME FOLDER_PATH)
 
-add_test(NAME test.paracl.basic
-         COMMAND ${BASH_PROGRAM} ${SCRIPTS_DIR}/test_compare.sh
-                 "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/basic)
+  add_test(
+    NAME ${TEST_NAME}
+    COMMAND
+      ${BASH_PROGRAM} ${SCRIPTS_DIR}/test_compare.sh "$<TARGET_FILE:pclc>"
+      ${CMAKE_CURRENT_SOURCE_DIR}/${FOLDER_PATH} "$<TARGET_FILE:pclvm>")
 
-add_test(NAME test.paracl.blocks
-         COMMAND ${BASH_PROGRAM} ${SCRIPTS_DIR}/test_compare.sh
-                 "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/blocks)
+endfunction()
 
-add_test(NAME test.paracl.functions
-         COMMAND ${BASH_PROGRAM} ${SCRIPTS_DIR}/test_compare.sh
-                 "$<TARGET_FILE:pclc>" ${CMAKE_CURRENT_SOURCE_DIR}/functions)
-
-add_test(
-  NAME test.paracl.morefunctions
-  COMMAND ${BASH_PROGRAM} ${SCRIPTS_DIR}/test_compare.sh "$<TARGET_FILE:pclc>"
-          ${CMAKE_CURRENT_SOURCE_DIR}/morefunctions)
+add_pass_test(test.paracl.external external)
+add_pass_test(test.paracl.basic basic)
+add_pass_test(test.paracl.blocks blocks)
+add_pass_test(test.paracl.functions functions)
+add_pass_test(test.paracl.morefunctions morefunctions)
 
 add_test(NAME test.paracl.fail
          COMMAND ${BASH_PROGRAM} ${SCRIPTS_DIR}/test_fail.sh

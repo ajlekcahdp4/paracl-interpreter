@@ -17,9 +17,9 @@
 
 namespace paracl::frontend::ast {
 
-std::string ast_dump_str(const i_ast_node &node);
+std::string ast_dump_str(const i_ast_node *node);
 
-inline void ast_dump(i_ast_node &node, std::ostream &os) {
+inline void ast_dump(i_ast_node *node, std::ostream &os) {
   os << ast_dump_str(node);
 }
 
