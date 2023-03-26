@@ -39,25 +39,15 @@ private:
 
 private:
   // Vector of return statements in the current functions.
-  std::vector<const ast::return_statement *> *m_return_statements = nullptr;
+  ast::return_vector *m_return_statements = nullptr;
 
 private:
-  enum class semantic_analysis_state {
-    E_LVALUE,
-    E_RVALUE,
-    E_DEFAULT,
-  } current_state = semantic_analysis_state::E_DEFAULT;
-
   bool m_in_function_body = false;
   bool m_type_errors_allowed = false; // Flag used to indicate that a type mismatch is not an error.
   // Set this flag to true when doing a first pass on recurisive functions.
 
   bool m_in_void_block = false; // Flag used to indicate that we are in guaranteed to be void block (e.g. 'while' body,
                                 // 'if' body or function body)
-
-private:
-  void set_state(semantic_analysis_state s) { current_state = s; }
-  void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
 
 private:
   void report_error(std::string msg, location loc) {
@@ -96,7 +86,7 @@ private:
 
 private:
   void check_return_types_matches(types::generic_type &type, location loc);
-  void begin_scope(symtab &stab) { m_scopes.begin_scope(&stab); }
+  void begin_scope(symtab &stab) { m_scopes.begin_scope(stab); }
   void end_scope() { m_scopes.end_scope(); }
 
 public:
@@ -117,7 +107,7 @@ public:
 
   void analyze_node(ast::statement_block &);
   void analyze_node(ast::unary_expression &);
-  bool analyze_node(ast::variable_expression &);
+  bool analyze_node(ast::variable_expression &, bool can_declare = false);
   void analyze_node(ast::while_statement &);
 
   void analyze_node(ast::function_call &);

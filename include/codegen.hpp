@@ -56,11 +56,11 @@ public:
     m_blocks.push_back(block);
   }
 
-  void begin_scope(frontend::symtab *stab) {
+  void begin_scope(frontend::symtab &stab) {
     assert(stab);
     begin_scope();
 
-    for (const auto &v : *stab) {
+    for (const auto &v : stab) {
       push_var(v.first);
     }
   }
@@ -270,7 +270,6 @@ void codegen_visitor::generate(ast::assignment_statement &ref) {
 }
 
 void codegen_visitor::generate(ast::binary_expression &ref) {
-
   reset_currently_statement();
   apply(ref.left());
 
@@ -316,7 +315,7 @@ void codegen_visitor::generate(ast::statement_block &ref) {
     m_prev_stack_size = m_symtab_stack.size();
   }
 
-  m_symtab_stack.begin_scope(&ref.stab);
+  m_symtab_stack.begin_scope(ref.stab);
 
   auto n_symbols = ref.stab.size();
 
@@ -416,7 +415,7 @@ void codegen_visitor::visit_if_with_else(ast::if_statement &ref) {
 void codegen_visitor::generate(ast::if_statement &ref) {
   m_symtab_stack.begin_scope(ref.control_block_symtab());
 
-  for (unsigned i = 0; i < ref.control_block_symtab()->size(); ++i) {
+  for (unsigned i = 0; i < ref.control_block_symtab().size(); ++i) {
     // no need to increment there cause it is already done in begin_scope
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
@@ -427,7 +426,7 @@ void codegen_visitor::generate(ast::if_statement &ref) {
     visit_if_with_else(ref);
   }
 
-  for (unsigned i = 0; i < ref.control_block_symtab()->size(); ++i) {
+  for (unsigned i = 0; i < ref.control_block_symtab().size(); ++i) {
     emit_pop();
   }
 
@@ -437,7 +436,7 @@ void codegen_visitor::generate(ast::if_statement &ref) {
 void codegen_visitor::generate(ast::while_statement &ref) {
   m_symtab_stack.begin_scope(ref.symbol_table());
 
-  for (unsigned i = 0; i < ref.symbol_table()->size(); ++i) {
+  for (unsigned i = 0; i < ref.symbol_table().size(); ++i) {
     // no need to increment there cause it is already done in begin_scope
     m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
   }
@@ -456,7 +455,7 @@ void codegen_visitor::generate(ast::while_statement &ref) {
   auto &to_relocate_after_loop_jump = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_after_loop);
   std::get<0>(to_relocate_after_loop_jump.m_attr) = m_builder.current_loc();
 
-  for (unsigned i = 0; i < ref.symbol_table()->size(); ++i) {
+  for (unsigned i = 0; i < ref.symbol_table().size(); ++i) {
     emit_pop();
   }
 
@@ -602,7 +601,7 @@ void codegen_visitor::generate_all(
 
   m_builder.emit_operation(vm_instruction_set::return_desc);
   for (auto &&[name, attr] : functions.m_named) {
-    assert(attr.definition && "[Debug] Attribute definition pointer can't be nullptr");
+    assert(attr.definition && "Attribute definition pointer can't be nullptr");
     generate_function(*attr.definition);
   }
 

@@ -31,64 +31,49 @@ void semantic_analyzer::analyze_node(ast::unary_expression &ref) {
 }
 
 void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
-  set_state(semantic_analysis_state::E_RVALUE);
   auto block_state = m_in_void_block;
   m_in_void_block = false;
   apply(ref.right());
   m_in_void_block = block_state;
-  set_state(semantic_analysis_state::E_LVALUE);
 
   auto &right_type = ref.right().type;
   if (!right_type) {
     if (!m_type_errors_allowed) {
       report_error("Type of the right side of the assignment is unknown or can't be deduced", ref.right().loc());
     }
-
-    reset_state();
     return;
   }
 
   if (right_type == types::type_builtin::type_void()) {
     report_error("Type of the right side of the assignment can't be `void`", ref.right().loc());
-    reset_state();
     return;
   }
 
   for (auto &v : ref) {
-    bool declared = analyze_node(v);
+    bool declared = analyze_node(v, true);
     if (right_type && !declared && !v.type) {
       v.type = right_type;
     } else {
       if (expect_type_eq(v, ref.right().type)) continue;
-      reset_state();
       return;
     }
   }
 
-  reset_state();
   ref.type = ref.right().type;
 }
 
 void semantic_analyzer::analyze_node(ast::binary_expression &ref) {
-  set_state(semantic_analysis_state::E_RVALUE);
   apply(ref.right());
-  set_state(semantic_analysis_state::E_RVALUE);
   apply(ref.left());
 
   if (expect_type_eq(ref.right(), type_builtin::type_int()) && expect_type_eq(ref.left(), type_builtin::type_int())) {
     ref.type = type_builtin::type_int();
   }
-
-  reset_state();
 }
 
 void semantic_analyzer::analyze_node(ast::print_statement &ref) {
-  set_state(semantic_analysis_state::E_RVALUE);
-
   apply(ref.expr());
   expect_type_eq(ref.expr(), type_builtin::type_int());
-
-  reset_state();
 }
 
 void semantic_analyzer::check_return_types_matches(types::generic_type &type, location loc) {
@@ -137,7 +122,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
   ref.type = types::type_builtin::type_void();
   for (auto start = ref.begin(), finish = ref.end(); start != finish; ++start) {
     auto ptr = *start;
-    assert(ptr && "[Debug]: broken statement pointer in a block");
+    assert(ptr && "Broken statement pointer in a block");
     auto &st = *ptr;
     apply(st);
 
@@ -156,7 +141,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
       // Implicit return case
       bool is_implicit_return = ref.return_statements.empty() && type != types::type_builtin::type_void();
       if (is_implicit_return) {
-        assert(m_ast && "[Debug]: nullptr in m_ast");
+        assert(m_ast && "Nullptr in m_ast");
 
         auto expr_ptr = ezvis::visit_tuple<ast::i_expression *, ast::tuple_expression_nodes>(
             [](ast::i_expression &expr) { return &expr; }, st
@@ -178,18 +163,18 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
 }
 
 void semantic_analyzer::analyze_node(ast::if_statement &ref) {
-  begin_scope(*ref.control_block_symtab());
+  begin_scope(ref.control_block_symtab());
   apply(ref.cond());
   expect_type_eq(ref.cond(), type_builtin::type_int().base());
 
   auto block_state = m_in_void_block; // save previous block state
   m_in_void_block = true;
-  begin_scope(*ref.true_symtab());
+  begin_scope(ref.true_symtab());
   apply(ref.true_block());
   end_scope();
 
   if (ref.else_block() != nullptr) {
-    begin_scope(*ref.else_symtab());
+    begin_scope(ref.else_symtab());
     apply(*ref.else_block());
     end_scope();
   }
@@ -199,7 +184,7 @@ void semantic_analyzer::analyze_node(ast::if_statement &ref) {
 }
 
 void semantic_analyzer::analyze_node(ast::while_statement &ref) {
-  begin_scope(*ref.symbol_table());
+  begin_scope(ref.symbol_table());
 
   apply(ref.cond());
   expect_type_eq(ref.cond(), type_builtin::type_int());
@@ -212,11 +197,11 @@ void semantic_analyzer::analyze_node(ast::while_statement &ref) {
   end_scope();
 }
 
-bool semantic_analyzer::analyze_node(ast::variable_expression &ref) {
+bool semantic_analyzer::analyze_node(ast::variable_expression &ref, bool can_declare) {
   auto attr = m_scopes.lookup_symbol(ref.name());
 
   if (!attr) { // Not found.
-    if (current_state == semantic_analysis_state::E_LVALUE) {
+    if (can_declare) {
       m_scopes.declare(ref.name(), &ref);
       return false;
     }

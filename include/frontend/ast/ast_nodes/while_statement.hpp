@@ -31,7 +31,7 @@ public:
   i_expression &cond() const { return *m_condition; }
   i_ast_node &block() const { return *m_block; }
 
-  symtab *symbol_table() { return &m_symtab; }
+  symtab &symbol_table() { return m_symtab; }
 };
 
 } // namespace paracl::frontend::ast

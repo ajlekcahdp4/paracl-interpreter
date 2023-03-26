@@ -10,7 +10,11 @@
 
 #pragma once
 
-#include "i_ast_node.hpp"
+#include "frontend/ast/ast_nodes/i_ast_node.hpp"
+#include "frontend/types/types.hpp"
+
+#include <algorithm>
+#include <vector>
 
 namespace paracl::frontend::ast {
 
@@ -27,6 +31,34 @@ public:
   i_expression &expr() const {
     if (m_expr == nullptr) throw std::runtime_error{"Attempt to dereference empty return statement"};
     return *m_expr;
+  }
+};
+
+class return_vector : private std::vector<return_statement *> {
+public:
+  using vector::begin;
+  using vector::end;
+  using vector::operator[];
+  using vector::at;
+  using vector::back;
+  using vector::cbegin;
+  using vector::cend;
+  using vector::clear;
+  using vector::crbegin;
+  using vector::crend;
+  using vector::empty;
+  using vector::front;
+  using vector::push_back;
+  using vector::rbegin;
+  using vector::rend;
+  using vector::size;
+
+public:
+  bool are_all_void() const {
+    return std::all_of(cbegin(), cend(), [&void_type = types::type_builtin::type_void()](return_statement *ret) {
+      assert(ret);
+      return ret->type && ret->type == void_type;
+    });
   }
 };
 

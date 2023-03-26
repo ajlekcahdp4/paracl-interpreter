@@ -27,8 +27,8 @@ endif()
 
 option(SANITIZE OFF)
 if(SANITIZE)
-  add_compile_options(-fsanitize=undefined -fno-omit-frame-pointer)
-  add_link_options(-fsanitize=undefined -fno-omit-frame-pointer)
+  add_compile_options(-fsanitize=undefined,address -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=undefined,address -fno-omit-frame-pointer)
 endif()
 
 include(FetchContent)
