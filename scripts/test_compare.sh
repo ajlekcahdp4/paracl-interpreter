@@ -21,7 +21,7 @@ for file in $current_folder/*.pcl; do
     passed=1
   fi
 
-  $1 $file -o $binfile
+  $1 $file -o$binfile
   if [ -f "${file}.in" ]; then
     $3 $binfile < ${file}.in > $ansfile
   else 
