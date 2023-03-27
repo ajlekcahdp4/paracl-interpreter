@@ -12,6 +12,7 @@
 
 #include "bison_paracl_parser.hpp"
 #include "frontend/analysis/function_explorer.hpp"
+#include "frontend/analysis/main_explorer.hpp"
 #include "frontend/analysis/semantic_analyzer.hpp"
 
 #include "frontend/ast/ast_container.hpp"
