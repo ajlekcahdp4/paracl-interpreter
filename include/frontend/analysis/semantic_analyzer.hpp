@@ -45,7 +45,6 @@ private:
   ast::return_vector *m_return_statements = nullptr;
 
 private:
-  bool m_in_function_body = false;
   bool m_type_errors_allowed = false; // Flag used to indicate that a type mismatch is not an error.
   // Set this flag to true when doing a first pass on recurisive functions.
   bool m_next_raw_block = false;
@@ -144,6 +143,8 @@ private:
     return begin_scope(stab);
   }
 
+  ast::statement_block *try_get_block_ptr(ast::i_ast_node &);
+
 public:
   EZVIS_VISIT_CT(ast::tuple_all_nodes)
 
@@ -166,7 +167,7 @@ public:
   void analyze_node(ast::while_statement &);
 
   void analyze_node(ast::function_call &);
-  void analyze_node(ast::function_definition &);
+  void analyze_node(ast::function_definition &) {}
   void analyze_node(ast::function_definition_to_ptr_conv &);
   void analyze_node(ast::return_statement &);
 

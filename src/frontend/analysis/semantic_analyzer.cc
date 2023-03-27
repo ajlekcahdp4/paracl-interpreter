@@ -24,10 +24,25 @@ namespace paracl::frontend {
 
 using types::type_builtin;
 
+ast::statement_block *semantic_analyzer::try_get_block_ptr(ast::i_ast_node &ref) {
+  auto block_ptr = ezvis::visit<ast::statement_block *, ast::error_node, ast::statement_block>(
+      paracl::utils::visitors{
+          [&](const ast::error_node &e) {
+            analyze_node(e);
+            return nullptr;
+          },
+          [](ast::statement_block &s) { return &s; }},
+      ref
+  );
+
+  return block_ptr;
+}
+
 void semantic_analyzer::analyze_node(ast::unary_expression &ref) {
   apply(ref.expr());
-  if (!expect_type_eq(ref.expr(), type_builtin::type_int())) return;
-  ref.type = type_builtin::type_int();
+  if (expect_type_eq(ref.expr(), type_builtin::type_int())) {
+    ref.type = type_builtin::type_int();
+  }
 }
 
 void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
@@ -202,46 +217,11 @@ bool semantic_analyzer::analyze_node(ast::variable_expression &ref, bool can_dec
   }
 
   assert(attr->m_definition && "Broken definition pointer");
-  auto type = ezvis::visit<types::generic_type, ast::variable_expression>(
+  ref.type = ezvis::visit<types::generic_type, ast::variable_expression>(
       [](ast::variable_expression &v) { return v.type; }, *attr->m_definition
   );
-  ref.type = type;
 
   return true;
-}
-
-using expressions_and_return =
-    utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node, ast::return_statement>;
-
-void semantic_analyzer::analyze_node(ast::function_definition &ref) {
-  if (m_in_function_body) return;
-  auto guard = begin_scope(ref.param_stab);
-  m_in_function_body = true; // Set flag
-
-  auto block_ptr = ezvis::visit<ast::statement_block *, ast::error_node, ast::statement_block>(
-      paracl::utils::visitors{
-          [&](const ast::error_node &e) {
-            analyze_node(e);
-            return nullptr;
-          },
-          [](ast::statement_block &s) { return &s; }},
-      ref.body()
-  );
-
-  auto &block_ref = *block_ptr;
-  if (block_ptr) {
-    next_value_block();
-    auto *old_returns = m_return_statements;
-    m_return_statements = &block_ref.return_statements;
-    analyze_node(block_ref);
-
-    ref.type.m_return_type = block_ref.type;
-    block_ref.type = type_builtin::type_void();
-
-    m_return_statements = old_returns;
-  }
-
-  m_in_function_body = false; // Exit
 }
 
 void semantic_analyzer::analyze_node(ast::function_call &ref) {
@@ -314,20 +294,8 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
 }
 
 bool semantic_analyzer::analyze_main(ast::i_ast_node &ref) {
-  // If we should visit the main scope, then we won't enter a function_definition node and set this flag ourselves.
-  // This flag prevents the analyzer to go lower than 1 layer of functions;
-  m_in_function_body = true;
   next_value_block();
-
-  auto block_ptr = ezvis::visit<ast::statement_block *, ast::error_node, ast::statement_block>(
-      paracl::utils::visitors{
-          [&](const ast::error_node &e) {
-            analyze_node(e);
-            return nullptr;
-          },
-          [](ast::statement_block &s) { return &s; }},
-      ref
-  );
+  auto block_ptr = try_get_block_ptr(ref);
 
   if (block_ptr) {
     auto &main_block = *block_ptr;
@@ -344,8 +312,23 @@ bool semantic_analyzer::analyze_main(ast::i_ast_node &ref) {
 
 bool semantic_analyzer::analyze_func(ast::function_definition &ref, bool is_recursive) {
   m_type_errors_allowed = is_recursive;
+  auto guard = begin_scope(ref.param_stab);
 
-  analyze_node(ref);
+  auto block_ptr = try_get_block_ptr(ref.body());
+  auto &block_ref = *block_ptr;
+
+  if (block_ptr) {
+    next_value_block();
+    auto *old_returns = m_return_statements;
+    m_return_statements = &block_ref.return_statements;
+    analyze_node(block_ref);
+
+    ref.type.m_return_type = block_ref.type;
+    block_ref.type = type_builtin::type_void();
+
+    m_return_statements = old_returns;
+  }
+
   if (is_recursive) {
     analyze_func(ref, false);
   }
