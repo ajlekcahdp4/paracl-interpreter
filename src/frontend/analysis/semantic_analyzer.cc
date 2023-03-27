@@ -110,7 +110,7 @@ void semantic_analyzer::check_return_types_matches(types::generic_type &type, lo
 
 using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
 void semantic_analyzer::analyze_node(ast::statement_block &ref) {
-  begin_scope(ref.stab);
+  auto guard = begin_scope(ref.stab);
 
   auto *old_returns = m_return_statements;
 
@@ -159,40 +159,33 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
   if (in_value_block()) check_return_types_matches(ref.type, ref.loc());
 
   m_return_statements = old_returns;
-
-  end_scope();
 }
 
 void semantic_analyzer::analyze_node(ast::if_statement &ref) {
-  begin_scope(ref.control_block_symtab());
+  auto control_guard = begin_scope(ref.control_block_symtab());
   apply(ref.cond());
   expect_type_eq(ref.cond(), type_builtin::type_int().base());
 
-  next_raw_block();
-  begin_scope(ref.true_symtab());
-  apply(ref.true_block());
-  end_scope();
-
-  if (ref.else_block()) {
-    next_raw_block();
-    begin_scope(ref.else_symtab());
-    apply(*ref.else_block());
-    end_scope();
+  {
+    auto guard_true = next_raw_block(ref.true_symtab());
+    apply(ref.true_block());
+    guard_true.release();
   }
 
-  end_scope();
+  if (ref.else_block()) {
+    auto guard_else = next_raw_block(ref.else_symtab());
+    apply(*ref.else_block());
+  }
 }
 
 void semantic_analyzer::analyze_node(ast::while_statement &ref) {
-  begin_scope(ref.symbol_table());
+  auto guard = begin_scope(ref.symbol_table());
 
   apply(ref.cond());
   expect_type_eq(ref.cond(), type_builtin::type_int());
 
   next_raw_block();
   apply(ref.block());
-
-  end_scope();
 }
 
 bool semantic_analyzer::analyze_node(ast::variable_expression &ref, bool can_declare) {
@@ -222,7 +215,7 @@ using expressions_and_return =
 
 void semantic_analyzer::analyze_node(ast::function_definition &ref) {
   if (m_in_function_body) return;
-  begin_scope(ref.param_stab);
+  auto guard = begin_scope(ref.param_stab);
   m_in_function_body = true; // Set flag
 
   auto block_ptr = ezvis::visit<ast::statement_block *, ast::error_node, ast::statement_block>(
@@ -248,7 +241,6 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
     m_return_statements = old_returns;
   }
 
-  end_scope();
   m_in_function_body = false; // Exit
 }
 

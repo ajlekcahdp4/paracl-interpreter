@@ -85,12 +85,38 @@ private:
     return expect_type_eq(ref, rhs.base());
   }
 
-private:
   void check_return_types_matches(types::generic_type &type, location loc);
 
-  void begin_scope(symtab &stab) {
+private:
+  class block_guard {
+  private:
+    semantic_analyzer &m_analyzer;
+    bool m_released = false;
+
+  public:
+    block_guard(semantic_analyzer &analyzer) : m_analyzer{analyzer} {}
+
+    block_guard(const block_guard &) = delete;
+    block_guard(block_guard &&) = delete;
+
+    block_guard &operator=(const block_guard &) = delete;
+    block_guard &operator=(block_guard &&) = delete;
+
+    ~block_guard() {
+      if (!m_released) m_analyzer.end_scope();
+    }
+
+    void release() {
+      if (m_released) return;
+      m_released = true;
+      m_analyzer.end_scope();
+    }
+  };
+
+  [[nodiscard]] block_guard begin_scope(symtab &stab) {
     m_scopes.begin_scope(stab);
     m_raw_block_stack.push(m_next_raw_block);
+    return block_guard{*this};
   }
 
   void end_scope() {
@@ -105,9 +131,18 @@ private:
   }
 
   bool in_value_block() const { return !in_raw_block(); }
-
   void next_raw_block() { m_next_raw_block = true; }
   void next_value_block() { m_next_raw_block = false; }
+
+  [[nodiscard]] block_guard next_raw_block(symtab &stab) {
+    next_raw_block();
+    return begin_scope(stab);
+  }
+
+  [[nodiscard]] block_guard next_value_block(symtab &stab) {
+    next_value_block();
+    return begin_scope(stab);
+  }
 
 public:
   EZVIS_VISIT_CT(ast::tuple_all_nodes)
