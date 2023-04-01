@@ -54,17 +54,32 @@ constexpr instruction_desc<E_ADD_NULLARY> add_desc = "add";
 // right-hand side
 constexpr instruction_desc<E_SUB_NULLARY> sub_desc = "sub";
 
+// mul: Multiply two values descructively. push(pop() * pop())
 constexpr instruction_desc<E_MUL_NULLARY> mul_desc = "mul";
+
+// div: Divide two values from the top of the stack. second = pop(), first = pop(), push(first / second)
 constexpr instruction_desc<E_DIV_NULLARY> div_desc = "div";
+
+// mod: Modulus division. Arguments like other binary operators
 constexpr instruction_desc<E_MOD_NULLARY> mod_desc = "mod";
+
+// and: Logical AND of two values from the top of the stack. If both of the values are non-zero, then pushes a non-zero
+// value. Otherwise zero.
 constexpr instruction_desc<E_AND_NULLARY> and_desc = "and";
+
+// or: Logical OR. See logical AND.
 constexpr instruction_desc<E_OR_NULLARY> or_desc = "or";
 
+// not: Logical not. Converts non-zero to zero, zero to non-zero integer from the top.
 constexpr instruction_desc<E_NOT_NULLARY> not_desc = "not";
 
+// print: Print to stdout. Destructive.
 constexpr instruction_desc<E_PRINT_NULLARY> print_desc = "print";
+
+// push_read: Read from stdin and push the value onto the stack.
 constexpr instruction_desc<E_PUSH_READ_NULLARY> push_read_desc = "push_read";
 
+// cmp_eq, cmp_ne, cmp_gt, cmp_ls, cmp_ge, cmp_le. Destructive comparison of values. Names should be self-explanatory.
 constexpr instruction_desc<E_CMP_EQ_NULLARY> cmp_eq_desc = "cmp_eq";
 constexpr instruction_desc<E_CMP_NE_NULLARY> cmp_ne_desc = "cmp_ne";
 constexpr instruction_desc<E_CMP_GT_NULLARY> cmp_gt_desc = "cmp_gt";
@@ -262,10 +277,14 @@ constexpr auto paracl_isa = decl_vm::instruction_set_description(
     store_r0_instr
 );
 
+using paracl_isa_type = decltype(paracl_isa);
+
 } // namespace instruction_set
 
 [[maybe_unused]] auto create_paracl_vm() {
-  return decl_vm::virtual_machine<decltype(instruction_set::paracl_isa)>{instruction_set::paracl_isa};
+  using instruction_set::paracl_isa;
+  using instruction_set::paracl_isa_type;
+  return decl_vm::virtual_machine<paracl_isa_type>{paracl_isa};
 }
 
 } // namespace

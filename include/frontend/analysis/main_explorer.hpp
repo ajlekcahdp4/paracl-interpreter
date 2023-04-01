@@ -10,9 +10,10 @@
 
 #pragma once
 
-#include "frontend/analysis/function_table.hpp"
 #include "frontend/ast/ast_container.hpp"
+#include "frontend/ast/ast_nodes/assignment_statement.hpp"
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
+#include "frontend/ast/ast_nodes/statement_block.hpp"
 
 #include "frontend/ast/node_identifier.hpp"
 #include "frontend/error.hpp"
@@ -20,7 +21,6 @@
 #include "frontend/types/types.hpp"
 
 #include "ezvis/ezvis.hpp"
-#include "location.hpp"
 
 #include <iostream>
 #include <string_view>

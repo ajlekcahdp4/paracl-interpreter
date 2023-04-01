@@ -87,7 +87,7 @@ void semantic_analyzer::analyze_node(ast::print_statement &ref) {
 void semantic_analyzer::check_return_types_matches(types::generic_type &type, location loc) {
   bool valid = true;
 
-  const auto on_error = [&](location loc) {
+  const auto on_error = [this, &valid](location loc) {
     error_report error = {
         {fmt::format("Return type deduction failed, found mismatch"), loc}
     };
@@ -133,7 +133,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref, bool main_block)
 
   ref.type = types::type_builtin::type_void;
   for (auto start = ref.begin(), finish = ref.end(); start != finish; ++start) {
-    auto ptr = *start;
+    auto *ptr = *start;
     assert(ptr && "Broken statement pointer in a block");
     auto &st = *ptr;
     apply(st);
@@ -144,7 +144,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref, bool main_block)
     auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
         paracl::utils::visitors{
             [](ast::i_expression &expr) { return expr.type; },
-            [&](ast::i_ast_node &) { return type_builtin::type_void; }},
+            [](ast::i_ast_node &) { return type_builtin::type_void; }},
         st
     );
 
@@ -232,7 +232,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
   auto function_found = m_functions->named_functions.lookup(name);
   auto attr = m_scopes.lookup_symbol(name);
 
-  const auto report = [&](auto &&loc) {
+  const auto report = [this, name, &ref](auto &&loc) {
     if (m_type_errors_allowed) return;
 
     error_report error = {
@@ -243,8 +243,8 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
     report_error(error);
   };
 
-  const auto match_types = [&](auto expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, arg.base()); };
-  const auto check_func_parameter_list = [&](auto &&type, auto &&loc, auto match) {
+  const auto match_types = [this](auto expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, arg.base()); };
+  const auto check_func_parameter_list = [ref, report](auto &&type, auto &&loc, auto match) {
     if (std::mismatch(ref.begin(), ref.end(), type.cbegin(), type.cend(), match).first != ref.end() ||
         ref.size() != type.size()) {
       report(loc);
@@ -272,7 +272,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
   }
 
   if (attr) {
-    auto def = attr->m_definition;
+    auto *def = attr->m_definition;
     auto &type = def->type;
 
     if (type.base().get_class() != types::type_class::E_COMPOSITE_FUNCTION) {
@@ -294,7 +294,7 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
 
 bool semantic_analyzer::analyze_main(ast::i_ast_node &ref) {
   next_value_block();
-  auto block_ptr = try_get_block_ptr(ref);
+  auto *block_ptr = try_get_block_ptr(ref);
 
   if (block_ptr) {
     auto &main_block = *block_ptr;
@@ -313,7 +313,7 @@ bool semantic_analyzer::analyze_func(ast::function_definition &ref, bool is_recu
   m_type_errors_allowed = is_recursive;
   auto guard = begin_scope(ref.param_stab);
 
-  auto block_ptr = try_get_block_ptr(ref.body());
+  auto *block_ptr = try_get_block_ptr(ref.body());
   auto &block_ref = *block_ptr;
 
   if (block_ptr) {

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "frontend/ast/ast_nodes.hpp"
+#include "frontend/ast/ast_nodes/function_decl.hpp"
 #include "frontend/symtab.hpp"
 #include "graphs/directed_graph.hpp"
 #include "utils/transparent.hpp"

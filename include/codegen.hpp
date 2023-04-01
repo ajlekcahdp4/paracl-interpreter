@@ -14,7 +14,6 @@
 
 #include "bytecode_vm/bytecode_builder.hpp"
 #include "bytecode_vm/decl_vm.hpp"
-#include "bytecode_vm/disassembly.hpp"
 #include "bytecode_vm/opcodes.hpp"
 #include "bytecode_vm/virtual_machine.hpp"
 
@@ -39,6 +38,12 @@
 
 namespace paracl::codegen {
 
+namespace ast = frontend::ast;
+namespace vm_instruction_set = bytecode_vm::instruction_set;
+namespace vm_builder = bytecode_vm::builder;
+
+using vm_builder::encoded_instruction;
+
 class codegen_stack_frame {
 private:
   using map_type = utils::transparent::string_unordered_map<unsigned>;
@@ -56,7 +61,7 @@ public:
     m_blocks.push_back(block);
   }
 
-  void begin_scope(frontend::symtab &stab) {
+  void begin_scope(const frontend::symtab &stab) {
     begin_scope();
 
     for (const auto &v : stab) {
@@ -168,22 +173,42 @@ private:
   }
 
 private:
-  void emit_pop();
-
   auto emit_with_increment(auto &&desc) {
     increment_stack();
-    return m_builder.emit_operation(desc);
+    return emit(desc);
   }
 
   auto emit_with_decrement(auto &&desc) {
     decrement_stack();
-    return m_builder.emit_operation(desc);
+    return emit(desc);
   }
+
+  auto emit(auto &&desc) { return m_builder.emit_operation(desc); }
+  void emit_pop() { emit_with_decrement(vm_instruction_set::pop_desc); }
 
   // clang-format off
   void increment_stack() { m_symtab_stack.push_dummy(); }
   void decrement_stack() { m_symtab_stack.pop_dummy(); }
   // clang-format on
+
+  void begin_scope(const frontend::symtab &stab) {
+    m_symtab_stack.begin_scope(stab);
+    for (unsigned i = 0; i < stab.size(); ++i) {
+      emit(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
+    }
+  }
+
+  void end_scope() {
+    auto current_size = m_symtab_stack.size();
+    m_symtab_stack.end_scope();
+    auto old_size = m_symtab_stack.size();
+
+    assert(current_size >= old_size);
+
+    for (unsigned i = 0; i < current_size - old_size; ++i) {
+      emit(vm_instruction_set::pop_desc);
+    }
+  }
 
 private:
   using to_visit = std::tuple<
@@ -218,16 +243,6 @@ public:
   void generate_all(const frontend::ast::ast_container &ast, const frontend::functions_analytics &functions);
   bytecode_vm::decl_vm::chunk to_chunk();
 };
-
-namespace vm_instruction_set = bytecode_vm::instruction_set;
-namespace vm_builder = bytecode_vm::builder;
-namespace ast = frontend::ast;
-
-using vm_builder::encoded_instruction;
-
-void codegen_visitor::emit_pop() {
-  emit_with_decrement(vm_instruction_set::pop_desc);
-}
 
 void codegen_visitor::generate(ast::constant_expression &ref) {
   auto index = lookup_or_insert_constant(ref.value());
@@ -311,14 +326,7 @@ void codegen_visitor::generate(ast::statement_block &ref) {
     m_prev_stack_size = m_symtab_stack.size();
   }
 
-  m_symtab_stack.begin_scope(ref.stab);
-
-  auto n_symbols = ref.stab.size();
-
-  for (unsigned i = 0; i < n_symbols; ++i) {
-    // no need to increment there cause it is already done in begin_scope
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
-  }
+  begin_scope(ref.stab);
 
   if (ref.size()) {
     for (auto start = ref.cbegin(), finish = ref.cend(); start != finish; ++start) {
@@ -328,13 +336,20 @@ void codegen_visitor::generate(ast::statement_block &ref) {
       using frontend::ast::ast_expression_types;
 
       const auto node_type = frontend::ast::identify_node(*statement);
-      const auto is_raw_expression =
+      const auto is_expression =
           std::find(ast_expression_types.begin(), ast_expression_types.end(), node_type) != ast_expression_types.end();
 
       bool is_assignment = (node_type == frontend::ast::ast_node_type::E_ASSIGNMENT_STATEMENT);
       bool is_return = (node_type == frontend::ast::ast_node_type::E_RETURN_STATEMENT);
+      bool pop_unused_result = is_expression && !is_return;
 
-      bool pop_unused_result = is_raw_expression && !is_return;
+      using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
+      auto type = ezvis::visit_tuple<frontend::types::generic_type, expressions_and_base>(
+          paracl::utils::visitors{
+              [](ast::i_expression &expr) { return expr.type; },
+              [](ast::i_ast_node &) { return frontend::types::type_builtin::type_void; }},
+          *statement
+      );
 
       if (is_assignment && pop_unused_result) {
         set_currently_statement();
@@ -346,19 +361,13 @@ void codegen_visitor::generate(ast::statement_block &ref) {
         apply(*statement);
       }
 
-      if (!is_assignment && pop_unused_result) {
-        m_builder.emit_operation(vm_instruction_set::pop_desc);
+      if ((!is_assignment) && (pop_unused_result) && (type != frontend::types::type_builtin::type_void)) {
+        emit_pop();
       }
     }
   }
 
-  if (!should_return) {
-    for (unsigned i = 0; i < n_symbols; ++i) {
-      emit_pop();
-    }
-  }
-
-  m_symtab_stack.end_scope();
+  end_scope();
 
   if (should_return) {
     m_return_address_constants.at(ret_addr_index).m_address = m_builder.current_loc();
@@ -391,7 +400,7 @@ void codegen_visitor::visit_if_with_else(ast::if_statement &ref) {
 
   set_currently_statement();
   apply(ref.true_block());
-  auto index_jmp_to_after_true_block = m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_desc, 0});
+  auto index_jmp_to_after_true_block = emit(encoded_instruction{vm_instruction_set::jmp_desc, 0});
 
   auto &to_relocate_else_jump = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_false_block);
   std::get<0>(to_relocate_else_jump.m_attr) = m_builder.current_loc();
@@ -404,12 +413,7 @@ void codegen_visitor::visit_if_with_else(ast::if_statement &ref) {
 }
 
 void codegen_visitor::generate(ast::if_statement &ref) {
-  m_symtab_stack.begin_scope(ref.control_block_symtab());
-
-  for (unsigned i = 0; i < ref.control_block_symtab().size(); ++i) {
-    // no need to increment there cause it is already done in begin_scope
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
-  }
+  begin_scope(ref.control_block_symtab());
 
   if (!ref.else_block()) {
     visit_if_no_else(ref);
@@ -417,20 +421,11 @@ void codegen_visitor::generate(ast::if_statement &ref) {
     visit_if_with_else(ref);
   }
 
-  for (unsigned i = 0; i < ref.control_block_symtab().size(); ++i) {
-    emit_pop();
-  }
-
-  m_symtab_stack.end_scope();
+  end_scope();
 }
 
 void codegen_visitor::generate(ast::while_statement &ref) {
-  m_symtab_stack.begin_scope(ref.symbol_table());
-
-  for (unsigned i = 0; i < ref.symbol_table().size(); ++i) {
-    // no need to increment there cause it is already done in begin_scope
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
-  }
+  begin_scope(ref.symbol_table());
 
   auto while_location_start = m_builder.current_loc();
   reset_currently_statement();
@@ -440,17 +435,11 @@ void codegen_visitor::generate(ast::while_statement &ref) {
   set_currently_statement();
 
   apply(ref.block());
-
-  m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_desc, while_location_start});
-
+  emit(encoded_instruction{vm_instruction_set::jmp_desc, while_location_start});
   auto &to_relocate_after_loop_jump = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_after_loop);
   std::get<0>(to_relocate_after_loop_jump.m_attr) = m_builder.current_loc();
 
-  for (unsigned i = 0; i < ref.symbol_table().size(); ++i) {
-    emit_pop();
-  }
-
-  m_symtab_stack.end_scope();
+  end_scope();
 }
 
 void codegen_visitor::generate(ast::unary_expression &ref) {
@@ -472,7 +461,7 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
 
   case unary_op::E_UN_OP_NOT: {
     apply(ref.expr());
-    m_builder.emit_operation(vm_instruction_set::not_desc);
+    emit(vm_instruction_set::not_desc);
     break;
 
   default: std::terminate();
@@ -500,10 +489,10 @@ void codegen_visitor::generate(ast::function_call &ref) {
     assert(e);
     apply(*e);
   }
-  m_builder.emit_operation(encoded_instruction{vm_instruction_set::update_sp_desc, n_args});
+  emit(encoded_instruction{vm_instruction_set::update_sp_desc, n_args});
 
   if (ref.m_def) {
-    auto relocate_index = m_builder.emit_operation(encoded_instruction{vm_instruction_set::jmp_desc});
+    auto relocate_index = emit(encoded_instruction{vm_instruction_set::jmp_desc});
     m_relocations_function_calls.push_back({relocate_index, ref.m_def});
   }
 
@@ -517,7 +506,10 @@ void codegen_visitor::generate(ast::function_call &ref) {
 
   m_return_address_constants.at(ret_addr_index).m_address = m_builder.current_loc();
   m_symtab_stack.end_scope();
-  if (is_return) emit_with_increment(encoded_instruction{vm_instruction_set::store_r0_desc});
+
+  if (is_return) {
+    emit_with_increment(encoded_instruction{vm_instruction_set::store_r0_desc});
+  }
 }
 
 void codegen_visitor::generate(frontend::ast::return_statement &ref) {
@@ -529,10 +521,10 @@ void codegen_visitor::generate(frontend::ast::return_statement &ref) {
   // clean up local variables
   unsigned local_var_n = m_symtab_stack.size() - m_prev_stack_size;
   for (unsigned i = 0; i < local_var_n; ++i) {
-    m_builder.emit_operation(encoded_instruction{vm_instruction_set::pop_desc});
+    emit(encoded_instruction{vm_instruction_set::pop_desc});
   }
 
-  m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
+  emit(encoded_instruction{vm_instruction_set::return_desc});
 }
 
 void codegen_visitor::generate(frontend::ast::function_definition_to_ptr_conv &ref) {
@@ -545,22 +537,14 @@ unsigned codegen_visitor::generate_function(frontend::ast::function_definition &
   m_symtab_stack.clear();
 
   m_curr_function = &ref;
-  m_symtab_stack.begin_scope();
-  for (auto &&var : ref) {
-    m_symtab_stack.push_var(var.name());
-  }
+  begin_scope(ref.param_symtab());
 
   auto &&function_pos = m_builder.current_loc();
   m_function_defs.insert({&ref, function_pos});
   apply(ref.body());
 
-  for (unsigned i = 0; i < ref.param_symtab().size(); ++i) {
-    emit_pop();
-  }
-
-  m_builder.emit_operation(encoded_instruction{vm_instruction_set::return_desc});
-
-  m_symtab_stack.end_scope();
+  end_scope();
+  emit(encoded_instruction{vm_instruction_set::return_desc});
 
   return function_pos;
 }
@@ -591,7 +575,7 @@ void codegen_visitor::generate_all(
     apply(*ast.get_root_ptr()); // Last instruction is ret
   }
 
-  m_builder.emit_operation(vm_instruction_set::return_desc);
+  emit(vm_instruction_set::return_desc);
   for (auto &&[name, attr] : functions.named_functions) {
     assert(attr.definition && "Attribute definition pointer can't be nullptr");
     generate_function(*attr.definition);
