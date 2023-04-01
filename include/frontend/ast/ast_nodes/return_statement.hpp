@@ -25,7 +25,7 @@ class return_statement : public i_expression {
 
 public:
   return_statement(i_expression *p_expr, location l)
-      : i_expression{l, p_expr ? p_expr->type : types::type_builtin::type_void()}, m_expr{p_expr} {}
+      : i_expression{l, p_expr ? p_expr->type : types::type_builtin::type_void}, m_expr{p_expr} {}
 
   bool empty() const { return !m_expr; }
   i_expression &expr() const {
@@ -55,7 +55,7 @@ public:
 
 public:
   bool are_all_void() const {
-    return std::all_of(cbegin(), cend(), [&void_type = types::type_builtin::type_void()](return_statement *ret) {
+    return std::all_of(cbegin(), cend(), [&void_type = types::type_builtin::type_void](return_statement *ret) {
       assert(ret);
       return ret->type && ret->type == void_type;
     });

@@ -18,7 +18,7 @@ class read_expression : public i_expression {
   EZVIS_VISITABLE();
 
 public:
-  read_expression(location l) : i_expression{l, types::type_builtin::type_int()} {}
+  read_expression(location l) : i_expression{l, types::type_builtin::type_int} {}
 };
 
 } // namespace paracl::frontend::ast

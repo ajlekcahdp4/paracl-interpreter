@@ -37,7 +37,7 @@ private:
     std::vector<types::generic_type> arg_types;
 
     for (auto &v : *this) {
-      if (!v.type) v.type = types::type_builtin::type_int();
+      if (!v.type) v.type = types::type_builtin::type_int;
       arg_types.push_back(v.type);
       param_stab.declare(v.name(), &v);
     }

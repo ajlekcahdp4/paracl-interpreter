@@ -297,7 +297,7 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
 }
 
 void codegen_visitor::generate(ast::statement_block &ref) {
-  bool should_return = ref.type && ref.type != frontend::types::type_builtin::type_void();
+  bool should_return = ref.type && ref.type != frontend::types::type_builtin::type_void;
 
   unsigned ret_addr_index = 0;
   unsigned prev_stack_size = m_prev_stack_size;
@@ -351,7 +351,7 @@ void codegen_visitor::generate(ast::statement_block &ref) {
 
       if (!is_assignment && pop_unused_result) {
         if (!(node_type == frontend::ast::ast_node_type::E_FUNCTION_CALL &&
-              static_cast<frontend::ast::function_call &>(*statement).type == frontend::types::type_builtin::type_void()
+              static_cast<frontend::ast::function_call &>(*statement).type == frontend::types::type_builtin::type_void
             )) {
           emit_pop();
         }
@@ -491,7 +491,7 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
 
 void codegen_visitor::generate(ast::function_call &ref) {
   bool is_return = false;
-  if (ref.type && ref.type != frontend::types::type_builtin::type_void()) {
+  if (ref.type && ref.type != frontend::types::type_builtin::type_void) {
     is_return = true;
   }
   const auto const_index = current_constant_index();

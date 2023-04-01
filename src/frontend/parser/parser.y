@@ -337,8 +337,8 @@ function_call:
   IDENTIFIER LPAREN param_list_or_empty RPAREN { $$ = driver.make_ast_node<ast::function_call>($1, @$, $3); } 
 
 builtin_type: 
-  INT   { $$ = types::type_builtin::type_int(); }
-| VOID  { $$ = types::type_builtin::type_void(); }
+  INT   { $$ = types::type_builtin::type_int; }
+| VOID  { $$ = types::type_builtin::type_void; }
 
 function_type:  type FUNC LPAREN type_list_or_empty RPAREN  { $$ = types::generic_type::make<types::type_composite_function>(std::move($4), $1); }
 

@@ -24,24 +24,19 @@ namespace paracl::frontend {
 
 using types::type_builtin;
 
-ast::statement_block *semantic_analyzer::try_get_block_ptr(ast::i_ast_node &ref) {
-  auto block_ptr = ezvis::visit<ast::statement_block *, ast::error_node, ast::statement_block>(
+ast::statement_block *semantic_analyzer::try_get_block_ptr(ast::i_ast_node &ref) { // clang-format off
+  return ezvis::visit<ast::statement_block *, ast::error_node, ast::statement_block>(
       paracl::utils::visitors{
-          [&](const ast::error_node &e) {
-            analyze_node(e);
-            return nullptr;
-          },
+          [this](const ast::error_node &e) { analyze_node(e); return nullptr; },
           [](ast::statement_block &s) { return &s; }},
       ref
   );
-
-  return block_ptr;
-}
+} // clang-format on
 
 void semantic_analyzer::analyze_node(ast::unary_expression &ref) {
   apply(ref.expr());
-  if (expect_type_eq(ref.expr(), type_builtin::type_int())) {
-    ref.type = type_builtin::type_int();
+  if (expect_type_eq(ref.expr(), type_builtin::type_int)) {
+    ref.type = type_builtin::type_int;
   }
 }
 
@@ -57,7 +52,7 @@ void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
     return;
   }
 
-  if (right_type == types::type_builtin::type_void()) {
+  if (right_type == types::type_builtin::type_void) {
     report_error("Type of the right side of the assignment can't be `void`", ref.right().loc());
     return;
   }
@@ -79,14 +74,14 @@ void semantic_analyzer::analyze_node(ast::binary_expression &ref) {
   apply(ref.right());
   apply(ref.left());
 
-  if (expect_type_eq(ref.right(), type_builtin::type_int()) && expect_type_eq(ref.left(), type_builtin::type_int())) {
-    ref.type = type_builtin::type_int();
+  if (expect_type_eq(ref.right(), type_builtin::type_int) && expect_type_eq(ref.left(), type_builtin::type_int)) {
+    ref.type = type_builtin::type_int;
   }
 }
 
 void semantic_analyzer::analyze_node(ast::print_statement &ref) {
   apply(ref.expr());
-  expect_type_eq(ref.expr(), type_builtin::type_int());
+  expect_type_eq(ref.expr(), type_builtin::type_int);
 }
 
 void semantic_analyzer::check_return_types_matches(types::generic_type &type, location loc) {
@@ -103,8 +98,8 @@ void semantic_analyzer::check_return_types_matches(types::generic_type &type, lo
 
   auto &ret_type = type;
   if (m_return_statements->empty()) {
-    if (!ret_type || ret_type == types::type_builtin::type_void()) {
-      ret_type = types::type_builtin::type_void();
+    if (!ret_type || ret_type == types::type_builtin::type_void) {
+      ret_type = types::type_builtin::type_void;
       return;
     }
 
@@ -134,7 +129,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
     ref.return_statements.clear();
   }
 
-  ref.type = types::type_builtin::type_void();
+  ref.type = types::type_builtin::type_void;
   for (auto start = ref.begin(), finish = ref.end(); start != finish; ++start) {
     auto ptr = *start;
     assert(ptr && "Broken statement pointer in a block");
@@ -148,13 +143,13 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
       auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
           paracl::utils::visitors{
               [](ast::i_expression &expr) { return expr.type; },
-              [&](ast::i_ast_node &) { return type_builtin::type_void(); }},
+              [&](ast::i_ast_node &) { return type_builtin::type_void; }},
           st
       );
 
       if (!type) break;
       // Implicit return case
-      bool is_implicit_return = ref.return_statements.empty() && type != types::type_builtin::type_void();
+      bool is_implicit_return = ref.return_statements.empty() && type != types::type_builtin::type_void;
       if (is_implicit_return) {
         assert(m_ast && "Nullptr in m_ast");
 
@@ -179,7 +174,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
 void semantic_analyzer::analyze_node(ast::if_statement &ref) {
   auto control_guard = begin_scope(ref.control_block_symtab());
   apply(ref.cond());
-  expect_type_eq(ref.cond(), type_builtin::type_int().base());
+  expect_type_eq(ref.cond(), type_builtin::type_int.base());
 
   {
     auto guard_true = next_raw_block(ref.true_symtab());
@@ -197,7 +192,7 @@ void semantic_analyzer::analyze_node(ast::while_statement &ref) {
   auto guard = begin_scope(ref.symbol_table());
 
   apply(ref.cond());
-  expect_type_eq(ref.cond(), type_builtin::type_int());
+  expect_type_eq(ref.cond(), type_builtin::type_int);
 
   next_raw_block();
   apply(ref.block());
@@ -303,7 +298,7 @@ bool semantic_analyzer::analyze_main(ast::i_ast_node &ref) {
     analyze_node(main_block);
 
     for (const auto &st : main_block.return_statements) {
-      expect_type_eq(*st, types::type_builtin::type_void());
+      expect_type_eq(*st, types::type_builtin::type_void);
     }
   }
 
@@ -324,7 +319,7 @@ bool semantic_analyzer::analyze_func(ast::function_definition &ref, bool is_recu
     analyze_node(block_ref);
 
     ref.type.m_return_type = block_ref.type;
-    block_ref.type = type_builtin::type_void();
+    block_ref.type = type_builtin::type_void;
 
     m_return_statements = old_returns;
   }
@@ -346,7 +341,7 @@ void semantic_analyzer::analyze_node(ast::return_statement &ref) {
     apply(ref.expr());
     ref.type = ref.expr().type;
   } else {
-    ref.type = types::type_builtin::type_void();
+    ref.type = types::type_builtin::type_void;
   }
 }
 
