@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) try {
   paracl::frontend::frontend_driver drv{input_file_name};
   drv.parse();
 
-  auto &parse_tree = drv.ast();
+  const auto &parse_tree = drv.ast();
   bool valid = drv.analyze();
 
   if (ast_dump_option->is_set()) {
@@ -62,7 +62,9 @@ int main(int argc, char *argv[]) try {
     return k_exit_success;
   }
 
-  if (!valid) return k_exit_failure;
+  if (!valid) {
+    return k_exit_failure;
+  }
 
   paracl::codegen::codegen_visitor generator;
   generator.generate_all(drv.ast(), drv.functions());

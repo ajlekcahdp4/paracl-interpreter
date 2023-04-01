@@ -23,6 +23,8 @@
 namespace paracl::frontend {
 
 void function_explorer::explore(ast::function_definition &ref) {
+  assert(ref.name.has_value() && "Encountered an unnamed function. This shouldn't happen");
+
   auto &&name_v = ref.name.value();
   auto [attr, inserted] = m_analytics->named_functions.define_function(name_v, {&ref});
 
@@ -49,7 +51,8 @@ void function_explorer::explore(ast::function_definition &ref) {
 void function_explorer::explore(ast::function_call &ref) {
   auto name_v = std::string{ref.name()};
   auto found = m_analytics->named_functions.lookup(name_v);
-  auto def = (found ? found->definition : nullptr);
+
+  auto *def = (found ? found->definition : nullptr);
   ref.m_def = def;
 
   if (found) {

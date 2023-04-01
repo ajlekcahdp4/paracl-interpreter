@@ -271,13 +271,10 @@ void codegen_visitor::generate(ast::assignment_statement &ref) {
 void codegen_visitor::generate(ast::binary_expression &ref) {
   reset_currently_statement();
   apply(ref.left());
-
   reset_currently_statement();
-
   apply(ref.right());
 
   using bin_op = ast::binary_operation;
-
   switch (ref.op_type()) {
   case bin_op::E_BIN_OP_ADD: emit_with_decrement(vm_instruction_set::add_desc); break;
   case bin_op::E_BIN_OP_SUB: emit_with_decrement(vm_instruction_set::sub_desc); break;
@@ -297,7 +294,7 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
 }
 
 void codegen_visitor::generate(ast::statement_block &ref) {
-  bool should_return = ref.type && ref.type != frontend::types::type_builtin::type_void;
+  bool should_return = ref.type != frontend::types::type_builtin::type_void;
 
   unsigned ret_addr_index = 0;
   unsigned prev_stack_size = m_prev_stack_size;
@@ -325,7 +322,6 @@ void codegen_visitor::generate(ast::statement_block &ref) {
 
   if (ref.size()) {
     for (auto start = ref.cbegin(), finish = ref.cend(); start != finish; ++start) {
-      auto &&last = std::prev(finish);
       auto &&statement = *start;
 
       assert(statement && "Broken statement pointer");
@@ -334,10 +330,11 @@ void codegen_visitor::generate(ast::statement_block &ref) {
       const auto node_type = frontend::ast::identify_node(*statement);
       const auto is_raw_expression =
           std::find(ast_expression_types.begin(), ast_expression_types.end(), node_type) != ast_expression_types.end();
+
       bool is_assignment = (node_type == frontend::ast::ast_node_type::E_ASSIGNMENT_STATEMENT);
       bool is_return = (node_type == frontend::ast::ast_node_type::E_RETURN_STATEMENT);
-      bool is_last_iteration = start == last;
-      bool pop_unused_result = (!is_last_iteration || !should_return) && is_raw_expression && !is_return;
+
+      bool pop_unused_result = is_raw_expression && !is_return;
 
       if (is_assignment && pop_unused_result) {
         set_currently_statement();
@@ -350,16 +347,11 @@ void codegen_visitor::generate(ast::statement_block &ref) {
       }
 
       if (!is_assignment && pop_unused_result) {
-        if (!(node_type == frontend::ast::ast_node_type::E_FUNCTION_CALL &&
-              static_cast<frontend::ast::function_call &>(*statement).type == frontend::types::type_builtin::type_void
-            )) {
-          emit_pop();
-        }
+        m_builder.emit_operation(vm_instruction_set::pop_desc);
       }
-      if (is_last_iteration && should_return && !is_return && is_raw_expression)
-        emit_with_decrement(vm_instruction_set::load_r0_desc);
     }
   }
+
   if (!should_return) {
     for (unsigned i = 0; i < n_symbols; ++i) {
       emit_pop();
@@ -463,7 +455,6 @@ void codegen_visitor::generate(ast::while_statement &ref) {
 
 void codegen_visitor::generate(ast::unary_expression &ref) {
   using unary_op = ast::unary_operation;
-
   reset_currently_statement();
 
   switch (ref.op_type()) {
@@ -491,9 +482,11 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
 
 void codegen_visitor::generate(ast::function_call &ref) {
   bool is_return = false;
-  if (ref.type && ref.type != frontend::types::type_builtin::type_void) {
+
+  if (ref.type != frontend::types::type_builtin::type_void) {
     is_return = true;
   }
+
   const auto const_index = current_constant_index();
   m_return_address_constants.push_back({const_index, 0}); // Dummy address
   const auto ret_addr_index = m_return_address_constants.size() - 1;

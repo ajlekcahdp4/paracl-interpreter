@@ -161,7 +161,7 @@ public:
   void analyze_node(ast::if_statement &);
   void analyze_node(ast::print_statement &);
 
-  void analyze_node(ast::statement_block &);
+  void analyze_node(ast::statement_block &, bool main_block = false);
   void analyze_node(ast::unary_expression &);
   bool analyze_node(ast::variable_expression &, bool can_declare = false);
   void analyze_node(ast::while_statement &);

@@ -1,8 +1,10 @@
 a = {
   a = ?;
+
   if (a <= 5)
     return 0;
   return 1;
 };
 
 print a;
+1;

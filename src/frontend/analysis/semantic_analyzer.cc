@@ -115,11 +115,13 @@ void semantic_analyzer::check_return_types_matches(types::generic_type &type, lo
     on_error(st->loc());
   }
 
-  if (valid) type = first_type;
+  if (valid) {
+    type = first_type;
+  }
 }
 
 using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
-void semantic_analyzer::analyze_node(ast::statement_block &ref) {
+void semantic_analyzer::analyze_node(ast::statement_block &ref, bool main_block) {
   auto guard = begin_scope(ref.stab);
 
   auto *old_returns = m_return_statements;
@@ -137,36 +139,38 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
     apply(st);
 
     bool is_last = (start == std::prev(finish));
-    if (!is_last) continue;
+    if (!is_last || in_raw_block()) continue;
 
-    if (in_value_block()) {
-      auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
-          paracl::utils::visitors{
-              [](ast::i_expression &expr) { return expr.type; },
-              [&](ast::i_ast_node &) { return type_builtin::type_void; }},
-          st
-      );
+    auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
+        paracl::utils::visitors{
+            [](ast::i_expression &expr) { return expr.type; },
+            [&](ast::i_ast_node &) { return type_builtin::type_void; }},
+        st
+    );
 
-      if (!type) break;
-      // Implicit return case
-      bool is_implicit_return = ref.return_statements.empty() && type != types::type_builtin::type_void;
-      if (is_implicit_return) {
-        assert(m_ast && "Nullptr in m_ast");
+    auto is_return = ezvis::visit<bool, ast::return_statement, ast::i_ast_node>(
+        paracl::utils::visitors{[](ast::return_statement &) { return true; }, [](ast::i_ast_node &) { return false; }},
+        st
+    );
 
-        auto expr_ptr = ezvis::visit_tuple<ast::i_expression *, ast::tuple_expression_nodes>(
-            [](ast::i_expression &expr) { return &expr; }, st
-        );
-        auto &ret = m_ast->make_node<ast::return_statement>(expr_ptr, expr_ptr->loc());
+    bool is_implicit_return = (type != types::type_builtin::type_void); // Implicit return case
+    if (!is_implicit_return || is_return || main_block) break;
 
-        ref.return_statements.push_back(&ret);
-        *start = &ret;
-      }
+    assert(m_ast && "Nullptr in m_ast");
 
-      ref.type = type;
-    }
+    auto expr_ptr = ezvis::visit_tuple<ast::i_expression *, ast::tuple_expression_nodes>(
+        [](ast::i_expression &expr) { return &expr; }, st
+    );
+    auto &ret = m_ast->make_node<ast::return_statement>(expr_ptr, expr_ptr->loc());
+
+    ref.return_statements.push_back(&ret);
+    ref.type = type;
+    *start = &ret;
   }
 
-  if (in_value_block()) check_return_types_matches(ref.type, ref.loc());
+  if (in_value_block()) {
+    check_return_types_matches(ref.type, ref.loc());
+  }
 
   m_return_statements = old_returns;
 }
@@ -295,7 +299,7 @@ bool semantic_analyzer::analyze_main(ast::i_ast_node &ref) {
   if (block_ptr) {
     auto &main_block = *block_ptr;
     m_functions->global_stab = &main_block.stab;
-    analyze_node(main_block);
+    analyze_node(main_block, true);
 
     for (const auto &st : main_block.return_statements) {
       expect_type_eq(*st, types::type_builtin::type_void);
