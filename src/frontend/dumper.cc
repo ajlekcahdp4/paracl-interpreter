@@ -11,7 +11,7 @@
 #include "frontend/dumper.hpp"
 #include "ezvis/ezvis.hpp"
 #include "frontend/ast/ast_nodes.hpp"
-#include "utils/serialization.hpp"
+#include "utils/files.hpp"
 #include <fmt/core.h>
 
 #include <cassert>
@@ -33,14 +33,14 @@ public:
 private:
   void print_declare_node(const i_ast_node &ref, std::string_view label) {
     assert(m_iter);
-    fmt::format_to(*m_iter, "\tnode_{:x} [label = \"{}\"];\n", utils::pointer_to_uintptr(&ref), label);
+    fmt::format_to(*m_iter, "\tnode_{:x} [label = \"{}\"];\n", ::utils::pointer_to_uintptr(&ref), label);
   }
 
   void print_bind_node(const i_ast_node &parent, const i_ast_node &child, std::string_view label = "") {
     assert(m_iter);
     fmt::format_to(
-        *m_iter, "\tnode_{:x} -> node_{:x} [label = \"{}\"]\n", utils::pointer_to_uintptr(&parent),
-        utils::pointer_to_uintptr(&child), label
+        *m_iter, "\tnode_{:x} -> node_{:x} [label = \"{}\"]\n", ::utils::pointer_to_uintptr(&parent),
+        ::utils::pointer_to_uintptr(&child), label
     );
   }
 

@@ -12,12 +12,13 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <concepts>
 #include <iterator>
 #include <optional>
 #include <variant>
 
-namespace paracl::utils {
+namespace utils {
 
 template <typename... Ts> struct visitors : Ts... {
   using Ts::operator()...;
@@ -41,4 +42,8 @@ struct tuple_add_types<std::tuple<t_tuple_types...>, t_types...> {
 template <typename t_tuple, typename... t_types>
 using tuple_add_types_t = typename tuple_add_types<t_tuple, t_types...>::type;
 
-} // namespace paracl::utils
+auto pointer_to_uintptr(auto *pointer) {
+  return std::bit_cast<uintptr_t>(pointer);
+}
+
+} // namespace utils

@@ -16,7 +16,7 @@
 #include "bytecode_vm/opcodes.hpp"
 #include "bytecode_vm/virtual_machine.hpp"
 
-#include "utils/serialization.hpp"
+#include "utils/files.hpp"
 
 #include <fmt/core.h>
 #include <fmt/format.h>

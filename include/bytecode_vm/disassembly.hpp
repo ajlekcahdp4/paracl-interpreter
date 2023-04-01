@@ -11,7 +11,7 @@
 #pragma once
 
 #include "bytecode_vm/decl_vm.hpp"
-#include "utils/serialization.hpp"
+#include "utils/files.hpp"
 
 #include <algorithm>
 #include <array>
@@ -50,7 +50,7 @@ public:
 
     auto current_instruction = instruction_set.instruction_lookup_table[*first++];
     // clang-format off
-    std::visit(paracl::utils::visitors{
+    std::visit(::utils::visitors{
       [&](std::monostate) {
         throw std::runtime_error{"Unknown opcode"};},
       [&](auto&& instr) {

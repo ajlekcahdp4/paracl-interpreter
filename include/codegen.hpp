@@ -23,7 +23,7 @@
 #include "frontend/ast/ast_nodes/i_ast_node.hpp"
 #include "frontend/ast/node_identifier.hpp"
 #include "frontend/symtab.hpp"
-#include "utils/transparent.hpp"
+#include "utils/misc.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -345,7 +345,7 @@ void codegen_visitor::generate(ast::statement_block &ref) {
 
       using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
       auto type = ezvis::visit_tuple<frontend::types::generic_type, expressions_and_base>(
-          paracl::utils::visitors{
+          ::utils::visitors{
               [](ast::i_expression &expr) { return expr.type; },
               [](ast::i_ast_node &) { return frontend::types::type_builtin::type_void; }},
           *statement

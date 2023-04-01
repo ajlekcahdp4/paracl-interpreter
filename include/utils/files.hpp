@@ -11,6 +11,7 @@
 #pragma once
 
 #include "utils/algorithm.hpp"
+#include "utils/concepts.hpp"
 
 #include <fmt/format.h>
 
@@ -26,7 +27,7 @@
 #include <span>
 #include <sstream>
 
-namespace paracl::utils {
+namespace utils {
 
 namespace detail {
 
@@ -42,9 +43,6 @@ inline auto get_iterator_endian(std::span<char> raw_bytes) {
 }
 
 } // namespace detail
-
-template <typename T>
-concept integral_or_floating = std::integral<T> || std::floating_point<T>;
 
 template <integral_or_floating T, std::input_iterator iter>
 std::pair<std::optional<T>, iter> read_little_endian(iter first, iter last) {
@@ -74,28 +72,7 @@ struct padded_hex {
 
 constexpr padded_hex padded_hex_printer;
 
-auto pointer_to_uintptr(auto *pointer) {
-  return std::bit_cast<uintptr_t>(pointer);
-}
-
-// clang-format off
-template <typename T>
-concept is_ifstream = requires (T stream) {
-  { [] <typename CharType, typename Traits> (std::basic_ifstream<CharType, Traits> &) {} (stream) };
-};
-
-template <typename T>
-concept is_ofstream = requires (T stream) {
-  { [] <typename CharType, typename Traits> (std::basic_ofstream<CharType, Traits> &) {} (stream) };
-};
-
-template <typename T>
-concept is_fstream = requires (std::remove_cvref_t<T> stream) {
-  requires is_ifstream<T> || is_ofstream<T>;
-};
-// clang-format on
-
-inline void try_open_file(is_fstream auto &file, const std::filesystem::path &path, std::ios_base::openmode mode) {
+void try_open_file(is_fstream auto &file, const std::filesystem::path &path, std::ios_base::openmode mode) {
   file.exceptions(file.exceptions() | std::ios::badbit | std::ios::failbit);
   try {
     file.open(path, mode);
@@ -112,4 +89,4 @@ inline std::string read_file(const std::filesystem::path &input_path) {
   return ss.str();
 }
 
-} // namespace paracl::utils
+} // namespace utils

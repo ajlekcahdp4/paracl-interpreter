@@ -26,7 +26,7 @@ using types::type_builtin;
 
 ast::statement_block *semantic_analyzer::try_get_block_ptr(ast::i_ast_node &ref) { // clang-format off
   return ezvis::visit<ast::statement_block *, ast::error_node, ast::statement_block>(
-      paracl::utils::visitors{
+      ::utils::visitors{
           [this](const ast::error_node &e) { analyze_node(e); return nullptr; },
           [](ast::statement_block &s) { return &s; }},
       ref
@@ -120,7 +120,7 @@ void semantic_analyzer::check_return_types_matches(types::generic_type &type, lo
   }
 }
 
-using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
+using expressions_and_base = ::utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
 void semantic_analyzer::analyze_node(ast::statement_block &ref, bool main_block) {
   auto guard = begin_scope(ref.stab);
 
@@ -142,15 +142,14 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref, bool main_block)
     if (!is_last || in_raw_block()) continue;
 
     auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
-        paracl::utils::visitors{
+        ::utils::visitors{
             [](ast::i_expression &expr) { return expr.type; },
             [](ast::i_ast_node &) { return type_builtin::type_void; }},
         st
     );
 
     auto is_return = ezvis::visit<bool, ast::return_statement, ast::i_ast_node>(
-        paracl::utils::visitors{[](ast::return_statement &) { return true; }, [](ast::i_ast_node &) { return false; }},
-        st
+        ::utils::visitors{[](ast::return_statement &) { return true; }, [](ast::i_ast_node &) { return false; }}, st
     );
 
     bool is_implicit_return = (type != types::type_builtin::type_void); // Implicit return case

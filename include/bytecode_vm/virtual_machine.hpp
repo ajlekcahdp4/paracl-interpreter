@@ -12,7 +12,7 @@
 
 #include "bytecode_vm/decl_vm.hpp"
 #include "bytecode_vm/opcodes.hpp"
-#include "utils/serialization.hpp"
+#include "utils/files.hpp"
 
 #include <cstddef>
 #include <cstdint>

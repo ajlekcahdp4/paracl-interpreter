@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) try {
   }
 
   std::ifstream input_file;
-  paracl::utils::try_open_file(input_file, input_file_name, std::ios::binary);
+  utils::try_open_file(input_file, input_file_name, std::ios::binary);
 
   auto ch = paracl::bytecode_vm::decl_vm::read_chunk(input_file);
   if (!ch) {
