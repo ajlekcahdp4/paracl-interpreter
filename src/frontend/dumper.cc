@@ -11,7 +11,7 @@
 #include "frontend/dumper.hpp"
 #include "ezvis/ezvis.hpp"
 #include "frontend/ast/ast_nodes.hpp"
-#include "utils/serialization.hpp"
+#include "utils/files.hpp"
 #include <fmt/core.h>
 
 #include <cassert>
@@ -27,21 +27,15 @@ private:
 
 public:
   std::vector<const i_ast_node *> m_queue;
-  using oput_iter = std::back_insert_iterator<std::string>;
-  oput_iter *m_iter = nullptr;
+  std::stringstream m_ss;
 
 private:
   void print_declare_node(const i_ast_node &ref, std::string_view label) {
-    assert(m_iter);
-    fmt::format_to(*m_iter, "\tnode_{:x} [label = \"{}\"];\n", utils::pointer_to_uintptr(&ref), label);
+    m_ss << fmt::format("\tnode_{} [label = \"{}\"];\n", fmt::ptr(&ref), label);
   }
 
   void print_bind_node(const i_ast_node &parent, const i_ast_node &child, std::string_view label = "") {
-    assert(m_iter);
-    fmt::format_to(
-        *m_iter, "\tnode_{:x} -> node_{:x} [label = \"{}\"]\n", utils::pointer_to_uintptr(&parent),
-        utils::pointer_to_uintptr(&child), label
-    );
+    m_ss << fmt::format("\tnode_{} -> node_{} [label = \"{}\"]\n", fmt::ptr(&parent), fmt::ptr(&child), label);
   }
 
 public:
@@ -79,28 +73,31 @@ private:
   void add_next(const i_ast_node &node) { m_queue.push_back(&node); }
 
   const i_ast_node *take_next() {
-    if (m_queue.empty()) return nullptr;
-    auto ptr = m_queue.back();
+    if (m_queue.empty()) {
+      return nullptr;
+    }
+
+    const auto *ptr = m_queue.back();
     m_queue.pop_back();
     return ptr;
   }
 
 public:
   std::string ast_dump(const i_ast_node *root) {
-    std::string output;
-    auto iterator = std::back_inserter(output);
-
-    m_iter = &iterator;
+    m_ss.clear();
     m_queue.clear();
 
-    if (root) add_next(*root);
-    fmt::format_to(iterator, "digraph abstract_syntax_tree {{\n");
-    while (auto ptr = take_next()) {
+    if (root) {
+      add_next(*root);
+    }
+
+    m_ss << fmt::format("digraph abstract_syntax_tree_{} {{\n", fmt::ptr(this));
+    while (const auto *ptr = take_next()) {
       apply(*ptr);
     }
-    fmt::format_to(iterator, "}}\n");
+    m_ss << "}\n";
 
-    return output;
+    return m_ss.str();
   }
 };
 
@@ -108,13 +105,10 @@ void ast_dumper::dump_node(const assignment_statement &ref) {
   print_declare_node(ref, "<assignment>");
   const i_ast_node *prev = &ref;
 
-  for (auto start = ref.begin(), finish = ref.end(); start != finish; ++start) {
-    const auto curr_ptr = &(*start);
-
-    add_next(*curr_ptr);
-    print_bind_node(*prev, *curr_ptr);
-
-    prev = curr_ptr;
+  for (const auto &curr_ref : ref) {
+    add_next(curr_ref);
+    print_bind_node(*prev, curr_ref);
+    prev = &curr_ref;
   }
 
   print_bind_node(ref, ref.right());
@@ -177,11 +171,8 @@ void ast_dumper::dump_node(const while_statement &ref) {
 }
 
 void ast_dumper::dump_node(const function_definition &ref) {
-  std::string label;
-  auto iter = std::back_inserter(label);
-
-  fmt::format_to(
-      iter, "<function definition>: {}\n<arg count>: {}\n<type>: {}", ref.name.value_or("anonymous"), ref.size(),
+  auto label = fmt::format(
+      "<function definition>: {}\n<arg count>: {}\n<type>: {}", ref.name.value_or("anonymous"), ref.size(),
       ref.type.to_string()
   );
 
@@ -196,7 +187,7 @@ void ast_dumper::dump_node(const function_definition &ref) {
 }
 
 void ast_dumper::dump_node(const return_statement &ref) {
-  print_declare_node(ref, fmt::format("<return statement>\n<type>: {}", ref.type_str()));
+  print_declare_node(ref, "<return statement>\n");
   print_bind_node(ref, ref.expr(), "<expression>");
   add_next(ref.expr());
 }

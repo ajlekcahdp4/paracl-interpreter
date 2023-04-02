@@ -17,8 +17,10 @@
 namespace paracl::frontend::ast {
 
 class while_statement : public i_ast_node {
+public:
+  symtab symbol_table;
+
 private:
-  symtab m_symtab;
   i_expression *m_condition;
   i_ast_node *m_block;
 
@@ -30,8 +32,6 @@ public:
 
   i_expression &cond() const { return *m_condition; }
   i_ast_node &block() const { return *m_block; }
-
-  symtab *symbol_table() { return &m_symtab; }
 };
 
 } // namespace paracl::frontend::ast

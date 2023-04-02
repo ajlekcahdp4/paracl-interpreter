@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "frontend/ast/ast_nodes.hpp"
+#include "frontend/ast/ast_nodes/function_decl.hpp"
+#include "frontend/symtab.hpp"
 #include "graphs/directed_graph.hpp"
 #include "utils/transparent.hpp"
 
@@ -56,11 +57,12 @@ public:
   auto size() const { return m_table.size(); }
 };
 
-using usegraph = graphs::basic_directed_graph<std::string, ast::function_definition *, void>;
+using usegraph_type = graphs::basic_directed_graph<std::string, ast::function_definition *, void>;
 
 struct functions_analytics final {
-  function_table m_named;
-  usegraph m_usegraph;
+  function_table named_functions;
+  usegraph_type usegraph;
+  symtab *global_stab;
 };
 
 } // namespace paracl::frontend

@@ -10,18 +10,13 @@
 
 #pragma once
 
+#include "utils/concepts.hpp"
+
 #include <string>
 #include <string_view>
 #include <unordered_map>
 
-namespace paracl::utils::transparent {
-
-// clang-format off
-template <typename T>
-concept convertible_to_string_view = requires(T str) {
-  { std::string_view{str} };
-};
-// clang-format on
+namespace utils::transparent {
 
 struct string_equal {
   using is_transparent = void;
@@ -37,4 +32,4 @@ struct string_hash {
 
 template <typename T> using string_unordered_map = std::unordered_map<std::string, T, string_hash, string_equal>;
 
-} // namespace paracl::utils::transparent
+} // namespace utils::transparent

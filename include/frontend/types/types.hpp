@@ -123,6 +123,9 @@ public:
   std::string to_string() const { return base().to_string(); }
   void swap(generic_type &rhs) { std::swap(*this, rhs); }
   operator bool() const { return m_impl.get(); }
+
+  operator i_type &() { return base(); }
+  operator const i_type &() const { return base(); }
 };
 
 class type_builtin final : public i_type {
@@ -132,15 +135,8 @@ private:
   EZVIS_VISITABLE();
 
 public:
-  static const generic_type &type_int() {
-    static const generic_type obj = generic_type::make<type_builtin>(builtin_type_class::E_BUILTIN_INT);
-    return obj;
-  }
-
-  static const generic_type &type_void() {
-    static const generic_type obj = generic_type::make<type_builtin>(builtin_type_class::E_BUILTIN_VOID);
-    return obj;
-  }
+  static inline const generic_type type_int = generic_type::make<type_builtin>(builtin_type_class::E_BUILTIN_INT);
+  static inline const generic_type type_void = generic_type::make<type_builtin>(builtin_type_class::E_BUILTIN_VOID);
 
 public:
   type_builtin(builtin_type_class type_tag) : i_type{type_class::E_BUILTIN}, m_builtin_type_tag{type_tag} {}

@@ -16,7 +16,7 @@
 #include "bytecode_vm/opcodes.hpp"
 #include "bytecode_vm/virtual_machine.hpp"
 
-#include "utils/serialization.hpp"
+#include "utils/files.hpp"
 
 #include <fmt/core.h>
 #include <fmt/format.h>
@@ -27,32 +27,34 @@
 #include <optional>
 #include <string>
 
+namespace {
+
+namespace bytecode_vm = paracl::bytecode_vm;
+namespace decl_vm = bytecode_vm::decl_vm;
+namespace disassembly = decl_vm::disassembly;
+namespace instruction_set = bytecode_vm::instruction_set;
+
 constexpr int k_exit_success = 0;
 constexpr int k_exit_failure = 1;
 
-inline void disassemble_chunk(const paracl::bytecode_vm::decl_vm::chunk &ch) {
-  using paracl::bytecode_vm::decl_vm::disassembly::chunk_complete_disassembler;
-  namespace instruction_set = paracl::bytecode_vm::instruction_set;
+[[maybe_unused]] void disassemble_chunk(const decl_vm::chunk &ch) {
+  using disassembly::chunk_complete_disassembler;
   chunk_complete_disassembler disas{instruction_set::paracl_isa};
   disas(std::cout, ch);
 }
 
-inline void execute_chunk(const paracl::bytecode_vm::decl_vm::chunk &ch) {
-  auto vm = paracl::bytecode_vm::create_paracl_vm();
+[[maybe_unused]] void execute_chunk(const decl_vm::chunk &ch) {
+  auto vm = bytecode_vm::create_paracl_vm();
   vm.set_program_code(std::move(ch));
-  vm.execute(true);
+  vm.execute();
 }
 
-inline std::optional<std::string>
+[[maybe_unused]] std::optional<std::string>
 read_input_file(const popl::Implicit<std::string> &option, const popl::OptionParser &op) {
-  if (!option.is_set()) {
-    if (op.non_option_args().size() != 1) {
-      fmt::println(stderr, "Input file not specified");
-      return std::nullopt;
-    }
-
-    return op.non_option_args().front();
-  }
-
-  return option.value();
+  if (option.is_set()) return option.value();                                // Case 1. Option set
+  if (op.non_option_args().size() == 1) return op.non_option_args().front(); // Case 2. Unnamed args
+  fmt::println(stderr, "Input file not specified");                          // Case 3. Error
+  return std::nullopt;
 }
+
+} // namespace

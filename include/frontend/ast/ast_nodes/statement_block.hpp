@@ -22,11 +22,7 @@ namespace paracl::frontend::ast {
 class statement_block : public i_expression, private std::vector<i_ast_node *> {
 public:
   symtab stab;
-
-  using ret_st_ptr = const return_statement *;
-  using return_vec = std::vector<ret_st_ptr>;
-
-  return_vec return_statements;
+  return_vector return_statements;
 
 private:
   EZVIS_VISITABLE();

@@ -19,6 +19,25 @@ else()
   add_compile_options(-Wall -Wextra -fconstexpr-depth=${CONSTEXPR_DEPTH_LIMIT})
 endif()
 
+option(LINT OFF)
+if(${LINT})
+  find_program(CLANG_TIDY_EXECUTABLE "clang-tidy")
+
+  set(CLANG_TIDY_COMMAND
+      "${CLANG_TIDY_EXECUTABLE}"
+      "-checks=-*,modernize-*,-modernize-use-trailing-return-type*,readability-*,-readability-implicit-bool-conversion*,\
+        -readability-identifier-length*,portability-*,bugprone-*")
+
+  function(target_enable_linter TARGET_NAME)
+    set_target_properties(${TARGET_NAME} PROPERTIES CXX_CLANG_TIDY
+                                                    "${CLANG_TIDY_COMMAND}")
+  endfunction()
+else()
+  function(target_enable_linter TARGET_NAME)
+    # Do nothing
+  endfunction()
+endif()
+
 option(PROFILE OFF)
 if(PROFILE)
   add_compile_options(-pg)
@@ -27,8 +46,8 @@ endif()
 
 option(SANITIZE OFF)
 if(SANITIZE)
-  add_compile_options(-fsanitize=undefined -fno-omit-frame-pointer)
-  add_link_options(-fsanitize=undefined -fno-omit-frame-pointer)
+  add_compile_options(-fsanitize=undefined,address -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=undefined,address -fno-omit-frame-pointer)
 endif()
 
 include(FetchContent)
@@ -67,10 +86,11 @@ target_link_libraries(bytecode_vm PUBLIC fmt::fmt)
 
 add_executable(pcldis src/pcldis.cc)
 target_link_libraries(pcldis popl bytecode_vm)
+target_enable_linter(pcldis)
 
 add_executable(pclvm src/pclvm.cc)
-target_compile_features(pclvm PRIVATE cxx_std_20)
 target_link_libraries(pclvm popl bytecode_vm)
+target_enable_linter(pclvm)
 
 bison_target(
   parser src/frontend/parser/parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.y.cc
@@ -93,11 +113,11 @@ target_include_directories(paracl_compiler PUBLIC include
                                                   ${CMAKE_CURRENT_BINARY_DIR})
 
 target_link_libraries(paracl_compiler PUBLIC ezvis graphs fmt::fmt)
-target_compile_features(paracl_compiler PUBLIC cxx_std_20)
+target_enable_linter(paracl_compiler)
 
 add_executable(pclc src/pclc.cc)
-target_compile_features(pclc PRIVATE cxx_std_20)
 target_link_libraries(pclc PRIVATE ezvis popl paracl_compiler bytecode_vm)
+target_enable_linter(pclc)
 
 set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
 find_program(BASH_PROGRAM bash)

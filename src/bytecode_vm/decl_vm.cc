@@ -1,5 +1,5 @@
 #include "bytecode_vm/decl_vm.hpp"
-#include "utils/serialization.hpp"
+#include "utils/files.hpp"
 
 #include <cstdint>
 #include <iostream>

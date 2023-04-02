@@ -12,6 +12,7 @@
 
 #include "bison_paracl_parser.hpp"
 #include "frontend/analysis/function_explorer.hpp"
+#include "frontend/analysis/main_explorer.hpp"
 #include "frontend/analysis/semantic_analyzer.hpp"
 
 #include "frontend/ast/ast_container.hpp"
@@ -105,22 +106,11 @@ public:
     function_explorer explorer;
 
     explorer.explore(ast, m_functions, errors);
-    auto scheduled = graphs::recursive_topo_sort(m_functions.m_usegraph);
+    auto scheduled = graphs::recursive_topo_sort(m_functions.usegraph);
 
     semantic_analyzer analyzer{m_functions};
     analyzer.set_error_queue(errors);
     analyzer.set_ast(ast);
-
-    // Note the order of analyze(....) && valid to prevent short-circuiting to check all functions.
-    for (auto start = scheduled.crbegin(), finish = scheduled.crend(); start != finish; ++start) {
-      auto *def = start->attr;
-      if (!def) continue;
-
-      auto attr = m_functions.m_named.lookup(def->name.value());
-      bool is_recursive = (attr ? attr->recursive : false);
-      analyzer.analyze_func(*def, is_recursive);
-    }
-
     analyzer.analyze_main(*ast.get_root_ptr());
 
     for (const auto &e : errors) {

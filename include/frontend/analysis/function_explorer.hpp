@@ -12,14 +12,12 @@
 
 #include "frontend/analysis/function_table.hpp"
 #include "frontend/ast/ast_container.hpp"
-#include "frontend/ast/ast_nodes/i_ast_node.hpp"
+#include "frontend/ast/ast_nodes.hpp"
 
 #include "frontend/error.hpp"
-#include "frontend/symtab.hpp"
 #include "frontend/types/types.hpp"
 
 #include "ezvis/ezvis.hpp"
-#include "location.hpp"
 
 #include <iostream>
 #include <string_view>
@@ -28,20 +26,18 @@ namespace paracl::frontend {
 
 class function_explorer final : public ezvis::visitor_base<ast::i_ast_node, function_explorer, void> {
 private:
-  std::vector<usegraph::value_type> m_function_stack;
-
-private:
+  std::vector<usegraph_type::value_type> m_function_stack;
   std::vector<error_report> *m_error_queue; // Diagnostics
   functions_analytics *m_analytics;
   ast::ast_container *m_ast;
 
-  using to_visit = ast::tuple_all_nodes;
+private:
   void report_error(error_report report) { m_error_queue->push_back(std::move(report)); }
 
 public:
   function_explorer() = default;
 
-  EZVIS_VISIT_CT(to_visit)
+  EZVIS_VISIT_CT(ast::tuple_all_nodes)
 
   void explore(const ast::binary_expression &ref) {
     apply(ref.right());
@@ -70,7 +66,7 @@ public:
   void explore(const ast::print_statement &ref) { apply(ref.expr()); }
   void explore(const ast::unary_expression &ref) { apply(ref.expr()); }
 
-  void explore(const ast::return_statement &ref) {
+  void explore(ast::return_statement &ref) {
     if (ref.empty()) return;
     apply(ref.expr());
   }

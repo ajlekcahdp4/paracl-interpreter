@@ -10,10 +10,12 @@
 
 #pragma once
 
+#include <cstddef>
+
 namespace paracl::bytecode_vm {
 
 // clang-format off
-enum opcode : char {
+enum opcode : unsigned char {
   E_RETURN_NULLARY,
 
   E_PUSH_CONST_UNARY,
@@ -31,7 +33,8 @@ enum opcode : char {
   E_JMP_UNARY, E_JMP_DYNAMIC_NULLARY, E_JMP_DYNAMIC_REL_UNARY, E_JMP_FALSE_UNARY, E_JMP_TRUE_UNARY, E_SETUP_CALL_NULLARY,
   E_PUSH_SP_NULLARY, E_UPDATE_SP_UNARY, 
   
-  E_LOAD_R0_NULLARY, E_STORE_R0_NULLARY,
+  E_LOAD_R0_NULLARY, E_STORE_R0_NULLARY, 
+  E_PUSH_LOCAL_UNARY, E_MOV_LOCAL_UNARY
 };
 // clang-format on
 

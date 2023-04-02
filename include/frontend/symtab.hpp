@@ -63,12 +63,16 @@ public:
 
 class symtab_stack final : private std::vector<symtab *> {
 public:
-  void begin_scope(symtab *stab) { vector::push_back(stab); }
+  void begin_scope(symtab &stab) { vector::push_back(&stab); }
   void end_scope() { vector::pop_back(); }
 
-  unsigned size() const {
-    return std::accumulate(vector::cbegin(), vector::cend(), 0, [](auto a, auto &&stab) { return a + stab->size(); });
+  vector::size_type size() const {
+    return std::accumulate(vector::cbegin(), vector::cend(), std::size_t{0}, [](auto a, auto &&stab) {
+      return a + stab->size();
+    });
   }
+
+  vector::size_type blocks() const { return vector::size(); }
 
   unsigned lookup_scope(std::string_view name) const {
     auto found = std::find_if(vector::crbegin(), vector::crend(), [&name](auto &stab) { return stab->declared(name); });
@@ -81,12 +85,15 @@ public:
   std::optional<symtab::attributes> lookup_symbol(std::string_view name) const {
     auto found = std::find_if(vector::crbegin(), vector::crend(), [&name](auto &stab) { return stab->declared(name); });
     if (found == vector::crend()) return std::nullopt;
-    assert(*found && "[Debug]: symbol table stack broken");
+    assert(*found && "Symbol table stack broken");
     return (*found)->get_attributes(name);
   }
 
   bool declared(std::string_view name) const { return (lookup_symbol(name) ? true : false); }
   void declare(std::string_view name, ast::variable_expression *def) { vector::back()->declare(name, def); }
+
+  using vector::back;
+  using vector::front;
 };
 
 } // namespace paracl::frontend

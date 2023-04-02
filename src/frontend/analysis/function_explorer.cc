@@ -23,8 +23,10 @@
 namespace paracl::frontend {
 
 void function_explorer::explore(ast::function_definition &ref) {
+  assert(ref.name.has_value() && "Encountered an unnamed function. This shouldn't happen");
+
   auto &&name_v = ref.name.value();
-  auto [attr, inserted] = m_analytics->m_named.define_function(name_v, {&ref});
+  auto [attr, inserted] = m_analytics->named_functions.define_function(name_v, {&ref});
 
   if (!inserted) {
     auto report = error_report{
@@ -36,9 +38,9 @@ void function_explorer::explore(ast::function_definition &ref) {
   }
 
   if (!m_function_stack.empty()) {
-    m_analytics->m_usegraph.insert(usegraph::value_type{name_v, &ref}, m_function_stack.back());
+    m_analytics->usegraph.insert(usegraph_type::value_type{name_v, &ref}, m_function_stack.back());
   } else {
-    m_analytics->m_usegraph.insert(usegraph::value_type{name_v, &ref});
+    m_analytics->usegraph.insert(usegraph_type::value_type{name_v, &ref});
   }
 
   m_function_stack.push_back({name_v, &ref});
@@ -48,8 +50,9 @@ void function_explorer::explore(ast::function_definition &ref) {
 
 void function_explorer::explore(ast::function_call &ref) {
   auto name_v = std::string{ref.name()};
-  auto found = m_analytics->m_named.lookup(name_v);
-  auto def = (found ? found->definition : nullptr);
+  auto found = m_analytics->named_functions.lookup(name_v);
+
+  auto *def = (found ? found->definition : nullptr);
   ref.m_def = def;
 
   if (found) {
@@ -57,14 +60,14 @@ void function_explorer::explore(ast::function_call &ref) {
       auto &&curr_func = m_function_stack.back();
       // Do not create recursive loops. These will get handled separately.
       if (curr_func.key != ref.name()) {
-        m_analytics->m_usegraph.insert(usegraph::value_type{name_v, def}, m_function_stack.back());
+        m_analytics->usegraph.insert(usegraph_type::value_type{name_v, def}, m_function_stack.back());
       } else {
-        m_analytics->m_named.set_recursive(name_v);
+        m_analytics->named_functions.set_recursive(name_v);
       }
     }
 
     else {
-      m_analytics->m_usegraph.insert(usegraph::value_type{name_v, def});
+      m_analytics->usegraph.insert(usegraph_type::value_type{name_v, def});
     }
   }
 
@@ -79,13 +82,13 @@ void function_explorer::explore(const ast::function_definition_to_ptr_conv &ref)
   auto &name = def.name;
 
   if (!name) {
-    name = fmt::format("$anon-func-{}", m_analytics->m_named.size());
+    name = fmt::format("$anon-func-{}", m_analytics->named_functions.size());
   }
 
   if (!m_function_stack.empty()) {
-    m_analytics->m_usegraph.insert(usegraph::value_type{name.value(), &def}, m_function_stack.back());
+    m_analytics->usegraph.insert(usegraph_type::value_type{name.value(), &def}, m_function_stack.back());
   } else {
-    m_analytics->m_usegraph.insert(usegraph::value_type{name.value(), &def});
+    m_analytics->usegraph.insert(usegraph_type::value_type{name.value(), &def});
   }
 
   apply(def);

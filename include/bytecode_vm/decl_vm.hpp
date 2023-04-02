@@ -11,8 +11,8 @@
 #pragma once
 
 #include "utils/algorithm.hpp"
+#include "utils/files.hpp"
 #include "utils/misc.hpp"
-#include "utils/serialization.hpp"
 
 #include <array>
 #include <concepts>
@@ -141,7 +141,7 @@ public:
   };
 
   template <auto I> static std::tuple_element_t<I, attribute_tuple_type> decode_attribute(auto &first, auto last) {
-    auto [val, iter] = paracl::utils::read_little_endian<std::tuple_element_t<I, attribute_tuple_type>>(first, last);
+    auto [val, iter] = ::utils::read_little_endian<std::tuple_element_t<I, attribute_tuple_type>>(first, last);
     if (!val) throw vm_error{"Decoding error"};
     first = iter;
     return val.value();
@@ -250,25 +250,23 @@ public:
     auto current_instruction = instruction_set.instruction_lookup_table[*(m_execution_context.m_ip++)];
 
     // clang-format off
-    std::visit(paracl::utils::visitors{
-      [&](std::monostate) {
+    std::visit(::utils::visitors{
+      [this](std::monostate) {
         m_execution_context.halt();
         throw vm_error{"Unknown opcode"};},
-      [&](const auto *instr) {
+      [&ctx](const auto *instr) {
         auto attr = instr->decode(ctx.m_ip, ctx.m_ip_end).attributes;
         instr->action(ctx, attr); }}, current_instruction);
     // clang-format on
   }
 
-  void execute(bool validate_stack = false) {
+  bool execute() {
     while (!m_execution_context.is_halted()) {
       execute_instruction();
     }
 
     auto &ctx = m_execution_context;
-    if (validate_stack && ctx.m_execution_stack.size() != 0) {
-      std::cerr << "Warning: execution finished abnormally: stack size = " << ctx.m_execution_stack.size() << "\n";
-    }
+    return (ctx.m_execution_stack.size() == 0);
   }
 };
 

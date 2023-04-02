@@ -16,8 +16,6 @@
 #include <ostream>
 #include <string>
 
-namespace utils = paracl::utils;
-
 int main(int argc, char *argv[]) try {
   std::string input_file_name;
 

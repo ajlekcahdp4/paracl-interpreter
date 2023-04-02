@@ -7,3 +7,4 @@ func (int func ()b): bar {
 }
 
 print bar(a);
+1;

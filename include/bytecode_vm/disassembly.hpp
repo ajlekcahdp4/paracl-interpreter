@@ -11,7 +11,7 @@
 #pragma once
 
 #include "bytecode_vm/decl_vm.hpp"
-#include "utils/serialization.hpp"
+#include "utils/files.hpp"
 
 #include <algorithm>
 #include <array>
@@ -30,7 +30,8 @@ public:
     os << ".constant_pool\n";
 
     for (constant_pool_type::size_type i = 0; start != finish; ++start, ++i) {
-      utils::padded_hex_printer(os, i) << " = { " << std::dec << *start << " }\n";
+      utils::padded_hex_printer(os, i) << " = { "
+                                       << "0x" << std::hex << *start << " }\n";
     }
 
     return os;
@@ -50,7 +51,7 @@ public:
 
     auto current_instruction = instruction_set.instruction_lookup_table[*first++];
     // clang-format off
-    std::visit(paracl::utils::visitors{
+    std::visit(::utils::visitors{
       [&](std::monostate) {
         throw std::runtime_error{"Unknown opcode"};},
       [&](auto&& instr) {

@@ -23,7 +23,7 @@
 
 #include <fmt/format.h>
 
-#include <iostream>
+#include <stack>
 
 namespace paracl::frontend {
 
@@ -33,31 +33,21 @@ private:
   functions_analytics *m_functions;
   ast::ast_container *m_ast;
 
+  using raw_block_stack = std::stack<bool>;
+  raw_block_stack m_raw_block_stack;
+
 private:
   error_queue_type *m_error_queue;
   error_queue_type m_default_error_queue;
 
 private:
   // Vector of return statements in the current functions.
-  std::vector<const ast::return_statement *> *m_return_statements = nullptr;
+  ast::return_vector *m_return_statements = nullptr;
 
 private:
-  enum class semantic_analysis_state {
-    E_LVALUE,
-    E_RVALUE,
-    E_DEFAULT,
-  } current_state = semantic_analysis_state::E_DEFAULT;
-
-  bool m_in_function_body = false;
   bool m_type_errors_allowed = false; // Flag used to indicate that a type mismatch is not an error.
   // Set this flag to true when doing a first pass on recurisive functions.
-
-  bool m_in_void_block = false; // Flag used to indicate that we are in guaranteed to be void block (e.g. 'while' body,
-                                // 'if' body or function body)
-
-private:
-  void set_state(semantic_analysis_state s) { current_state = s; }
-  void reset_state() { current_state = semantic_analysis_state::E_DEFAULT; }
+  bool m_next_raw_block = false;
 
 private:
   void report_error(std::string msg, location loc) {
@@ -68,20 +58,18 @@ private:
 
   void report_error(error_report report) { m_error_queue->push_back(std::move(report)); }
 
-  bool expect_type_eq(const ast::i_expression &ref, const types::i_type &rhs) {
+  bool expect_type_eq(const types::generic_type &lhs, const types::i_type &rhs, location loc) {
     if (m_type_errors_allowed) return false;
 
-    auto &&type = ref.type;
+    auto &&type = lhs;
     if (!type || !(type == rhs)) {
 
       if (!type) {
-        report_error(fmt::format("Expression is not of expected type '{}'", rhs.to_string()), ref.loc());
+        report_error(fmt::format("Expression is not of expected type '{}'", rhs.to_string()), loc);
       }
 
       else {
-        report_error(
-            fmt::format("Expression is of type '{}', expected '{}'", type.to_string(), rhs.to_string()), ref.loc()
-        );
+        report_error(fmt::format("Expression is of type '{}', expected '{}'", type.to_string(), rhs.to_string()), loc);
       }
 
       return false;
@@ -90,19 +78,75 @@ private:
     return true;
   }
 
-  bool expect_type_eq(const ast::i_expression &ref, const types::generic_type &rhs) {
-    return expect_type_eq(ref, rhs.base());
+  bool expect_type_eq(const ast::i_expression &ref, const types::i_type &rhs) {
+    return expect_type_eq(ref.type, rhs, ref.loc());
   }
 
-private:
   void check_return_types_matches(types::generic_type &type, location loc);
-  void begin_scope(symtab &stab) { m_scopes.begin_scope(&stab); }
-  void end_scope() { m_scopes.end_scope(); }
+
+private:
+  class block_guard {
+  private:
+    semantic_analyzer &m_analyzer;
+    bool m_released = false;
+
+  public:
+    block_guard(semantic_analyzer &analyzer) : m_analyzer{analyzer} {}
+
+    block_guard(const block_guard &) = delete;
+    block_guard(block_guard &&) = delete;
+
+    block_guard &operator=(const block_guard &) = delete;
+    block_guard &operator=(block_guard &&) = delete;
+
+    ~block_guard() {
+      if (!m_released) m_analyzer.end_scope();
+    }
+
+    void release() {
+      if (m_released) return;
+      m_released = true;
+      m_analyzer.end_scope();
+    }
+  };
+
+  [[nodiscard]] block_guard begin_scope(symtab &stab) {
+    m_scopes.begin_scope(stab);
+    m_raw_block_stack.push(m_next_raw_block);
+    return block_guard{*this};
+  }
+
+  void end_scope() {
+    m_scopes.end_scope();
+    m_raw_block_stack.pop();
+    m_next_raw_block = false;
+  }
+
+  bool in_raw_block() const {
+    if (m_raw_block_stack.empty()) return false;
+    return m_raw_block_stack.top();
+  }
+
+  bool in_value_block() const { return !in_raw_block(); }
+  void next_raw_block() { m_next_raw_block = true; }
+  void next_value_block() { m_next_raw_block = false; }
+
+  [[nodiscard]] block_guard next_raw_block(symtab &stab) {
+    next_raw_block();
+    return begin_scope(stab);
+  }
+
+  [[nodiscard]] block_guard next_value_block(symtab &stab) {
+    next_value_block();
+    return begin_scope(stab);
+  }
+
+  ast::statement_block *try_get_block_ptr(ast::i_ast_node &);
 
 public:
   EZVIS_VISIT_CT(ast::tuple_all_nodes)
 
-  void analyze_node(ast::error_node &ref) { report_error(ref.error_msg(), ref.loc()); }
+  void analyze_node(const ast::error_node &ref) { report_error(ref.error_msg(), ref.loc()); }
 
   // clang-format off
   void analyze_node(ast::read_expression &) {}
@@ -115,9 +159,9 @@ public:
   void analyze_node(ast::if_statement &);
   void analyze_node(ast::print_statement &);
 
-  void analyze_node(ast::statement_block &);
+  void analyze_node(ast::statement_block &, bool main_block = false);
   void analyze_node(ast::unary_expression &);
-  bool analyze_node(ast::variable_expression &);
+  bool analyze_node(ast::variable_expression &, bool can_declare = false);
   void analyze_node(ast::while_statement &);
 
   void analyze_node(ast::function_call &);

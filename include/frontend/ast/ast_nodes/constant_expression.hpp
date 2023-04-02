@@ -21,7 +21,7 @@ class constant_expression : public i_expression { // Inherit from i_expression b
   EZVIS_VISITABLE();
 
 public:
-  constant_expression(int p_val, location l) : i_expression{l, types::type_builtin::type_int()}, m_val{p_val} {}
+  constant_expression(int p_val, location l) : i_expression{l, types::type_builtin::type_int}, m_val{p_val} {}
   int value() const { return m_val; }
 };
 

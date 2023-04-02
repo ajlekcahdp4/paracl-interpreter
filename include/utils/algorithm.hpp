@@ -13,7 +13,7 @@
 #include <concepts>
 #include <iterator>
 
-namespace paracl::utils {
+namespace utils {
 
 template <std::input_iterator input_it>
 input_it copy_while(
@@ -29,4 +29,4 @@ input_it copy_while(
   return first;
 }
 
-} // namespace paracl::utils
+} // namespace utils

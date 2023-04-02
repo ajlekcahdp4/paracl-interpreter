@@ -11,8 +11,8 @@
 #pragma once
 
 #include "decl_vm.hpp"
+#include "utils/files.hpp"
 #include "utils/misc.hpp"
-#include "utils/serialization.hpp"
 
 #include <array>
 #include <concepts>
@@ -35,7 +35,7 @@ template <typename t_desc> struct encoded_instruction {
   attribute_types m_attr;
 
   template <auto I> void encode_attributes(std::output_iterator<char> auto iter) const {
-    paracl::utils::write_little_endian<std::tuple_element_t<I, attribute_types>>(std::get<I>(m_attr), iter);
+    ::utils::write_little_endian<std::tuple_element_t<I, attribute_types>>(std::get<I>(m_attr), iter);
   }
 
   // [[maybe_unused]] to silence false-positive errors by GCC
@@ -71,8 +71,8 @@ using encoded_tuple_from_desc_tuple_t = typename encoded_tuple_from_desc_tuple<t
 
 template <typename t_instruction_set> class bytecode_builder {
 public:
-  using instruction_variant_type =
-      utils::variant_from_tuple_t<encoded_tuple_from_desc_tuple_t<typename t_instruction_set::instruction_tuple_type>>;
+  using instruction_variant_type = ::utils::variant_from_tuple_t<
+      encoded_tuple_from_desc_tuple_t<typename t_instruction_set::instruction_tuple_type>>;
 
 private:
   using instruction_vec = std::vector<instruction_variant_type>;
