@@ -175,24 +175,24 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref, bool main_block)
 }
 
 void semantic_analyzer::analyze_node(ast::if_statement &ref) {
-  auto control_guard = begin_scope(ref.control_block_symtab());
+  auto control_guard = begin_scope(ref.control_block_symtab);
   apply(ref.cond());
   expect_type_eq(ref.cond(), type_builtin::type_int.base());
 
   {
-    auto guard_true = next_raw_block(ref.true_symtab());
+    auto guard_true = next_raw_block(ref.true_symtab);
     apply(ref.true_block());
     guard_true.release();
   }
 
   if (ref.else_block()) {
-    auto guard_else = next_raw_block(ref.else_symtab());
+    auto guard_else = next_raw_block(ref.false_symtab);
     apply(*ref.else_block());
   }
 }
 
 void semantic_analyzer::analyze_node(ast::while_statement &ref) {
-  auto guard = begin_scope(ref.symbol_table());
+  auto guard = begin_scope(ref.symbol_table);
 
   apply(ref.cond());
   expect_type_eq(ref.cond(), type_builtin::type_int);

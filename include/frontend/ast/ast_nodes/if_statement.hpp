@@ -17,10 +17,12 @@
 namespace paracl::frontend::ast {
 
 class if_statement : public i_ast_node {
-  symtab m_control_block_symtab;
-  symtab m_true_symtab;
-  symtab m_false_symtab;
+public:
+  symtab control_block_symtab;
+  symtab true_symtab;
+  symtab false_symtab;
 
+private:
   i_expression *m_condition;
   i_ast_node *m_true_block;
   i_ast_node *m_else_block = nullptr;
@@ -37,10 +39,6 @@ public:
   i_expression &cond() const { return *m_condition; }
   i_ast_node &true_block() const { return *m_true_block; }
   i_ast_node *else_block() const { return m_else_block; }
-
-  symtab &true_symtab() { return m_true_symtab; }
-  symtab &else_symtab() { return m_false_symtab; }
-  symtab &control_block_symtab() { return m_control_block_symtab; }
 };
 
 } // namespace paracl::frontend::ast

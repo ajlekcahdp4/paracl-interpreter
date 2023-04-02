@@ -118,7 +118,7 @@ public:
 // paracl_isa relies on lambda types
 namespace {
 
-class codegen_visitor final : public ezvis::visitor_base<frontend::ast::i_ast_node, codegen_visitor, void> {
+class codegen_visitor final : public ezvis::visitor_base<const frontend::ast::i_ast_node, codegen_visitor, void> {
   using builder_type = bytecode_vm::builder::bytecode_builder<decltype(bytecode_vm::instruction_set::paracl_isa)>;
 
 private:
@@ -149,7 +149,7 @@ private:
   std::vector<unsigned> m_exit_relocations;
 
 private:
-  std::unordered_map<frontend::ast::function_definition *, unsigned> m_function_defs;
+  std::unordered_map<const frontend::ast::function_definition *, unsigned> m_function_defs;
   const frontend::functions_analytics *m_functions;
   codegen_stack_frame m_symtab_stack;
   builder_type m_builder;
@@ -163,8 +163,8 @@ private:
   void reset_currently_statement() { m_is_currently_statement = false; }
   bool is_currently_statement() const { return m_is_currently_statement; }
 
-  void visit_if_no_else(frontend::ast::if_statement &);
-  void visit_if_with_else(frontend::ast::if_statement &);
+  void visit_if_no_else(const frontend::ast::if_statement &);
+  void visit_if_with_else(const frontend::ast::if_statement &);
 
   unsigned lookup_or_insert_constant(int constant);
 
@@ -223,48 +223,48 @@ public:
 
   codegen_visitor() = default;
 
-  void generate(frontend::ast::assignment_statement &);
-  void generate(frontend::ast::binary_expression &);
-  void generate(frontend::ast::constant_expression &);
-  void generate(frontend::ast::if_statement &);
-  void generate(frontend::ast::print_statement &);
-  void generate(frontend::ast::read_expression &);
-  void generate(frontend::ast::statement_block &);
-  void generate(frontend::ast::unary_expression &);
-  void generate(frontend::ast::variable_expression &);
-  void generate(frontend::ast::while_statement &);
-  void generate(frontend::ast::function_call &);
-  void generate(frontend::ast::return_statement &);
-  void generate(frontend::ast::function_definition_to_ptr_conv &);
+  void generate(const frontend::ast::assignment_statement &);
+  void generate(const frontend::ast::binary_expression &);
+  void generate(const frontend::ast::constant_expression &);
+  void generate(const frontend::ast::if_statement &);
+  void generate(const frontend::ast::print_statement &);
+  void generate(const frontend::ast::read_expression &);
+  void generate(const frontend::ast::statement_block &);
+  void generate(const frontend::ast::unary_expression &);
+  void generate(const frontend::ast::variable_expression &);
+  void generate(const frontend::ast::while_statement &);
+  void generate(const frontend::ast::function_call &);
+  void generate(const frontend::ast::return_statement &);
+  void generate(const frontend::ast::function_definition_to_ptr_conv &);
 
   EZVIS_VISIT_INVOKER(generate);
 
-  unsigned generate_function(frontend::ast::function_definition &);
+  unsigned generate_function(const frontend::ast::function_definition &);
   void generate_all(const frontend::ast::ast_container &ast, const frontend::functions_analytics &functions);
   bytecode_vm::decl_vm::chunk to_chunk();
 };
 
-void codegen_visitor::generate(ast::constant_expression &ref) {
+void codegen_visitor::generate(const ast::constant_expression &ref) {
   auto index = lookup_or_insert_constant(ref.value());
   emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, index});
 }
 
-void codegen_visitor::generate(ast::read_expression &) {
+void codegen_visitor::generate(const ast::read_expression &) {
   emit_with_increment(vm_instruction_set::push_read_desc);
 }
 
-void codegen_visitor::generate(ast::variable_expression &ref) {
+void codegen_visitor::generate(const ast::variable_expression &ref) {
   auto index = m_symtab_stack.lookup_location(ref.name());
   emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, index});
 }
 
-void codegen_visitor::generate(ast::print_statement &ref) {
+void codegen_visitor::generate(const ast::print_statement &ref) {
   reset_currently_statement();
   apply(ref.expr());
   emit_with_decrement(vm_instruction_set::print_desc);
 }
 
-void codegen_visitor::generate(ast::assignment_statement &ref) {
+void codegen_visitor::generate(const ast::assignment_statement &ref) {
   const bool emit_push = !is_currently_statement();
   apply(ref.right());
 
@@ -283,7 +283,7 @@ void codegen_visitor::generate(ast::assignment_statement &ref) {
   }
 }
 
-void codegen_visitor::generate(ast::binary_expression &ref) {
+void codegen_visitor::generate(const ast::binary_expression &ref) {
   reset_currently_statement();
   apply(ref.left());
   reset_currently_statement();
@@ -308,7 +308,7 @@ void codegen_visitor::generate(ast::binary_expression &ref) {
   }
 }
 
-void codegen_visitor::generate(ast::statement_block &ref) {
+void codegen_visitor::generate(const ast::statement_block &ref) {
   bool should_return = ref.type != frontend::types::type_builtin::type_void;
 
   unsigned ret_addr_index = 0;
@@ -329,13 +329,12 @@ void codegen_visitor::generate(ast::statement_block &ref) {
   begin_scope(ref.stab);
 
   if (ref.size()) {
-    for (auto start = ref.cbegin(), finish = ref.cend(); start != finish; ++start) {
-      auto &&statement = *start;
-
-      assert(statement && "Broken statement pointer");
+    for (auto st_ptr : ref) {
+      assert(st_ptr && "Broken statement pointer");
       using frontend::ast::ast_expression_types;
+      auto &st = *st_ptr;
 
-      const auto node_type = frontend::ast::identify_node(*statement);
+      const auto node_type = frontend::ast::identify_node(st);
       const auto is_expression =
           std::find(ast_expression_types.begin(), ast_expression_types.end(), node_type) != ast_expression_types.end();
 
@@ -348,7 +347,7 @@ void codegen_visitor::generate(ast::statement_block &ref) {
           ::utils::visitors{
               [](ast::i_expression &expr) { return expr.type; },
               [](ast::i_ast_node &) { return frontend::types::type_builtin::type_void; }},
-          *statement
+          st
       );
 
       if (is_assignment && pop_unused_result) {
@@ -358,7 +357,7 @@ void codegen_visitor::generate(ast::statement_block &ref) {
       }
 
       if (node_type != ast::ast_node_type::E_FUNCTION_DEFINITION) {
-        apply(*statement);
+        apply(st);
       }
 
       if ((!is_assignment) && (pop_unused_result) && (type != frontend::types::type_builtin::type_void)) {
@@ -377,7 +376,7 @@ void codegen_visitor::generate(ast::statement_block &ref) {
   }
 }
 
-void codegen_visitor::visit_if_no_else(ast::if_statement &ref) {
+void codegen_visitor::visit_if_no_else(const ast::if_statement &ref) {
   reset_currently_statement();
   apply(ref.cond());
 
@@ -392,7 +391,7 @@ void codegen_visitor::visit_if_no_else(ast::if_statement &ref) {
   std::get<0>(to_relocate.m_attr) = jump_to_index;
 }
 
-void codegen_visitor::visit_if_with_else(ast::if_statement &ref) {
+void codegen_visitor::visit_if_with_else(const ast::if_statement &ref) {
   reset_currently_statement();
   apply(ref.cond());
 
@@ -412,8 +411,8 @@ void codegen_visitor::visit_if_with_else(ast::if_statement &ref) {
   std::get<0>(to_relocate_after_true_block.m_attr) = m_builder.current_loc();
 }
 
-void codegen_visitor::generate(ast::if_statement &ref) {
-  begin_scope(ref.control_block_symtab());
+void codegen_visitor::generate(const ast::if_statement &ref) {
+  begin_scope(ref.control_block_symtab);
 
   if (!ref.else_block()) {
     visit_if_no_else(ref);
@@ -424,8 +423,8 @@ void codegen_visitor::generate(ast::if_statement &ref) {
   end_scope();
 }
 
-void codegen_visitor::generate(ast::while_statement &ref) {
-  begin_scope(ref.symbol_table());
+void codegen_visitor::generate(const ast::while_statement &ref) {
+  begin_scope(ref.symbol_table);
 
   auto while_location_start = m_builder.current_loc();
   reset_currently_statement();
@@ -442,7 +441,7 @@ void codegen_visitor::generate(ast::while_statement &ref) {
   end_scope();
 }
 
-void codegen_visitor::generate(ast::unary_expression &ref) {
+void codegen_visitor::generate(const ast::unary_expression &ref) {
   using unary_op = ast::unary_operation;
   reset_currently_statement();
 
@@ -469,7 +468,7 @@ void codegen_visitor::generate(ast::unary_expression &ref) {
   }
 }
 
-void codegen_visitor::generate(ast::function_call &ref) {
+void codegen_visitor::generate(const ast::function_call &ref) {
   bool is_return = false;
 
   if (ref.type != frontend::types::type_builtin::type_void) {
@@ -512,7 +511,7 @@ void codegen_visitor::generate(ast::function_call &ref) {
   }
 }
 
-void codegen_visitor::generate(frontend::ast::return_statement &ref) {
+void codegen_visitor::generate(const frontend::ast::return_statement &ref) {
   if (!ref.empty()) {
     apply(ref.expr());
     emit_with_decrement(vm_instruction_set::load_r0_desc);
@@ -527,13 +526,13 @@ void codegen_visitor::generate(frontend::ast::return_statement &ref) {
   emit(encoded_instruction{vm_instruction_set::return_desc});
 }
 
-void codegen_visitor::generate(frontend::ast::function_definition_to_ptr_conv &ref) {
+void codegen_visitor::generate(const frontend::ast::function_definition_to_ptr_conv &ref) {
   const auto const_index = current_constant_index();
   m_dynamic_jumps_constants.push_back({const_index, 0, &ref.definition()}); // Dummy address
   emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
 }
 
-unsigned codegen_visitor::generate_function(frontend::ast::function_definition &ref) {
+unsigned codegen_visitor::generate_function(const frontend::ast::function_definition &ref) {
   m_symtab_stack.clear();
 
   m_curr_function = &ref;
