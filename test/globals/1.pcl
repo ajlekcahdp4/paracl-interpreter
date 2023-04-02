@@ -5,8 +5,8 @@ c = 0;
 func() : test {
     b = 2;
     c = 3;
-    a = 1;
     d = 4; // d here is a local variable
+    a = 1;
 }
 
 d = 0; // local variable
