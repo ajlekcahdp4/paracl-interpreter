@@ -3,7 +3,7 @@ a = {
 
   if (a <= 5)
     return 0;
-  return 1;
+  1; // Implicit return
 };
 
 print a;
