@@ -335,7 +335,25 @@ bool semantic_analyzer::analyze_func(ast::function_definition &ref, bool is_recu
   return m_error_queue->empty();
 }
 
+void semantic_analyzer::analyze_node(ast::function_definition &ref) {
+  semantic_analyzer analyzer{*m_functions}; // Yes, yes, a semantic analyzer that recursively creates another sema is
+                                            // pretty bad, but such is the language we are compiling.
+
+  analyzer.set_error_queue(*m_error_queue);
+  analyzer.set_ast(*m_ast);
+
+  auto guard = analyzer.begin_scope(*m_scopes.front()
+  ); // Basically this is the global scope being passed into all nested function scopes. It will get passed down
+     // infinitely down the nested functions as well.
+
+  auto attr = m_functions->named_functions.lookup(ref.name.value());
+  bool is_recursive = (attr ? attr->recursive : false);
+
+  analyzer.analyze_func(ref, is_recursive);
+}
+
 void semantic_analyzer::analyze_node(ast::function_definition_to_ptr_conv &ref) {
+  analyze_node(ref.definition());
   ref.type = types::generic_type::make<types::type_composite_function>(ref.definition().type);
 }
 

@@ -36,6 +36,10 @@ using decl_vm::instruction_desc;
 // `unsigned` -- index of the constant in the pool to push onto the stack
 constexpr instruction_desc<E_PUSH_CONST_UNARY, unsigned> push_const_desc = "push_const";
 
+// push_cons: Pushes a value from the stack slot onto the top. Is not destructive. Absolute addressing
+constexpr instruction_desc<E_PUSH_LOCAL_UNARY, unsigned> push_local_desc = "push_local";
+constexpr instruction_desc<E_MOV_LOCAL_UNARY, unsigned> mov_local_desc = "mov_local";
+
 // mov_local_rel: Pops a value from the top of the stack, then moves into a stack slot of the address `sp + attr<0>`
 // 'int` -- offset to apply to the stack pointer to calculate the final stack slot. Note: can be negative
 constexpr instruction_desc<E_MOV_LOCAL_REL_UNARY, int> mov_local_rel_desc = "mov_local_rel";
@@ -267,6 +271,16 @@ constexpr auto load_r0_instr = load_r0_desc >> [](auto &&ctx, auto &&) {
   ctx.set_r0(val);
 };
 
+constexpr auto push_local_instr = push_local_desc >> [](auto &&ctx, auto &&attr) {
+  auto val = ctx.at_stack(std::get<0>(attr));
+  ctx.push(val);
+};
+
+constexpr auto mov_local_instr = mov_local_desc >> [](auto &&ctx, auto &&attr) {
+  auto val = ctx.pop();
+  ctx.at_stack(std::get<0>(attr)) = val;
+};
+
 constexpr auto store_r0_instr = store_r0_desc >> [](auto &&ctx, auto &&) { ctx.push(ctx.r0()); };
 
 constexpr auto paracl_isa = decl_vm::instruction_set_description(
@@ -274,7 +288,7 @@ constexpr auto paracl_isa = decl_vm::instruction_set_description(
     or_instr, cmp_eq_instr, cmp_ne_instr, cmp_gt_instr, cmp_ls_instr, cmp_ge_instr, cmp_le_instr, print_instr,
     push_read, mov_local_rel_instr, push_local_rel_instr, jmp_instr, jmp_true_instr, jmp_false_instr, not_instr,
     setup_call_instr, jmp_dynamic_instr, jmp_dynamic_rel_instr, push_sp_instr, update_sp_instr, load_r0_instr,
-    store_r0_instr
+    store_r0_instr, push_local_instr, mov_local_instr
 );
 
 using paracl_isa_type = decltype(paracl_isa);

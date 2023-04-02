@@ -111,17 +111,6 @@ public:
     semantic_analyzer analyzer{m_functions};
     analyzer.set_error_queue(errors);
     analyzer.set_ast(ast);
-
-    // Note the order of analyze(....) && valid to prevent short-circuiting to check all functions.
-    for (auto start = scheduled.crbegin(), finish = scheduled.crend(); start != finish; ++start) {
-      auto *def = start->attr;
-      if (!def) continue;
-
-      auto attr = m_functions.named_functions.lookup(def->name.value());
-      bool is_recursive = (attr ? attr->recursive : false);
-      analyzer.analyze_func(*def, is_recursive);
-    }
-
     analyzer.analyze_main(*ast.get_root_ptr());
 
     for (const auto &e : errors) {

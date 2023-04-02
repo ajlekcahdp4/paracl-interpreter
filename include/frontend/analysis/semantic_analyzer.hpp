@@ -165,7 +165,7 @@ public:
   void analyze_node(ast::while_statement &);
 
   void analyze_node(ast::function_call &);
-  void analyze_node(ast::function_definition &) {}
+  void analyze_node(ast::function_definition &);
   void analyze_node(ast::function_definition_to_ptr_conv &);
   void analyze_node(ast::return_statement &);
 

@@ -91,6 +91,9 @@ public:
 
   bool declared(std::string_view name) const { return (lookup_symbol(name) ? true : false); }
   void declare(std::string_view name, ast::variable_expression *def) { vector::back()->declare(name, def); }
+
+  using vector::back;
+  using vector::front;
 };
 
 } // namespace paracl::frontend

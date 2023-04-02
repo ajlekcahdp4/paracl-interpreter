@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <exception>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -44,6 +45,36 @@ namespace vm_builder = bytecode_vm::builder;
 
 using vm_builder::encoded_instruction;
 
+class codegen_stack_block {
+  using map_type = utils::transparent::string_unordered_map<unsigned>;
+
+private:
+  unsigned m_top;
+  map_type m_map;
+
+public:
+  codegen_stack_block(unsigned curr_top = 0) : m_top{curr_top} {}
+
+  std::optional<unsigned> lookup(std::string_view name) const {
+    auto it = m_map.find(name);
+    return (it == m_map.end() ? std::nullopt : std::optional{it->second});
+  }
+
+  void push_dummy() { ++m_top; }
+  unsigned size() const { return m_top; }
+  unsigned names() const { return m_map.size(); }
+
+  void push_var(std::string_view name) {
+    [[maybe_unused]] auto res = m_map.emplace(name, m_top++);
+    assert(res.second && "Reinserting var with the same label");
+  }
+
+  void pop_dummy() {
+    assert(m_top > 0 && "Ending nonexistent scope");
+    --m_top;
+  }
+};
+
 class codegen_stack_frame {
 private:
   using map_type = utils::transparent::string_unordered_map<unsigned>;
@@ -53,11 +84,11 @@ private:
     map_type m_map;
   };
 
-  std::vector<stack_block> m_blocks;
+  std::vector<codegen_stack_block> m_blocks;
 
 public:
   void begin_scope() {
-    auto block = stack_block{size(), map_type{}};
+    auto block = codegen_stack_block{size()};
     m_blocks.push_back(block);
   }
 
@@ -76,42 +107,41 @@ public:
 
   void push_var(std::string_view name) {
     auto &back = m_blocks.back();
-    [[maybe_unused]] auto res = back.m_map.emplace(name, back.m_top++);
-    assert(res.second && "Reinserting var with the same label");
+    back.push_var(name);
   }
 
   void pop_dummy() {
-    assert(m_blocks.size() && m_blocks.back().m_top > 0 && "Ending nonexistent scope");
-    m_blocks.back().m_top--;
+    assert(m_blocks.size() && "Ending nonexistent scope");
+    m_blocks.back().pop_dummy();
   }
 
-  unsigned lookup_location(std::string_view name) const {
+  std::optional<unsigned> lookup_location(std::string_view name) const {
     unsigned loc = 0;
 
-    [[maybe_unused]] auto found = std::find_if(m_blocks.crbegin(), m_blocks.crend(), [&name, &loc](auto &block) {
-      auto it = block.m_map.find(name);
-      if (it == block.m_map.end()) return false;
-      loc = it->second;
-      return true;
+    [[maybe_unused]] auto found = std::find_if(m_blocks.crbegin(), m_blocks.crend(), [name, &loc](auto &block) {
+      auto found = block.lookup(name);
+      if (found) loc = *found;
+      return block.lookup(name).has_value();
     });
 
-    assert(found != m_blocks.crend());
-    return loc;
+    return (found == m_blocks.crend() ? std::nullopt : std::optional{loc});
   }
 
-  void push_dummy() { ++m_blocks.back().m_top; }
+  void push_dummy() { m_blocks.back().push_dummy(); }
 
   unsigned size() const {
     if (m_blocks.empty()) return 0;
-    return m_blocks.back().m_top;
+    return m_blocks.back().size();
   }
 
   unsigned names() const {
     if (m_blocks.empty()) return 0;
-    return m_blocks.back().m_map.size();
+    return m_blocks.back().names();
   }
 
   void clear() { m_blocks.clear(); }
+
+  codegen_stack_block front() { return m_blocks.front(); }
 };
 
 // It's really necessary to put all of this code inside an anonymous namespace to avoid external linkage.
@@ -151,11 +181,13 @@ private:
 private:
   std::unordered_map<const frontend::ast::function_definition *, unsigned> m_function_defs;
   const frontend::functions_analytics *m_functions;
+
+  codegen_stack_block m_global_scope; // Global scope stack variable distribution.
   codegen_stack_frame m_symtab_stack;
+
   builder_type m_builder;
 
   unsigned m_prev_stack_size = 0;
-
   bool m_is_currently_statement = false;
 
 private:
@@ -229,7 +261,7 @@ public:
   void generate(const frontend::ast::if_statement &);
   void generate(const frontend::ast::print_statement &);
   void generate(const frontend::ast::read_expression &);
-  void generate(const frontend::ast::statement_block &);
+  void generate(const frontend::ast::statement_block &, bool global_scope = false);
   void generate(const frontend::ast::unary_expression &);
   void generate(const frontend::ast::variable_expression &);
   void generate(const frontend::ast::while_statement &);
@@ -254,8 +286,14 @@ void codegen_visitor::generate(const ast::read_expression &) {
 }
 
 void codegen_visitor::generate(const ast::variable_expression &ref) {
-  auto index = m_symtab_stack.lookup_location(ref.name());
-  emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, index});
+  if (auto index = m_symtab_stack.lookup_location(ref.name()); index) {
+    emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, index.value()});
+    return;
+  }
+
+  if (auto index = m_global_scope.lookup(ref.name()); index) {
+    emit_with_increment(encoded_instruction{vm_instruction_set::push_local_desc, index.value()});
+  }
 }
 
 void codegen_visitor::generate(const ast::print_statement &ref) {
@@ -268,18 +306,36 @@ void codegen_visitor::generate(const ast::assignment_statement &ref) {
   const bool emit_push = !is_currently_statement();
   apply(ref.right());
 
-  const auto last_it = std::prev(ref.rend());
-  for (auto start = ref.rbegin(), finish = last_it; start != finish; ++start) {
-    const auto left_index = m_symtab_stack.lookup_location(start->name());
-    emit_with_decrement(encoded_instruction{vm_instruction_set::mov_local_rel_desc, left_index});
-    emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, left_index});
-  }
+  auto move_to_location = [this](std::string_view name) {
+    if (auto index = m_symtab_stack.lookup_location(name); index) {
+      emit_with_decrement(encoded_instruction{vm_instruction_set::mov_local_rel_desc, *index});
+      return;
+    }
 
-  // Last iteration:
-  const auto left_index = m_symtab_stack.lookup_location(last_it->name());
-  emit_with_decrement(encoded_instruction{vm_instruction_set::mov_local_rel_desc, left_index});
-  if (emit_push) {
-    emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, left_index});
+    else if (auto index = m_global_scope.lookup(name); index) {
+      emit_with_decrement(encoded_instruction{vm_instruction_set::mov_local_desc, *index});
+    }
+  };
+
+  auto push_from_location = [this](std::string_view name) {
+    if (auto index = m_symtab_stack.lookup_location(name); index) {
+      emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, *index});
+      return;
+    }
+
+    else if (auto index = m_global_scope.lookup(name); index) {
+      emit_with_increment(encoded_instruction{vm_instruction_set::push_local_desc, *index});
+    }
+  };
+
+  const auto last_it = std::prev(ref.rend()); // Empty assignments can't exist.
+  for (auto start = ref.rbegin(), finish = ref.rend(); start != finish; ++start) {
+    move_to_location(start->name());
+
+    bool is_last = (start == last_it);
+    if (!is_last || (is_last && emit_push)) {
+      push_from_location(start->name());
+    }
   }
 }
 
@@ -308,7 +364,7 @@ void codegen_visitor::generate(const ast::binary_expression &ref) {
   }
 }
 
-void codegen_visitor::generate(const ast::statement_block &ref) {
+void codegen_visitor::generate(const ast::statement_block &ref, bool global_scope) {
   bool should_return = ref.type != frontend::types::type_builtin::type_void;
 
   unsigned ret_addr_index = 0;
@@ -366,6 +422,7 @@ void codegen_visitor::generate(const ast::statement_block &ref) {
     }
   }
 
+  if (global_scope) m_global_scope = m_symtab_stack.front();
   end_scope();
 
   if (should_return) {
@@ -497,7 +554,7 @@ void codegen_visitor::generate(const ast::function_call &ref) {
 
   else {
     int total_depth = m_symtab_stack.size() - n_args;
-    int rel_pos = m_symtab_stack.lookup_location(ref.name()) - total_depth;
+    int rel_pos = m_symtab_stack.lookup_location(ref.name()).value() - total_depth;
 
     emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, rel_pos});
     emit_with_decrement(vm_instruction_set::jmp_dynamic_desc);
@@ -573,11 +630,14 @@ void codegen_visitor::generate_all(
   m_return_address_constants.clear();
   m_functions = &functions;
 
-  if (ast.get_root_ptr()) {
-    apply(*ast.get_root_ptr()); // Last instruction is ret
+  if (ast.get_root_ptr()) { // clang-format off
+    ezvis::visit<void, frontend::ast::statement_block>(
+      [this](auto &st) { generate(st, true);  }, 
+      *ast.get_root_ptr()
+    ); // clang-format on
   }
 
-  emit(vm_instruction_set::return_desc);
+  emit(vm_instruction_set::return_desc); // Last instruction is ret
   for (auto &&[name, attr] : functions.named_functions) {
     assert(attr.definition && "Attribute definition pointer can't be nullptr");
     generate_function(*attr.definition);
