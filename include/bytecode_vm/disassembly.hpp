@@ -30,7 +30,8 @@ public:
     os << ".constant_pool\n";
 
     for (constant_pool_type::size_type i = 0; start != finish; ++start, ++i) {
-      utils::padded_hex_printer(os, i) << " = { " << std::dec << *start << " }\n";
+      utils::padded_hex_printer(os, i) << " = { "
+                                       << "0x" << std::hex << *start << " }\n";
     }
 
     return os;

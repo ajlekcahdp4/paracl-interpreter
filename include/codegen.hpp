@@ -537,7 +537,10 @@ unsigned codegen_visitor::generate_function(frontend::ast::function_definition &
   m_symtab_stack.clear();
 
   m_curr_function = &ref;
-  begin_scope(ref.param_symtab());
+  m_symtab_stack.begin_scope();
+  for (auto &&param : ref) {
+    m_symtab_stack.push_var(param.name());
+  }
 
   auto &&function_pos = m_builder.current_loc();
   m_function_defs.insert({&ref, function_pos});
