@@ -7,6 +7,7 @@ func (x) : gt5 {
     return zero;
   }
   one = 1;
+  one;
   return one;
 }
 

@@ -58,20 +58,18 @@ private:
 
   void report_error(error_report report) { m_error_queue->push_back(std::move(report)); }
 
-  bool expect_type_eq(const ast::i_expression &ref, const types::i_type &rhs) {
+  bool expect_type_eq(const types::generic_type &lhs, const types::i_type &rhs, location loc) {
     if (m_type_errors_allowed) return false;
 
-    auto &&type = ref.type;
+    auto &&type = lhs;
     if (!type || !(type == rhs)) {
 
       if (!type) {
-        report_error(fmt::format("Expression is not of expected type '{}'", rhs.to_string()), ref.loc());
+        report_error(fmt::format("Expression is not of expected type '{}'", rhs.to_string()), loc);
       }
 
       else {
-        report_error(
-            fmt::format("Expression is of type '{}', expected '{}'", type.to_string(), rhs.to_string()), ref.loc()
-        );
+        report_error(fmt::format("Expression is of type '{}', expected '{}'", type.to_string(), rhs.to_string()), loc);
       }
 
       return false;
@@ -80,8 +78,8 @@ private:
     return true;
   }
 
-  bool expect_type_eq(const ast::i_expression &ref, const types::generic_type &rhs) {
-    return expect_type_eq(ref, rhs.base());
+  bool expect_type_eq(const ast::i_expression &ref, const types::i_type &rhs) {
+    return expect_type_eq(ref.type, rhs, ref.loc());
   }
 
   void check_return_types_matches(types::generic_type &type, location loc);

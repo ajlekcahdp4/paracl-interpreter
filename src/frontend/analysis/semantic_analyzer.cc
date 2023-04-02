@@ -107,11 +107,11 @@ void semantic_analyzer::check_return_types_matches(types::generic_type &type, lo
     return;
   }
 
-  auto &first_type = m_return_statements->front()->type;
+  auto &&first_type = m_return_statements->front()->type();
 
   for (const auto &st : *m_return_statements) {
     assert(st && "[Dedug]: Broken statement pointer");
-    if (st->type && st->type == first_type) continue;
+    if (st->type() && st->type() == first_type) continue;
     on_error(st->loc());
   }
 
@@ -300,8 +300,9 @@ bool semantic_analyzer::analyze_main(ast::i_ast_node &ref) {
     m_functions->global_stab = &main_block.stab;
     analyze_node(main_block, true);
 
-    for (const auto &st : main_block.return_statements) {
-      expect_type_eq(*st, types::type_builtin::type_void);
+    for (const auto *st : main_block.return_statements) {
+      assert(st);
+      expect_type_eq(st->type(), types::type_builtin::type_void, st->loc());
     }
   }
 
@@ -342,9 +343,6 @@ void semantic_analyzer::analyze_node(ast::return_statement &ref) {
   m_return_statements->push_back(&ref);
   if (!ref.empty()) {
     apply(ref.expr());
-    ref.type = ref.expr().type;
-  } else {
-    ref.type = types::type_builtin::type_void;
   }
 }
 

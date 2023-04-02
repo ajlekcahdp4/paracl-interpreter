@@ -66,7 +66,7 @@ public:
   void explore(const ast::print_statement &ref) { apply(ref.expr()); }
   void explore(const ast::unary_expression &ref) { apply(ref.expr()); }
 
-  void explore(const ast::return_statement &ref) {
+  void explore(ast::return_statement &ref) {
     if (ref.empty()) return;
     apply(ref.expr());
   }

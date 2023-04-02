@@ -123,6 +123,9 @@ public:
   std::string to_string() const { return base().to_string(); }
   void swap(generic_type &rhs) { std::swap(*this, rhs); }
   operator bool() const { return m_impl.get(); }
+
+  operator i_type &() { return base(); }
+  operator const i_type &() const { return base(); }
 };
 
 class type_builtin final : public i_type {

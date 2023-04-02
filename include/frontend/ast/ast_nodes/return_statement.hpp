@@ -18,19 +18,28 @@
 
 namespace paracl::frontend::ast {
 
-class return_statement : public i_expression {
+class return_statement : public i_ast_node {
   i_expression *m_expr;
 
   EZVIS_VISITABLE();
 
 public:
-  return_statement(i_expression *p_expr, location l)
-      : i_expression{l, p_expr ? p_expr->type : types::type_builtin::type_void}, m_expr{p_expr} {}
+  return_statement(i_expression *p_expr, location l) : i_ast_node{l}, m_expr{p_expr} {}
 
   bool empty() const { return !m_expr; }
-  i_expression &expr() const {
+  i_expression &expr() {
     if (m_expr == nullptr) throw std::runtime_error{"Attempt to dereference empty return statement"};
     return *m_expr;
+  }
+
+  const i_expression &expr() const {
+    if (m_expr == nullptr) throw std::runtime_error{"Attempt to dereference empty return statement"};
+    return *m_expr;
+  }
+
+  types::generic_type type() const {
+    if (!m_expr) return types::type_builtin::type_void;
+    return m_expr->type;
   }
 };
 
@@ -57,7 +66,7 @@ public:
   bool are_all_void() const {
     return std::all_of(cbegin(), cend(), [&void_type = types::type_builtin::type_void](return_statement *ret) {
       assert(ret);
-      return ret->type && ret->type == void_type;
+      return ret->type() && ret->type() == void_type;
     });
   }
 };
