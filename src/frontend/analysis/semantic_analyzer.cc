@@ -152,7 +152,7 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref, bool main_block)
         ::utils::visitors{[](ast::return_statement &) { return true; }, [](ast::i_ast_node &) { return false; }}, st
     );
 
-    bool is_implicit_return = (type != types::type_builtin::type_void); // Implicit return case
+    bool is_implicit_return = type && (type != types::type_builtin::type_void); // Implicit return case
     if (!is_implicit_return || is_return || main_block) break;
 
     assert(m_ast && "Nullptr in m_ast");
