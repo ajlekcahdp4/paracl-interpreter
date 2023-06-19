@@ -34,6 +34,7 @@ public:
   if_statement &copy(const if_statement &);
   print_statement &copy(const print_statement &);
   read_expression &copy(const read_expression &);
+  value_block &copy(const value_block &);
   statement_block &copy(const statement_block &);
   unary_expression &copy(const unary_expression &);
   variable_expression &copy(const variable_expression &);

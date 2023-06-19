@@ -24,11 +24,11 @@ namespace paracl::frontend {
 
 using types::type_builtin;
 
-ast::statement_block *semantic_analyzer::try_get_block_ptr(ast::i_ast_node &ref) { // clang-format off
-  return ezvis::visit<ast::statement_block *, ast::error_node, ast::statement_block>(
+ast::value_block *semantic_analyzer::try_get_block_ptr(ast::i_ast_node &ref) { // clang-format off
+  return ezvis::visit<ast::value_block *, ast::error_node, ast::value_block>(
       ::utils::visitors{
           [this](const ast::error_node &e) { analyze_node(e); return nullptr; },
-          [](ast::statement_block &s) { return &s; }},
+          [](ast::value_block &s) { return &s; }},
       ref
   );
 } // clang-format on
@@ -121,7 +121,7 @@ void semantic_analyzer::check_return_types_matches(types::generic_type &type, lo
 }
 
 using expressions_and_base = ::utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
-void semantic_analyzer::analyze_node(ast::statement_block &ref, bool main_block) {
+void semantic_analyzer::analyze_node(ast::value_block &ref, bool main_block) {
   auto guard = begin_scope(ref.stab);
 
   auto *old_returns = m_return_statements;

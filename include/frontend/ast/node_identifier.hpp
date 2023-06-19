@@ -30,6 +30,7 @@ enum class ast_node_type {
   E_PRINT_STATEMENT,
   E_READ_EXPRESSION,
   E_STATEMENT_BLOCK,
+  E_VALUE_BLOCK,
   E_UNARY_EXPRESSION,
   E_VARIABLE_EXPRESSION,
   E_RETURN_STATEMENT,
@@ -50,6 +51,7 @@ template <> inline ast_node_type get_ast_node_type<while_statement>() { return a
 template <> inline ast_node_type get_ast_node_type<print_statement>() { return ast_node_type::E_PRINT_STATEMENT; }
 template <> inline ast_node_type get_ast_node_type<read_expression>() { return ast_node_type::E_READ_EXPRESSION; }
 template <> inline ast_node_type get_ast_node_type<statement_block>() { return ast_node_type::E_STATEMENT_BLOCK; }
+template <> inline ast_node_type get_ast_node_type<value_block>() { return ast_node_type::E_VALUE_BLOCK; }
 template <> inline ast_node_type get_ast_node_type<unary_expression>() { return ast_node_type::E_UNARY_EXPRESSION; }
 template <> inline ast_node_type get_ast_node_type<variable_expression>() { return ast_node_type::E_VARIABLE_EXPRESSION; }
 template <> inline ast_node_type get_ast_node_type<return_statement>() { return ast_node_type::E_RETURN_STATEMENT; }
@@ -59,7 +61,7 @@ template <> inline ast_node_type get_ast_node_type<function_definition_to_ptr_co
 
 constexpr auto ast_expression_types = std::array{
     ast_node_type::E_ASSIGNMENT_STATEMENT,
-    ast_node_type::E_STATEMENT_BLOCK,
+    ast_node_type::E_VALUE_BLOCK,
     ast_node_type::E_BINARY_EXPRESSION,
     ast_node_type::E_CONSTANT_EXPRESSION,
     ast_node_type::E_UNARY_EXPRESSION,

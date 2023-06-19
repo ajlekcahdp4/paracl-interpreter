@@ -246,7 +246,7 @@ private:
   using to_visit = std::tuple<
       frontend::ast::assignment_statement, frontend::ast::binary_expression, frontend::ast::constant_expression,
       frontend::ast::if_statement, frontend::ast::print_statement, frontend::ast::read_expression,
-      frontend::ast::statement_block, frontend::ast::unary_expression, frontend::ast::variable_expression,
+      frontend::ast::value_block, frontend::ast::unary_expression, frontend::ast::variable_expression,
       frontend::ast::while_statement, frontend::ast::function_call, frontend::ast::return_statement,
       frontend::ast::function_definition_to_ptr_conv>;
 
@@ -262,6 +262,7 @@ public:
   void generate(const frontend::ast::print_statement &);
   void generate(const frontend::ast::read_expression &);
   void generate(const frontend::ast::statement_block &, bool global_scope = false);
+  void generate(const frontend::ast::value_block &);
   void generate(const frontend::ast::unary_expression &);
   void generate(const frontend::ast::variable_expression &);
   void generate(const frontend::ast::while_statement &);
@@ -364,7 +365,7 @@ void codegen_visitor::generate(const ast::binary_expression &ref) {
   }
 }
 
-void codegen_visitor::generate(const ast::statement_block &ref, bool global_scope) {
+void codegen_visitor::generate(const ast::value_block &ref, bool global_scope) {
   bool should_return = ref.type != frontend::types::type_builtin::type_void;
 
   unsigned ret_addr_index = 0;
@@ -631,7 +632,7 @@ void codegen_visitor::generate_all(
   m_functions = &functions;
 
   if (ast.get_root_ptr()) { // clang-format off
-    ezvis::visit<void, frontend::ast::statement_block>(
+    ezvis::visit<void, frontend::ast::value_block>(
       [this](auto &st) { generate(st, true);  }, 
       *ast.get_root_ptr()
     ); // clang-format on

@@ -142,7 +142,7 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
   expression_statement
 
 %type <ast::i_expression *> 
-  statement_block
+  value_block
   function_call
 
 %type <ast::i_ast_node *>
@@ -157,7 +157,7 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %type <ast::return_statement *>
   return_statement
 
-%type <ast::statement_block>
+%type <ast::value_block>
   statements
 
 %type <ast::assignment_statement *> 
@@ -195,7 +195,7 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %%
 
 program:  
-  statements  { auto ptr = driver.make_ast_node<ast::statement_block>(std::move($1)); driver.m_ast.set_root_ptr(ptr); }
+  statements  { auto ptr = driver.make_ast_node<ast::value_block>(std::move($1)); driver.m_ast.set_root_ptr(ptr); }
 | %empty      { }
 
 optional_semicol: 
@@ -208,7 +208,7 @@ primary_expression:
 | QMARK                       { $$ = driver.make_ast_node<ast::read_expression>(@$); }
 | LPAREN expression RPAREN    { $$ = $2; }
 | LPAREN error RPAREN         { auto e = driver.take_error(); $$ = driver.make_ast_node<ast::error_node>(e.m_error_message, e.m_loc); yyerrok; }
-| statement_block             { $$ = $1; }
+| value_block             { $$ = $1; }
 | function_call               { $$ = $1; }
 
 unary_expression: 
@@ -249,7 +249,7 @@ expression:
   logical_expression    { $$ = $1; }
 | chainable_assignment  { $$ = $1; }   
 
-/* Allow statement_block not to be followed by a semicol */
+/* Allow value_block not to be followed by a semicol */
 chainable_assignment_statement:  
 IDENTIFIER ASSIGN chainable_assignment_statement    { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
 | IDENTIFIER ASSIGN logical_expression SEMICOL      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
@@ -261,7 +261,7 @@ IDENTIFIER ASSIGN chainable_assignment_statement    { $$ = $3; auto left = ast::
 typed_chainable_assignment_statement:   
   typed_identifier ASSIGN chainable_assignment_statement    { $$ = $3; $$->append_variable(*$1); }
 | typed_identifier ASSIGN logical_expression SEMICOL        { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
-| typed_identifier ASSIGN statement_block                   { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
+| typed_identifier ASSIGN value_block                   { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
 | typed_identifier ASSIGN function_def optional_semicol     { 
   auto fnc_ptr = driver.make_ast_node<ast::function_definition_to_ptr_conv>(@3, *$3);
   $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *fnc_ptr, @3); }
@@ -284,9 +284,9 @@ statements:
 | error eof_or_semicol { auto e = driver.take_error(); $$.append_statement(*driver.make_ast_node<ast::error_node>(e.m_error_message, e.m_loc)); yyerrok; }
                       
 
-statement_block:  
-  LBRACE statements RBRACE    { $$ = driver.make_ast_node<ast::statement_block>(std::move($2)); }
-| LBRACE RBRACE       { $$ = driver.make_ast_node<ast::statement_block>(); }
+value_block:  
+  LBRACE statements RBRACE    { $$ = driver.make_ast_node<ast::value_block>(std::move($2)); }
+| LBRACE RBRACE       { $$ = driver.make_ast_node<ast::value_block>(); }
 | LBRACE error RBRACE { auto e = driver.take_error(); $$ = driver.make_ast_node<ast::error_node>(e.m_error_message, e.m_loc); yyerrok; }
 
 while_statement:  
@@ -301,7 +301,7 @@ expression_statement:
 
 statement:    
   print_statement                       { $$ = $1; }
-| statement_block                       { $$ = $1; }
+| value_block                       { $$ = $1; }
 | while_statement                       { $$ = $1; }
 | if_statement                          { $$ = $1; }
 | typed_chainable_assignment_statement  { $$ = $1; }
@@ -318,8 +318,8 @@ arglist_or_empty:
 | %empty  { }
 
 function_def:
-  FUNC LPAREN arglist_or_empty RPAREN statement_block { $$ = driver.make_ast_node<ast::function_definition>(std::nullopt, *$5, @$, $3);} 
-| FUNC LPAREN arglist_or_empty RPAREN COL IDENTIFIER statement_block { $$ = driver.make_ast_node<ast::function_definition>($6, *$7, @$, $3); }
+  FUNC LPAREN arglist_or_empty RPAREN value_block { $$ = driver.make_ast_node<ast::function_definition>(std::nullopt, *$5, @$, $3);} 
+| FUNC LPAREN arglist_or_empty RPAREN COL IDENTIFIER value_block { $$ = driver.make_ast_node<ast::function_definition>($6, *$7, @$, $3); }
 
 return_statement: 
   RET expression SEMICOL  { $$ = driver.make_ast_node<ast::return_statement>($2, @$); }

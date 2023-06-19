@@ -141,7 +141,7 @@ private:
     return begin_scope(stab);
   }
 
-  ast::statement_block *try_get_block_ptr(ast::i_ast_node &);
+  ast::value_block *try_get_block_ptr(ast::i_ast_node &);
 
 public:
   EZVIS_VISIT_CT(ast::tuple_all_nodes)
@@ -159,7 +159,7 @@ public:
   void analyze_node(ast::if_statement &);
   void analyze_node(ast::print_statement &);
 
-  void analyze_node(ast::statement_block &, bool main_block = false);
+  void analyze_node(ast::value_block &, bool main_block = false);
   void analyze_node(ast::unary_expression &);
   bool analyze_node(ast::variable_expression &, bool can_declare = false);
   void analyze_node(ast::while_statement &);

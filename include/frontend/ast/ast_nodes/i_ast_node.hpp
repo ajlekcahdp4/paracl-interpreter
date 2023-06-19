@@ -44,12 +44,18 @@ public:
   }
 };
 
+class i_statement : public i_ast_node {
+public:
+  i_statement(location l = location{}) : i_ast_node{l} {}
+};
+
 // Expresssions
 class binary_expression;
 class constant_expression;
 class read_expression;
 class assignment_statement;
-class statement_block; // Is a statement as well as an expression, just like assignment
+class value_block;
+class statement_block;
 class unary_expression;
 class variable_expression;
 class function_call;
@@ -65,7 +71,7 @@ class return_statement;
 class error_node;
 
 using tuple_expression_nodes = std::tuple<
-    assignment_statement, binary_expression, constant_expression, read_expression, statement_block, unary_expression,
+    assignment_statement, binary_expression, constant_expression, read_expression, value_block, unary_expression,
     variable_expression, function_call, function_definition_to_ptr_conv>;
 
 using tuple_all_nodes = utils::tuple_add_types_t<

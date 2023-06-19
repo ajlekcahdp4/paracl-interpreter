@@ -50,7 +50,7 @@ public:
     if (ref.else_block() != nullptr) apply(*ref.else_block());
   }
 
-  void explore(const ast::statement_block &ref) {
+  void explore(const ast::value_block &ref) {
     for (auto &statement : ref) {
       assert(statement);
       apply(*statement);
