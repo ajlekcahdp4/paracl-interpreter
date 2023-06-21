@@ -22,6 +22,7 @@ namespace paracl::frontend::ast {
 class statement_block : private std::vector<i_ast_node *>, public i_statement {
 public:
   symtab stab;
+  return_vector return_statements;
 
 private:
   EZVIS_VISITABLE();

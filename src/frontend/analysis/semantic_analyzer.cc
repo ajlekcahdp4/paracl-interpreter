@@ -174,14 +174,47 @@ void semantic_analyzer::analyze_node(ast::value_block &ref, bool main_block) {
   m_return_statements = old_returns;
 }
 
+void semantic_analyzer::analyze_node(ast::statement_block &ref, bool main_block) {
+  auto guard = begin_scope(ref.stab);
+
+  auto *old_returns = m_return_statements;
+
+  if (in_value_block()) {
+    m_return_statements = &ref.return_statements;
+    ref.return_statements.clear();
+  }
+
+  for (auto start = ref.begin(), finish = ref.end(); start != finish; ++start) {
+    auto *ptr = *start;
+    assert(ptr && "Broken statement pointer in a block");
+    auto &st = *ptr;
+    apply(st);
+
+    bool is_last = (start == std::prev(finish));
+    if (!is_last || in_raw_block()) continue;
+
+    assert(m_ast && "Nullptr in m_ast");
+
+    auto expr_ptr = ezvis::visit_tuple<ast::i_expression *, ast::tuple_expression_nodes>(
+        [](ast::i_expression &expr) { return &expr; }, st
+    );
+    auto &ret = m_ast->make_node<ast::return_statement>(expr_ptr, expr_ptr->loc());
+
+    ref.return_statements.push_back(&ret);
+    *start = &ret;
+  }
+
+  m_return_statements = old_returns;
+}
+
 void semantic_analyzer::analyze_node(ast::if_statement &ref) {
   auto control_guard = begin_scope(ref.control_block_symtab);
-  apply(ref.cond());
-  expect_type_eq(ref.cond(), type_builtin::type_int.base());
+  apply(*ref.cond());
+  expect_type_eq(*ref.cond(), type_builtin::type_int.base());
 
   {
     auto guard_true = next_raw_block(ref.true_symtab);
-    apply(ref.true_block());
+    apply(*ref.true_block());
     guard_true.release();
   }
 
@@ -194,11 +227,11 @@ void semantic_analyzer::analyze_node(ast::if_statement &ref) {
 void semantic_analyzer::analyze_node(ast::while_statement &ref) {
   auto guard = begin_scope(ref.symbol_table);
 
-  apply(ref.cond());
-  expect_type_eq(ref.cond(), type_builtin::type_int);
+  apply(*ref.cond());
+  expect_type_eq(*ref.cond(), type_builtin::type_int);
 
   next_raw_block();
-  apply(ref.block());
+  apply(*ref.block());
 }
 
 bool semantic_analyzer::analyze_node(ast::variable_expression &ref, bool can_declare) {

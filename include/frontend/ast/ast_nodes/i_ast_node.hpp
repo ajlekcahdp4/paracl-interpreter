@@ -76,6 +76,6 @@ using tuple_expression_nodes = std::tuple<
 
 using tuple_all_nodes = utils::tuple_add_types_t<
     tuple_expression_nodes, if_statement, print_statement, while_statement, error_node, function_definition,
-    return_statement>;
+    return_statement, statement_block>;
 
 } // namespace paracl::frontend::ast

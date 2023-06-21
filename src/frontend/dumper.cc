@@ -129,11 +129,11 @@ void ast_dumper::dump_node(const binary_expression &ref) {
 void ast_dumper::dump_node(const if_statement &ref) {
   print_declare_node(ref, "<if>");
 
-  print_bind_node(ref, ref.cond(), "<condition>");
-  print_bind_node(ref, ref.true_block(), "<then>");
+  print_bind_node(ref, *ref.cond(), "<condition>");
+  print_bind_node(ref, *ref.true_block(), "<then>");
 
-  add_next(ref.cond());
-  add_next(ref.true_block());
+  add_next(*ref.cond());
+  add_next(*ref.true_block());
 
   if (ref.else_block()) {
     print_bind_node(ref, *ref.else_block(), "<else>");
@@ -172,11 +172,11 @@ void ast_dumper::dump_node(const unary_expression &ref) {
 void ast_dumper::dump_node(const while_statement &ref) {
   print_declare_node(ref, "<while>");
 
-  print_bind_node(ref, ref.cond(), "<condition>");
-  print_bind_node(ref, ref.block(), "<body>");
+  print_bind_node(ref, *ref.cond(), "<condition>");
+  print_bind_node(ref, *ref.block(), "<body>");
 
-  add_next(ref.cond());
-  add_next(ref.block());
+  add_next(*ref.cond());
+  add_next(*ref.block());
 }
 
 void ast_dumper::dump_node(const function_definition &ref) {

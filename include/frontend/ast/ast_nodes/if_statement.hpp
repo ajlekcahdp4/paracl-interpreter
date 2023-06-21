@@ -22,8 +22,8 @@ public:
   symtab false_symtab;
 
 private:
-  i_expression *m_condition;
-  statement_block *m_true_block;
+  i_expression *m_condition = nullptr;
+  statement_block *m_true_block = nullptr;
   statement_block *m_else_block = nullptr;
 
   EZVIS_VISITABLE();
@@ -35,9 +35,9 @@ public:
   if_statement(i_expression &cond, statement_block &true_block, statement_block &else_block, location l)
       : i_statement{l}, m_condition{&cond}, m_true_block{&true_block}, m_else_block{&else_block} {}
 
-  i_expression &cond() const { return *m_condition; }
-  statement_block &true_block() const { return *m_true_block; }
-  statement_block &else_block() const { return *m_else_block; }
+  i_expression *cond() const { return m_condition; }
+  statement_block *true_block() const { return m_true_block; }
+  statement_block *else_block() const { return m_else_block; }
 };
 
 } // namespace paracl::frontend::ast

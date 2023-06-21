@@ -30,8 +30,8 @@ public:
   while_statement(i_expression &cond, statement_block &block, location l)
       : i_statement{l}, m_condition{&cond}, m_block{&block} {}
 
-  i_expression &cond() const { return *m_condition; }
-  statement_block &block() const { return *m_block; }
+  i_expression *cond() const { return m_condition; }
+  statement_block *block() const { return m_block; }
 };
 
 } // namespace paracl::frontend::ast
