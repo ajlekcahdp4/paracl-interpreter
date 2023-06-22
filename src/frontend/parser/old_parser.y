@@ -254,9 +254,10 @@ chainable_assignment_statement:
 IDENTIFIER ASSIGN chainable_assignment_statement    { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); }
 | IDENTIFIER ASSIGN logical_expression SEMICOL      { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
 | IDENTIFIER ASSIGN function_def optional_semicol   { 
-  auto left = ast::variable_expression{$1, @1};
-  auto fnc_ptr = driver.make_ast_node<ast::function_definition_to_ptr_conv>(@3, *$3);
-  $$ = driver.make_ast_node<ast::assignment_statement>(left, *fnc_ptr, @3); }
+    auto left = ast::variable_expression{$1, @1};
+    auto fnc_ptr = driver.make_ast_node<ast::function_definition_to_ptr_conv>(@3, *$3);
+    $$ = driver.make_ast_node<ast::assignment_statement>(left, *fnc_ptr, @3);
+  }
 
 typed_chainable_assignment_statement:   
   typed_identifier ASSIGN chainable_assignment_statement    { $$ = $3; $$->append_variable(*$1); }

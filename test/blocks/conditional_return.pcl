@@ -5,7 +5,7 @@ foo = func(x) {
     } else {
       return 1;
     }
-  };
+  }
 }
 
 i = 0;

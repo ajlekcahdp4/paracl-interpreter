@@ -27,7 +27,7 @@
 %define parse.lac full
 
 %glr-parser
-%expect-rr 2
+%expect-rr 4
 
 
 %code requires {
@@ -164,6 +164,7 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 
 %type <ast::assignment_statement *> 
   chainable_assignment
+  chainable_assignment_statement
 
 %type <ast::variable_expression *>
   typified_identifier
@@ -250,10 +251,15 @@ logical_expression:
 | logical_expression LOGICAL_OR equality_expression     { $$ = driver.make_ast_node<ast::binary_expression>(ast::binary_operation::E_BIN_OP_OR, *$1, *$3, @$); }
 | equality_expression                                   { $$ = $1; }
 
-chainable_assignment:  
-typified_identifier ASSIGN chainable_assignment    { $$ = $3; $$->append_variable(*$1); }
-| typified_identifier ASSIGN logical_expression    { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
-| typified_identifier ASSIGN function_def          {
+chainable_assignment: 
+  IDENTIFIER ASSIGN chainable_assignment  { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); } 
+| IDENTIFIER ASSIGN logical_expression    { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
+
+chainable_assignment_statement:  
+  typified_identifier ASSIGN chainable_assignment SEMICOL   { $$ = $3; $$->append_variable(*$1); }
+| typified_identifier ASSIGN logical_expression SEMICOL     { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
+| typified_identifier ASSIGN value_block                    { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @2); }
+| typified_identifier ASSIGN function_def optional_semicol  {
     auto fnc_ptr = driver.make_ast_node<ast::function_definition_to_ptr_conv>(*$3, @3);
     $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *fnc_ptr, @2);
   }
@@ -268,8 +274,9 @@ return_statement:
 
 statement:
   PRINT expression SEMICOL         { $$ = driver.make_ast_node<ast::print_statement>(*$2, @$); }
-| expression SEMICOL               { $$ = $1; }
+| logical_expression SEMICOL               { $$ = $1; }
 | statement_block                  { $$ = $1; }
+| chainable_assignment_statement   { $$ = $1; }
 | while_statement                  { $$ = $1; }
 | if_statement                     { $$ = $1; }
 | function_def optional_semicol    { $$ = $1; }
