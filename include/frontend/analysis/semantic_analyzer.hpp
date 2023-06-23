@@ -141,7 +141,7 @@ private:
     return begin_scope(stab);
   }
 
-  ast::value_block *try_get_block_ptr(ast::i_ast_node &);
+  ast::statement_block *try_get_block_ptr(ast::i_ast_node &);
 
 public:
   EZVIS_VISIT_CT(ast::tuple_all_nodes)

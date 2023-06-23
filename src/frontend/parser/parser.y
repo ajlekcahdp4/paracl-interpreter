@@ -187,6 +187,8 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %type <std::vector<ast::i_expression *>>
   param_list
 
+%type eof_or_semicol
+
 %precedence THEN
 %precedence ELSE
 
@@ -196,6 +198,11 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 
 program:  
   statements_list  { auto ptr = driver.make_ast_node<ast::statement_block>($1, @1); driver.m_ast.set_root_ptr(ptr); }
+
+
+eof_or_semicol: 
+  SEMICOL 
+| EOF
 
 
 optional_semicol: 
@@ -274,7 +281,7 @@ return_statement:
 
 statement:
   PRINT expression SEMICOL         { $$ = driver.make_ast_node<ast::print_statement>(*$2, @$); }
-| logical_expression SEMICOL               { $$ = $1; }
+| logical_expression SEMICOL       { $$ = $1; }
 | statement_block                  { $$ = $1; }
 | chainable_assignment_statement   { $$ = $1; }
 | while_statement                  { $$ = $1; }
@@ -284,6 +291,7 @@ statement:
 
 statements_list:
   statements_list statement { $$ = std::move($1); $$.push_back($2); }
+| statements_list error eof_or_semicol { $$ = std::move($1); auto e = driver.take_error(); $$.push_back(driver.make_ast_node<ast::error_node>(e.m_error_message, e.m_loc)); yyerrok; }
 | %empty                    {  }
 
 statement_block:

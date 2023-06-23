@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) try {
   drv.parse();
 
   const auto &parse_tree = drv.ast();
-  // bool valid = drv.analyze();
+  bool valid = drv.analyze();
 
   if (ast_dump_option->is_set()) {
     paracl::frontend::ast::ast_dump(parse_tree.get_root_ptr(), std::cout);

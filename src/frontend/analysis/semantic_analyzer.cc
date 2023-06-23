@@ -24,11 +24,11 @@ namespace paracl::frontend {
 
 using types::type_builtin;
 
-ast::value_block *semantic_analyzer::try_get_block_ptr(ast::i_ast_node &ref) { // clang-format off
-  return ezvis::visit<ast::value_block *, ast::error_node, ast::value_block>(
+ast::statement_block *semantic_analyzer::try_get_block_ptr(ast::i_ast_node &ref) { // clang-format off
+  return ezvis::visit<ast::statement_block *, ast::error_node, ast::statement_block>(
       ::utils::visitors{
           [this](const ast::error_node &e) { analyze_node(e); return nullptr; },
-          [](ast::value_block &s) { return &s; }},
+          [](ast::statement_block &s) { return &s; }},
       ref
   );
 } // clang-format on
@@ -193,6 +193,20 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref, bool main_block)
     bool is_last = (start == std::prev(finish));
     if (!is_last || in_raw_block()) continue;
 
+    auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
+        ::utils::visitors{
+            [](ast::i_expression &expr) { return expr.type; },
+            [](ast::i_ast_node &) { return type_builtin::type_void; }},
+        st
+    );
+
+    auto is_return = ezvis::visit<bool, ast::return_statement, ast::i_ast_node>(
+        ::utils::visitors{[](ast::return_statement &) { return true; }, [](ast::i_ast_node &) { return false; }}, st
+    );
+
+    bool is_implicit_return = type && (type != types::type_builtin::type_void); // Implicit return case
+    if (!is_implicit_return || is_return || main_block) break;
+
     assert(m_ast && "Nullptr in m_ast");
 
     auto expr_ptr = ezvis::visit_tuple<ast::i_expression *, ast::tuple_expression_nodes>(
@@ -355,8 +369,7 @@ bool semantic_analyzer::analyze_func(ast::function_definition &ref, bool is_recu
     m_return_statements = &block_ref.return_statements;
     analyze_node(block_ref);
 
-    ref.type.m_return_type = block_ref.type;
-    block_ref.type = type_builtin::type_void;
+    /* TODO: Deduce function's return type */
 
     m_return_statements = old_returns;
   }
