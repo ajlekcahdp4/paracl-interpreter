@@ -312,6 +312,7 @@ void semantic_analyzer::analyze_node(ast::function_definition &ref) {
                                             // pretty bad, but such is the language we are compiling.
   analyzer.set_error_queue(*m_error_queue);
   analyzer.set_ast(*m_ast);
+  analyzer.m_scopes = m_scopes;
   auto attr = m_functions->named_functions.lookup(ref.name.value());
   bool is_recursive = (attr ? attr->recursive : false);
   analyzer.analyze_func(ref, is_recursive);

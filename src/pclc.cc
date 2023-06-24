@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) try {
     return k_exit_success;
   }
 
-  // execute_chunk(ch);
+  execute_chunk(ch);
 
 } catch (std::exception &e) {
   fmt::println(stderr, "Error: {}", e.what());
