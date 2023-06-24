@@ -50,7 +50,6 @@ void semantic_analyzer::analyze_node(ast::unary_expression &ref) {
 }
 
 void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
-  next_value_block();
   apply(ref.right());
 
   auto &right_type = ref.right().type;
@@ -117,7 +116,7 @@ types::generic_type semantic_analyzer::deduce_return_type(location loc) {
 
 using expressions_and_base = ::utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
 void semantic_analyzer::analyze_node(ast::value_block &ref) {
-  auto guard = begin_scope(ref.stab);
+  m_scopes.begin_scope(ref.stab);
 
   auto *old_returns = m_return_statements;
   m_return_statements = &ref.return_statements;
@@ -129,7 +128,7 @@ void semantic_analyzer::analyze_node(ast::value_block &ref) {
     apply(stmt);
 
     bool is_last = (std::next(start) == finish);
-    if (!is_last || in_raw_block()) continue;
+    if (!is_last) continue;
     /* There we've already reached the last statement of the value block. It may be an implicit return */
 
     /* If the last expression is of type void, then this's not an implicit return */
@@ -166,7 +165,7 @@ void semantic_analyzer::analyze_node(ast::value_block &ref) {
 }
 
 void semantic_analyzer::analyze_node(ast::statement_block &ref) {
-  auto guard = begin_scope(ref.stab);
+  m_scopes.begin_scope(ref.stab);
   for (auto start = ref.begin(), finish = ref.end(); start != finish; ++start) {
     assert(*start && "Broken statement pointer in a block");
     auto &&stmt = **start;
@@ -175,29 +174,15 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
 }
 
 void semantic_analyzer::analyze_node(ast::if_statement &ref) {
-  auto control_guard = begin_scope(ref.control_block_symtab);
   apply(*ref.cond());
   expect_type_eq(*ref.cond(), type_builtin::type_int.base());
-
-  {
-    auto guard_true = next_raw_block(ref.true_symtab);
-    apply(*ref.true_block());
-    guard_true.release();
-  }
-
-  if (ref.else_block()) {
-    auto guard_else = next_raw_block(ref.false_symtab);
-    apply(*ref.else_block());
-  }
+  apply(*ref.true_block());
+  if (ref.else_block()) apply(*ref.else_block());
 }
 
 void semantic_analyzer::analyze_node(ast::while_statement &ref) {
-  auto guard = begin_scope(ref.symbol_table);
-
   apply(*ref.cond());
   expect_type_eq(*ref.cond(), type_builtin::type_int);
-
-  next_raw_block();
   apply(*ref.block());
 }
 
@@ -292,7 +277,6 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
 }
 
 bool semantic_analyzer::analyze_main(ast::i_ast_node &ref) {
-  next_value_block();
   auto *block_ptr = try_get_statement_block_ptr(ref);
 
   if (block_ptr) {
@@ -311,11 +295,10 @@ bool semantic_analyzer::analyze_main(ast::i_ast_node &ref) {
 
 bool semantic_analyzer::analyze_func(ast::function_definition &ref, bool is_recursive) {
   m_type_errors_allowed = is_recursive;
-  auto guard = begin_scope(ref.param_stab);
+  m_scopes.begin_scope(ref.param_stab);
   auto *body_ptr = try_get_value_block_ptr(ref.body());
   /* If not Error node */
   if (body_ptr) {
-    next_value_block();
     auto &&body = *body_ptr;
     analyze_node(body);
     ref.type.m_return_type = body.type;
@@ -327,17 +310,10 @@ bool semantic_analyzer::analyze_func(ast::function_definition &ref, bool is_recu
 void semantic_analyzer::analyze_node(ast::function_definition &ref) {
   semantic_analyzer analyzer{*m_functions}; // Yes, yes, a semantic analyzer that recursively creates another sema is
                                             // pretty bad, but such is the language we are compiling.
-
   analyzer.set_error_queue(*m_error_queue);
   analyzer.set_ast(*m_ast);
-
-  auto guard = analyzer.begin_scope(*m_scopes.front()
-  ); // Basically this is the global scope being passed into all nested function scopes. It will get passed down
-     // infinitely down the nested functions as well.
-
   auto attr = m_functions->named_functions.lookup(ref.name.value());
   bool is_recursive = (attr ? attr->recursive : false);
-
   analyzer.analyze_func(ref, is_recursive);
 }
 

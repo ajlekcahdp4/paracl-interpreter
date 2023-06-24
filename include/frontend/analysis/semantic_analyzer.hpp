@@ -47,7 +47,6 @@ private:
 private:
   bool m_type_errors_allowed = false; // Flag used to indicate that a type mismatch is not an error.
   // Set this flag to true when doing a first pass on recurisive functions.
-  bool m_next_raw_block = false;
 
 private:
   void report_error(std::string msg, location loc) {
@@ -85,62 +84,6 @@ private:
   types::generic_type deduce_return_type(location loc);
 
 private:
-  class block_guard {
-  private:
-    semantic_analyzer &m_analyzer;
-    bool m_released = false;
-
-  public:
-    block_guard(semantic_analyzer &analyzer) : m_analyzer{analyzer} {}
-
-    block_guard(const block_guard &) = delete;
-    block_guard(block_guard &&) = delete;
-
-    block_guard &operator=(const block_guard &) = delete;
-    block_guard &operator=(block_guard &&) = delete;
-
-    ~block_guard() {
-      if (!m_released) m_analyzer.end_scope();
-    }
-
-    void release() {
-      if (m_released) return;
-      m_released = true;
-      m_analyzer.end_scope();
-    }
-  };
-
-  [[nodiscard]] block_guard begin_scope(symtab &stab) {
-    m_scopes.begin_scope(stab);
-    m_raw_block_stack.push(m_next_raw_block);
-    return block_guard{*this};
-  }
-
-  void end_scope() {
-    m_scopes.end_scope();
-    m_raw_block_stack.pop();
-    m_next_raw_block = false;
-  }
-
-  bool in_raw_block() const {
-    if (m_raw_block_stack.empty()) return false;
-    return m_raw_block_stack.top();
-  }
-
-  bool in_value_block() const { return !in_raw_block(); }
-  void next_raw_block() { m_next_raw_block = true; }
-  void next_value_block() { m_next_raw_block = false; }
-
-  [[nodiscard]] block_guard next_raw_block(symtab &stab) {
-    next_raw_block();
-    return begin_scope(stab);
-  }
-
-  [[nodiscard]] block_guard next_value_block(symtab &stab) {
-    next_value_block();
-    return begin_scope(stab);
-  }
-
   ast::statement_block *try_get_statement_block_ptr(ast::i_ast_node &);
   ast::value_block *try_get_value_block_ptr(ast::i_ast_node &);
 
