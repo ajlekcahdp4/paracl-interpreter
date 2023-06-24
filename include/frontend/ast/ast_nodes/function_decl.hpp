@@ -30,7 +30,7 @@ public:
   symtab param_stab;
 
 private:
-  statement_block *m_block;
+  i_ast_node *m_block;
 
 private:
   types::type_composite_function make_func_type(const types::generic_type &return_type) {
@@ -51,7 +51,7 @@ public:
   types::type_composite_function type;
 
   function_definition(
-      std::optional<std::string> p_name, statement_block &body, location l, std::vector<variable_expression> vars = {},
+      std::optional<std::string> p_name, i_ast_node &body, location l, std::vector<variable_expression> vars = {},
       types::generic_type return_type = {}
   )
       : i_ast_node{l}, vector{std::move(vars)}, name{p_name}, m_block{&body}, type{make_func_type(return_type)} {}
@@ -66,7 +66,7 @@ public:
   using vector::size;
 
   symtab &param_symtab() { return param_stab; }
-  statement_block &body() const { return *m_block; }
+  i_ast_node &body() const { return *m_block; }
 };
 
 class function_definition_to_ptr_conv final : public i_expression {

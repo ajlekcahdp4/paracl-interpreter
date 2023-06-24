@@ -342,8 +342,8 @@ arglist:
 | %empty                             {  }
 
 function_def:
-  FUNC LPAREN arglist RPAREN statement_block                { $$ = driver.make_ast_node<ast::function_definition>(std::nullopt, *$5, @$, $3);} 
-| FUNC LPAREN arglist RPAREN COL IDENTIFIER statement_block { $$ = driver.make_ast_node<ast::function_definition>($6, *$7, @$, $3); }
+  FUNC LPAREN arglist RPAREN value_block                { $$ = driver.make_ast_node<ast::function_definition>(std::nullopt, *$5, @$, $3);} 
+| FUNC LPAREN arglist RPAREN COL IDENTIFIER value_block { $$ = driver.make_ast_node<ast::function_definition>($6, *$7, @$, $3); }
 
 param_list: 
   param_list COMMA expression { $$ = std::move($1); $$.push_back($3); }
