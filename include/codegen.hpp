@@ -246,9 +246,9 @@ private:
   using to_visit = std::tuple<
       frontend::ast::assignment_statement, frontend::ast::binary_expression, frontend::ast::constant_expression,
       frontend::ast::if_statement, frontend::ast::print_statement, frontend::ast::read_expression,
-      frontend::ast::value_block, frontend::ast::unary_expression, frontend::ast::variable_expression,
-      frontend::ast::while_statement, frontend::ast::function_call, frontend::ast::return_statement,
-      frontend::ast::function_definition_to_ptr_conv>;
+      frontend::ast::value_block, frontend::ast::statement_block, frontend::ast::unary_expression,
+      frontend::ast::variable_expression, frontend::ast::while_statement, frontend::ast::function_call,
+      frontend::ast::return_statement, frontend::ast::function_definition_to_ptr_conv>;
 
 public:
   EZVIS_VISIT_CT(to_visit);
@@ -262,7 +262,7 @@ public:
   void generate(const frontend::ast::print_statement &);
   void generate(const frontend::ast::read_expression &);
   void generate(const frontend::ast::statement_block &, bool global_scope = false);
-  void generate(const frontend::ast::value_block &);
+  void generate(const frontend::ast::value_block &, bool global_scope = false);
   void generate(const frontend::ast::unary_expression &);
   void generate(const frontend::ast::variable_expression &);
   void generate(const frontend::ast::while_statement &);
@@ -434,14 +434,83 @@ void codegen_visitor::generate(const ast::value_block &ref, bool global_scope) {
   }
 }
 
+void codegen_visitor::generate(const ast::statement_block &ref, bool global_scope) {
+  bool should_return = false;
+
+  unsigned ret_addr_index = 0;
+  unsigned prev_stack_size = m_prev_stack_size;
+
+  if (should_return) {
+    const auto const_index = current_constant_index();
+    m_return_address_constants.push_back({const_index, 0}); // Dummy address
+    ret_addr_index = m_return_address_constants.size() - 1;
+
+    m_symtab_stack.begin_scope(); // scope to isolate IP and SP
+    emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, const_index});
+    emit_with_increment(vm_instruction_set::setup_call_desc);
+
+    m_prev_stack_size = m_symtab_stack.size();
+  }
+
+  begin_scope(ref.stab);
+
+  if (ref.size()) {
+    for (auto st_ptr : ref) {
+      assert(st_ptr && "Broken statement pointer");
+      using frontend::ast::ast_expression_types;
+      auto &st = *st_ptr;
+
+      const auto node_type = frontend::ast::identify_node(st);
+      const auto is_expression =
+          std::find(ast_expression_types.begin(), ast_expression_types.end(), node_type) != ast_expression_types.end();
+
+      bool is_assignment = (node_type == frontend::ast::ast_node_type::E_ASSIGNMENT_STATEMENT);
+      bool is_return = (node_type == frontend::ast::ast_node_type::E_RETURN_STATEMENT);
+      bool pop_unused_result = is_expression && !is_return;
+
+      using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
+      auto type = ezvis::visit_tuple<frontend::types::generic_type, expressions_and_base>(
+          ::utils::visitors{
+              [](ast::i_expression &expr) { return expr.type; },
+              [](ast::i_ast_node &) { return frontend::types::type_builtin::type_void; }},
+          st
+      );
+
+      if (is_assignment && pop_unused_result) {
+        set_currently_statement();
+      } else {
+        reset_currently_statement();
+      }
+
+      if (node_type != ast::ast_node_type::E_FUNCTION_DEFINITION) {
+        apply(st);
+      }
+
+      if ((!is_assignment) && (pop_unused_result) && (type != frontend::types::type_builtin::type_void)) {
+        emit_pop();
+      }
+    }
+  }
+
+  if (global_scope) m_global_scope = m_symtab_stack.front();
+  end_scope();
+
+  if (should_return) {
+    m_return_address_constants.at(ret_addr_index).m_address = m_builder.current_loc();
+    m_prev_stack_size = prev_stack_size;
+    m_symtab_stack.end_scope(); // end scope for IP and SP
+    emit_with_increment(vm_instruction_set::store_r0_desc);
+  }
+}
+
 void codegen_visitor::visit_if_no_else(const ast::if_statement &ref) {
   reset_currently_statement();
-  apply(ref.cond());
+  apply(*ref.cond());
 
   auto index_jmp_to_false_block = emit_with_decrement(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
 
   set_currently_statement();
-  apply(ref.true_block());
+  apply(*ref.true_block());
 
   auto jump_to_index = m_builder.current_loc();
   auto &to_relocate = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_false_block);
@@ -451,12 +520,12 @@ void codegen_visitor::visit_if_no_else(const ast::if_statement &ref) {
 
 void codegen_visitor::visit_if_with_else(const ast::if_statement &ref) {
   reset_currently_statement();
-  apply(ref.cond());
+  apply(*ref.cond());
 
   auto index_jmp_to_false_block = emit_with_decrement(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
 
   set_currently_statement();
-  apply(ref.true_block());
+  apply(*ref.true_block());
   auto index_jmp_to_after_true_block = emit(encoded_instruction{vm_instruction_set::jmp_desc, 0});
 
   auto &to_relocate_else_jump = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_false_block);
@@ -486,12 +555,12 @@ void codegen_visitor::generate(const ast::while_statement &ref) {
 
   auto while_location_start = m_builder.current_loc();
   reset_currently_statement();
-  apply(ref.cond());
+  apply(*ref.cond());
 
   auto index_jmp_to_after_loop = emit_with_decrement(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
   set_currently_statement();
 
-  apply(ref.block());
+  apply(*ref.block());
   emit(encoded_instruction{vm_instruction_set::jmp_desc, while_location_start});
   auto &to_relocate_after_loop_jump = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_after_loop);
   std::get<0>(to_relocate_after_loop_jump.m_attr) = m_builder.current_loc();
@@ -632,7 +701,7 @@ void codegen_visitor::generate_all(
   m_functions = &functions;
 
   if (ast.get_root_ptr()) { // clang-format off
-    ezvis::visit<void, frontend::ast::value_block>(
+    ezvis::visit<void, frontend::ast::statement_block>(
       [this](auto &st) { generate(st, true);  }, 
       *ast.get_root_ptr()
     ); // clang-format on

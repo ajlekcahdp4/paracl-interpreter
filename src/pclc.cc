@@ -11,7 +11,7 @@
 #include "frontend/dumper.hpp"
 #include "frontend/frontend_driver.hpp"
 
-// #include "codegen.hpp"
+#include "codegen.hpp"
 #include "common.hpp"
 
 #include <concepts>
@@ -60,26 +60,26 @@ int main(int argc, char *argv[]) try {
     return k_exit_success;
   }
 
-  // if (!valid) {
-  //   return k_exit_failure;
-  // }
+  if (!valid) {
+    return k_exit_failure;
+  }
 
-  // paracl::codegen::codegen_visitor generator;
-  // generator.generate_all(drv.ast(), drv.functions());
-  // auto ch = generator.to_chunk();
+  paracl::codegen::codegen_visitor generator;
+  generator.generate_all(drv.ast(), drv.functions());
+  auto ch = generator.to_chunk();
 
-  // if (dump_binary) {
-  //   disassemble_chunk(ch);
-  //   return k_exit_success;
-  // }
+  if (dump_binary) {
+    disassemble_chunk(ch);
+    return k_exit_success;
+  }
 
-  // if (output_file_option->is_set()) {
-  //   std::string output_file_name = output_file_option->value();
-  //   std::ofstream output_file;
-  //   utils::try_open_file(output_file, output_file_name, std::ios::binary);
-  //   write_chunk(output_file, ch);
-  //   return k_exit_success;
-  // }
+  if (output_file_option->is_set()) {
+    std::string output_file_name = output_file_option->value();
+    std::ofstream output_file;
+    utils::try_open_file(output_file, output_file_name, std::ios::binary);
+    write_chunk(output_file, ch);
+    return k_exit_success;
+  }
 
   // execute_chunk(ch);
 
