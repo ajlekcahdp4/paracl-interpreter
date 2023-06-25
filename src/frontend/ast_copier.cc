@@ -52,7 +52,7 @@ unary_expression &ast_copier::copy(const unary_expression &ref) {
 
 while_statement &ast_copier::copy(const while_statement &ref) {
   return m_container.make_node<while_statement>(
-      static_cast<i_expression &>(apply(ref.cond())), apply(ref.block()), ref.loc()
+      static_cast<i_expression &>(apply(*ref.cond())), static_cast<statement_block &>(apply(*ref.block())), ref.loc()
   );
 }
 
@@ -62,7 +62,7 @@ function_definition &ast_copier::copy(const function_definition &ref) {
 }
 
 function_definition_to_ptr_conv &ast_copier::copy(const function_definition_to_ptr_conv &ref) {
-  return m_container.make_node<function_definition_to_ptr_conv>(ref.loc(), copy(ref.definition()));
+  return m_container.make_node<function_definition_to_ptr_conv>(copy(ref.definition()), ref.loc());
 }
 
 return_statement &ast_copier::copy(const return_statement &ref) {
@@ -83,11 +83,21 @@ assignment_statement &ast_copier::copy(const assignment_statement &ref) {
 if_statement &ast_copier::copy(const if_statement &ref) {
   if (ref.else_block()) {
     return m_container.make_node<if_statement>(
-        copy_expr(ref.cond()), apply(ref.true_block()), apply(*ref.else_block()), ref.loc()
+        copy_expr(*ref.cond()), copy(*ref.true_block()), copy(*ref.else_block()), ref.loc()
     );
   }
 
-  return m_container.make_node<if_statement>(copy_expr(ref.cond()), apply(ref.true_block()), ref.loc());
+  return m_container.make_node<if_statement>(copy_expr(*ref.cond()), copy(*ref.true_block()), ref.loc());
+}
+
+value_block &ast_copier::copy(const value_block &ref) {
+  auto &copy = m_container.make_node<value_block>();
+
+  for (const auto &v : ref) {
+    copy.append_statement(apply(*v));
+  }
+
+  return copy;
 }
 
 statement_block &ast_copier::copy(const statement_block &ref) {

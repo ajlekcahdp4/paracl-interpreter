@@ -49,7 +49,7 @@ public:
     auto &root = *ast.get_root_ptr();
     const auto node_type = frontend::ast::identify_node(root);
     if (node_type != frontend::ast::ast_node_type::E_ERROR_NODE) {
-      auto &block = static_cast<ast::statement_block &>(root);
+      auto &block = static_cast<ast::value_block &>(root);
       for (auto *expr : block)
         explore(*expr);
     }

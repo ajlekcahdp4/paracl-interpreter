@@ -45,9 +45,16 @@ public:
   }
 
   void explore(const ast::if_statement &ref) {
-    apply(ref.cond());
-    apply(ref.true_block());
+    apply(*ref.cond());
+    apply(*ref.true_block());
     if (ref.else_block() != nullptr) apply(*ref.else_block());
+  }
+
+  void explore(const ast::value_block &ref) {
+    for (auto &statement : ref) {
+      assert(statement);
+      apply(*statement);
+    }
   }
 
   void explore(const ast::statement_block &ref) {
@@ -58,8 +65,8 @@ public:
   }
 
   void explore(const ast::while_statement &ref) {
-    apply(ref.cond());
-    apply(ref.block());
+    apply(*ref.cond());
+    apply(*ref.block());
   }
 
   void explore(const ast::assignment_statement &ref) { apply(ref.right()); }

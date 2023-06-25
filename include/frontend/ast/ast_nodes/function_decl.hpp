@@ -75,7 +75,7 @@ class function_definition_to_ptr_conv final : public i_expression {
   EZVIS_VISITABLE();
 
 public:
-  function_definition_to_ptr_conv(location l, function_definition &def) : i_expression{l}, m_definition{&def} {}
+  function_definition_to_ptr_conv(function_definition &def, location l) : i_expression{l}, m_definition{&def} {}
   function_definition &definition() const { return *m_definition; }
 };
 

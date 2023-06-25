@@ -47,6 +47,7 @@ public:
   void dump_node(const binary_expression &ref);
   void dump_node(const if_statement &ref);
   void dump_node(const print_statement &ref);
+  void dump_node(const value_block &ref);
   void dump_node(const statement_block &ref);
   void dump_node(const unary_expression &ref);
   void dump_node(const while_statement &ref);
@@ -128,11 +129,11 @@ void ast_dumper::dump_node(const binary_expression &ref) {
 void ast_dumper::dump_node(const if_statement &ref) {
   print_declare_node(ref, "<if>");
 
-  print_bind_node(ref, ref.cond(), "<condition>");
-  print_bind_node(ref, ref.true_block(), "<then>");
+  print_bind_node(ref, *ref.cond(), "<condition>");
+  print_bind_node(ref, *ref.true_block(), "<then>");
 
-  add_next(ref.cond());
-  add_next(ref.true_block());
+  add_next(*ref.cond());
+  add_next(*ref.true_block());
 
   if (ref.else_block()) {
     print_bind_node(ref, *ref.else_block(), "<else>");
@@ -146,8 +147,16 @@ void ast_dumper::dump_node(const print_statement &ref) {
   add_next(ref.expr());
 }
 
+void ast_dumper::dump_node(const value_block &ref) {
+  print_declare_node(ref, fmt::format("<value_block>\n<type>: {}", ref.type_str()));
+  for (const auto &v : ref) {
+    print_bind_node(ref, *v);
+    add_next(*v);
+  }
+}
+
 void ast_dumper::dump_node(const statement_block &ref) {
-  print_declare_node(ref, fmt::format("<statement_block>\n<type>: {}", ref.type_str()));
+  print_declare_node(ref, "<statement_block>");
   for (const auto &v : ref) {
     print_bind_node(ref, *v);
     add_next(*v);
@@ -163,11 +172,11 @@ void ast_dumper::dump_node(const unary_expression &ref) {
 void ast_dumper::dump_node(const while_statement &ref) {
   print_declare_node(ref, "<while>");
 
-  print_bind_node(ref, ref.cond(), "<condition>");
-  print_bind_node(ref, ref.block(), "<body>");
+  print_bind_node(ref, *ref.cond(), "<condition>");
+  print_bind_node(ref, *ref.block(), "<body>");
 
-  add_next(ref.cond());
-  add_next(ref.block());
+  add_next(*ref.cond());
+  add_next(*ref.block());
 }
 
 void ast_dumper::dump_node(const function_definition &ref) {
