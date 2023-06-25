@@ -103,7 +103,7 @@ types::generic_type semantic_analyzer::deduce_return_type(location loc) {
   if (m_return_statements->empty()) return types::type_builtin::type_void;
 
   auto types_not_equal = [](ast::return_statement *first, ast::return_statement *second) {
-    return (first->expr().type != second->expr().type);
+    return first->expr().type && second->expr().type && (first->expr().type != second->expr().type);
   };
 
   if (std::adjacent_find(m_return_statements->begin(), m_return_statements->end(), types_not_equal) !=
@@ -111,7 +111,16 @@ types::generic_type semantic_analyzer::deduce_return_type(location loc) {
     on_error(loc);
     return types::type_builtin::type_void;
   }
-  return m_return_statements->front()->expr().type;
+
+  auto it = std::find_if(m_return_statements->begin(), m_return_statements->end(), [](ast::return_statement *ret) {
+    return ret->expr().type;
+  });
+  if (it == m_return_statements->end()) {
+    on_error(loc);
+    return types::type_builtin::type_void;
+  }
+  auto &&found = *it;
+  return found->expr().type;
 }
 
 using expressions_and_base = ::utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
@@ -170,6 +179,36 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
     assert(*start && "Broken statement pointer in a block");
     auto &&stmt = **start;
     apply(stmt);
+
+    bool is_last = (std::next(start) == finish);
+    if (!is_last || !m_return_statements) continue;
+    /* There we've already reached the last statement of the value block. It may be an implicit return */
+
+    /* If the last expression is of type void, then this's not an implicit return */
+    auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
+        ::utils::visitors{
+            [](ast::i_expression &expr) { return expr.type; },
+            [](ast::i_ast_node &) { return type_builtin::type_void; }},
+        stmt
+    );
+    bool is_implicit_return = (!type || type != types::type_builtin::type_void);
+
+    /* It also can be an explicit return */
+    bool is_return = ezvis::visit<bool, ast::return_statement, ast::i_ast_node>(
+        ::utils::visitors{[](ast::return_statement &) { return true; }, [](ast::i_ast_node &) { return false; }}, stmt
+    );
+
+    if (!is_implicit_return || is_return) break;
+
+    /* There stmt is definitely an implicit return */
+    auto expr_ptr = ezvis::visit_tuple<ast::i_expression *, ast::tuple_expression_nodes>(
+        [](ast::i_expression &expr) { return &expr; }, stmt
+    );
+    auto &&ret = m_ast->make_node<ast::return_statement>(expr_ptr, expr_ptr->loc());
+    m_return_statements->push_back(&ret);
+
+    /* replace expression node in AST with explicit return statement */
+    *start = &ret;
   }
 }
 

@@ -1,0 +1,9 @@
+fib = func (n) : f {
+        if (n == 0)
+                0;
+        else if (n <= 2)
+                1;
+        else
+                f(n - 2) + f(n - 1);
+}
+print fib(?);
