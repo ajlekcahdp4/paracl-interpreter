@@ -1,5 +1,5 @@
 a = { 1; } + { 2; };
 
 print a;
-print ({ 1; 5; } + { a = 2; });
+print ({ 1; 5; } + { a = 2; }); // the same as 'basic.pcl'. prints 2.
 print a;

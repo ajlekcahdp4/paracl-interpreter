@@ -1,0 +1,4 @@
+a = {{1;} + 1;};
+// {1;} act there as a usual statement block
+// outer block returns last statement '+1;'
+print a;
