@@ -70,6 +70,8 @@ find_package(BISON 3.8 REQUIRED)
 find_package(fmt REQUIRED)
 find_package(Boost REQUIRED COMPONENTS program_options)
 
+add_subdirectory(ezvis)
+
 # Compiler source
 set(BYTECODE_VM_SOURCES src/bytecode_vm/decl_vm.cc)
 

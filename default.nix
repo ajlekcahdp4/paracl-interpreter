@@ -18,6 +18,7 @@ stdenv.mkDerivation {
       ./include
       ./test
       ./scripts
+      ./ezvis
     ];
   };
   nativeBuildInputs = with pkgs; [

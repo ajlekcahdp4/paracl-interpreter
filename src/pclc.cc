@@ -29,11 +29,12 @@ namespace po = boost::program_options;
 int main(int argc, char *argv[]) try {
   auto desc = po::options_description{"Allowed options"};
   auto ast_dump_option = false;
+  std::string output_file_option;
 
   desc.add_options()("help", "produce help message");
   desc.add_options()("ast-dump,a", po::value(&ast_dump_option), "Dump AST");
 
-  desc.add_options()("output,o", po::value(&n)->default_value(false), "Otput file for compiled program");
+  desc.add_options()("output,o", po::value(&output_file_option), "Otput file for compiled program");
 
   po::positional_options_description pos_desc;
   pos_desc.add("input-file", -1);
@@ -68,7 +69,7 @@ int main(int argc, char *argv[]) try {
   const auto &parse_tree = drv.ast();
   bool valid = drv.analyze();
 
-  if (ast_dump_option->is_set()) {
+  if (ast_dump_option) {
     paracl::frontend::ast::ast_dump(parse_tree.get_root_ptr(), std::cout);
     return k_exit_success;
   }
@@ -81,17 +82,11 @@ int main(int argc, char *argv[]) try {
   generator.generate_all(drv.ast(), drv.functions());
   auto ch = generator.to_chunk();
 
-  if (dump_binary) {
-    disassemble_chunk(ch);
-    return k_exit_success;
-  }
-
-  if (output_file_option->is_set()) {
-    std::string output_file_name = output_file_option->value();
+  if (output_file_option.empty()) {
     std::ofstream output_file;
-    utils::try_open_file(output_file, output_file_name, std::ios::binary);
+    utils::try_open_file(output_file, output_file_option, std::ios::binary);
     write_chunk(output_file, ch);
-    return k_exit_success;
+    return EXIT_SUCCESS;
   }
 
   execute_chunk(ch);
