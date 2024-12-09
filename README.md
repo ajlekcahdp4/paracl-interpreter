@@ -58,6 +58,7 @@ func(x) : rfib1 {
 ```
 
 This is equivalent:
+
 ```
 fib = func(int x) : rfib2 {
   int res = 0;
@@ -67,7 +68,8 @@ fib = func(int x) : rfib2 {
 }
 ```
 
-Here ```fib``` is a function pointer which can be reassigned or passed into other functions:
+Here `fib` is a function pointer which can be reassigned or passed into other functions:
+
 ```
 print fib(10); // prints 55
 
@@ -83,6 +85,7 @@ print fib_printer(fib, 10); // prints 55
 This interpreter relies on GNU Bison and Flex. You have to have them installed to build this project.
 
 ### Linux
+
 ```sh
 cmake -S ./ -B build/ -DCMAKE_BUILD_TYPE=Release
 cd build/
@@ -100,6 +103,7 @@ came --build build
 ```
 
 ## 2. ParaCL Compiler (pclc)
+
 The _pclc_ binary is the brain of the whole interpreter. It compiles the source file into an executable for the ParaCL VM and executes it. It's possible to skip the execution and dump the disassembled binary or write it to file.
 There is a standalone VM executable _pclvm_ which is used to run the bytecode file.
 

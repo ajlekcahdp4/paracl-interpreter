@@ -403,7 +403,8 @@ void codegen_visitor::generate(const ast::value_block &ref, bool global_scope) {
       auto type = ezvis::visit_tuple<frontend::types::generic_type, expressions_and_base>(
           ::utils::visitors{
               [](ast::i_expression &expr) { return expr.type; },
-              [](ast::i_ast_node &) { return frontend::types::type_builtin::type_void; }},
+              [](ast::i_ast_node &) { return frontend::types::type_builtin::type_void; }
+          },
           st
       );
 
@@ -472,7 +473,8 @@ void codegen_visitor::generate(const ast::statement_block &ref, bool global_scop
       auto type = ezvis::visit_tuple<frontend::types::generic_type, expressions_and_base>(
           ::utils::visitors{
               [](ast::i_expression &expr) { return expr.type; },
-              [](ast::i_ast_node &) { return frontend::types::type_builtin::type_void; }},
+              [](ast::i_ast_node &) { return frontend::types::type_builtin::type_void; }
+          },
           st
       );
 

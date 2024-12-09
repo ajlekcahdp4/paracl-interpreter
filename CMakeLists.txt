@@ -62,19 +62,13 @@ FetchContent_Declare(
   GIT_REPOSITORY "https://github.com/serjzimmerman/ezvis.git"
   GIT_TAG origin/main)
 
-FetchContent_Declare(
-  fmt
-  GIT_REPOSITORY "https://github.com/fmtlib/fmt.git"
-  GIT_TAG origin/master)
-
-FetchContent_MakeAvailable(graphs ezvis fmt)
+FetchContent_MakeAvailable(graphs)
 
 # Tools
 find_package(FLEX REQUIRED)
-find_package(BISON 3.5 REQUIRED)
-
-# External libraries
-add_subdirectory(3rd-party/popl EXCLUDE_FROM_ALL)
+find_package(BISON 3.8 REQUIRED)
+find_package(fmt REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options)
 
 # Compiler source
 set(BYTECODE_VM_SOURCES src/bytecode_vm/decl_vm.cc)
@@ -84,12 +78,12 @@ target_include_directories(bytecode_vm PUBLIC include)
 target_compile_features(bytecode_vm PUBLIC cxx_std_20)
 target_link_libraries(bytecode_vm PUBLIC fmt::fmt)
 
-add_executable(pcldis src/pcldis.cc)
-target_link_libraries(pcldis popl bytecode_vm)
-target_enable_linter(pcldis)
+# add_executable(pcldis src/pcldis.cc)
+# target_link_libraries(pcldis Boost::program_options bytecode_vm)
+# target_enable_linter(pcldis)
 
 add_executable(pclvm src/pclvm.cc)
-target_link_libraries(pclvm popl bytecode_vm)
+target_link_libraries(pclvm Boost::program_options bytecode_vm)
 target_enable_linter(pclvm)
 
 bison_target(
@@ -116,7 +110,7 @@ target_link_libraries(paracl_compiler PUBLIC ezvis graphs fmt::fmt)
 target_enable_linter(paracl_compiler)
 
 add_executable(pclc src/pclc.cc)
-target_link_libraries(pclc PRIVATE ezvis popl paracl_compiler bytecode_vm)
+target_link_libraries(pclc PRIVATE ezvis Boost::program_options paracl_compiler bytecode_vm)
 target_enable_linter(pclc)
 
 set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)

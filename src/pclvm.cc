@@ -10,29 +10,39 @@
 
 #include "common.hpp"
 
+#include <boost/program_options.hpp>
+
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <ostream>
 #include <string>
 
+namespace po = boost::program_options;
+
 int main(int argc, char *argv[]) try {
-  std::string input_file_name;
+  auto desc = po::options_description{"Allowed options"};
 
-  popl::OptionParser op("Allowed options");
-  auto help_option = op.add<popl::Switch>("h", "help", "Print this help message");
-  auto input_file_option = op.add<popl::Implicit<std::string>>("i", "input", "Specify input file", "");
-  op.parse(argc, argv);
+  desc.add_options()("help", "produce help message");
 
-  if (help_option->is_set()) {
-    fmt::println("{}", op.help());
-    return k_exit_success;
+  po::positional_options_description pos_desc;
+  pos_desc.add("input-file", -1);
+
+  auto vm = po::variables_map{};
+  po::store(po::command_line_parser(argc, argv).options(desc).positional(pos_desc).run(), vm);
+
+  std::string input_file_name = vm["input-file"].as<std::string>();
+
+  if (vm.count("help")) {
+    std::cout << desc << "\n";
+    return EXIT_SUCCESS;
   }
 
-  if (auto res = read_input_file(*input_file_option, op); res.has_value()) {
-    input_file_name = *res;
-  } else {
-    return k_exit_failure;
+  po::notify(vm);
+
+  if (input_file_name.empty()) {
+    fmt::println(stderr, "Input file must be specified");
+    return EXIT_FAILURE;
   }
 
   std::ifstream input_file;

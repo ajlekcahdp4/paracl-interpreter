@@ -143,8 +143,8 @@ void semantic_analyzer::analyze_node(ast::value_block &ref) {
     /* If the last expression is of type void, then this's not an implicit return */
     auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
         ::utils::visitors{
-            [](ast::i_expression &expr) { return expr.type; },
-            [](ast::i_ast_node &) { return type_builtin::type_void; }},
+            [](ast::i_expression &expr) { return expr.type; }, [](ast::i_ast_node &) { return type_builtin::type_void; }
+        },
         stmt
     );
     auto is_implicit_return = (type != types::type_builtin::type_void);
@@ -187,8 +187,8 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
     /* If the last expression is of type void, then this's not an implicit return */
     auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
         ::utils::visitors{
-            [](ast::i_expression &expr) { return expr.type; },
-            [](ast::i_ast_node &) { return type_builtin::type_void; }},
+            [](ast::i_expression &expr) { return expr.type; }, [](ast::i_ast_node &) { return type_builtin::type_void; }
+        },
         stmt
     );
     bool is_implicit_return = (!type || type != types::type_builtin::type_void);

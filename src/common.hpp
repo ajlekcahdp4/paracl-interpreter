@@ -21,8 +21,6 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 
-#include <popl/popl.hpp>
-
 #include <memory>
 #include <optional>
 #include <string>
@@ -47,14 +45,6 @@ constexpr int k_exit_failure = 1;
   auto vm = bytecode_vm::create_paracl_vm();
   vm.set_program_code(std::move(ch));
   vm.execute();
-}
-
-[[maybe_unused]] std::optional<std::string>
-read_input_file(const popl::Implicit<std::string> &option, const popl::OptionParser &op) {
-  if (option.is_set()) return option.value();                                // Case 1. Option set
-  if (op.non_option_args().size() == 1) return op.non_option_args().front(); // Case 2. Unnamed args
-  fmt::println(stderr, "Input file not specified");                          // Case 3. Error
-  return std::nullopt;
 }
 
 } // namespace
