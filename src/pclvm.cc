@@ -22,16 +22,15 @@ namespace po = boost::program_options;
 
 int main(int argc, char *argv[]) try {
   auto desc = po::options_description{"Allowed options"};
-
+  std::string input_file_name;
   desc.add_options()("help", "produce help message");
+  desc.add_options()("input-file", po::value(&input_file_name)->default_value("a.out"), "Input file name");
 
   po::positional_options_description pos_desc;
   pos_desc.add("input-file", -1);
 
   auto vm = po::variables_map{};
   po::store(po::command_line_parser(argc, argv).options(desc).positional(pos_desc).run(), vm);
-
-  std::string input_file_name = vm["input-file"].as<std::string>();
 
   if (vm.count("help")) {
     std::cout << desc << "\n";

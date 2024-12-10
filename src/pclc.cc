@@ -30,11 +30,15 @@ int main(int argc, char *argv[]) try {
   auto desc = po::options_description{"Allowed options"};
   auto ast_dump_option = false;
   std::string output_file_option;
+  std::string input_file_name;
 
-  desc.add_options()("help", "produce help message");
-  desc.add_options()("ast-dump,a", po::value(&ast_dump_option), "Dump AST");
+  desc.add_options()("help", "Produce help message");
+  desc.add_options()("ast-dump,a", po::value(&ast_dump_option)->default_value(false), "Dump AST");
+  desc.add_options()("input-file", po::value(&input_file_name), "Input file name");
 
-  desc.add_options()("output,o", po::value(&output_file_option), "Otput file for compiled program");
+  desc.add_options()(
+      "output,o", po::value(&output_file_option)->default_value("a.out"), "Otput file for compiled program"
+  );
 
   po::positional_options_description pos_desc;
   pos_desc.add("input-file", -1);
@@ -42,18 +46,9 @@ int main(int argc, char *argv[]) try {
   auto vm = po::variables_map{};
   po::store(po::command_line_parser(argc, argv).options(desc).positional(pos_desc).run(), vm);
 
-  std::string input_file_name = vm["input-file"].as<std::string>();
-
   if (vm.count("help")) {
     std::cout << desc << "\n";
     return EXIT_SUCCESS;
-  }
-
-  po::notify(vm);
-
-  if (vm.count("help")) {
-    std::cout << desc << "\n";
-    return EXIT_FAILURE;
   }
 
   po::notify(vm);
