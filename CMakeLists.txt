@@ -148,6 +148,13 @@ add_llvm_based_tool(pclc
   LLVM_COMPONENTS
   executionengine
   interpreter
+  target
+  AllTargetsInfos
+  AllTargetsDescs
+  AllTargetsDisassemblers
+  AllTargetsAsmParsers
+  AllTargetsCodeGens
+  support
   SOURCES 
   src/pclc.cc
 )

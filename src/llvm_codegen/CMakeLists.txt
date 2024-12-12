@@ -1,5 +1,4 @@
 add_llvm_based_lib(paracl-llvm
-  SHARED
   LLVM_COMPONENTS
   target
   core

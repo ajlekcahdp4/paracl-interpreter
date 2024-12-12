@@ -29,6 +29,6 @@ stdenv.mkDerivation {
   ];
   buildInputs = with pkgs; [
     boost
-    llvm_18
+    llvm_19
   ];
 }

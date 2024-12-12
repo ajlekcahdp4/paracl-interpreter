@@ -19,6 +19,9 @@
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/ExecutionEngine/Interpreter.h>
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/Support/InitLLVM.h>
+
 
 #include <boost/program_options.hpp>
 
@@ -106,11 +109,17 @@ int main(int argc, char *argv[]) try {
   }
 
   if (out_type == output_type::LLVM) {
+    llvm::InitializeNativeTarget();
+    llvm::InitializeNativeTargetAsmPrinter();
     llvm::LLVMContext ctx;
     auto m = paracl::llvm_codegen::emit_llvm(drv, ctx);
     if (vm.count("emit-llvm")) m->dump();
     auto &module_ref = *m;
-    auto *exec = llvm::EngineBuilder(std::move(m)).create();
+    std::string err;
+    auto *exec = llvm::EngineBuilder(std::move(m)).setErrorStr(&err).create();
+    if (!err.empty())
+      throw std::runtime_error(err);
+    assert(exec);
     std::unordered_map<std::string, void *> external_functions;
     external_functions.try_emplace("__print", reinterpret_cast<void *>(paracl::llvm_codegen::intrinsics::print));
     external_functions.try_emplace("__read", reinterpret_cast<void *>(paracl::llvm_codegen::intrinsics::read));
@@ -129,7 +138,6 @@ int main(int argc, char *argv[]) try {
     });
 
     exec->setVerifyModules(true);
-    exec->DisableLazyCompilation(false);
     exec->finalizeObject();
     exec->runFunction(module_ref.getFunction("main"), {});
 
