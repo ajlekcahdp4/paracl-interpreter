@@ -23,22 +23,14 @@
         "x86_64-linux"
         "aarch64-linux"
       ];
-      flake.overlays.default = _final: prev: {
-        llvmPackages_19.libllvm = prev.llvmPackages_19.libllvm.overrideAttrs {
-          patches = prev.patches ++ [ ./overlays/llvm-install-target-headers.patch ];
-        };
-      };
       perSystem =
         { pkgs, ... }:
-        let
-          llvmPkgs = pkgs.llvmPackages_19;
-        in
         rec {
           imports = [ ./nix/treefmt.nix ];
           packages = rec {
-            paracl = pkgs.callPackage ./. { inherit (llvmPkgs) stdenv; };
+            paracl = pkgs.callPackage ./. { stdenv = pkgs.gcc14Stdenv; };
           };
-          devShells.default = pkgs.mkShell {
+          devShells.default = (pkgs.mkShell.override { stdenv = pkgs.gcc14Stdenv; }) {
             nativeBuildInputs =
               packages.paracl.nativeBuildInputs
               ++ (with pkgs; [
@@ -46,6 +38,8 @@
                 filecheck
                 act
                 gdb
+                lldb
+                libffi
                 valgrind
                 just
               ]);

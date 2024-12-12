@@ -1,6 +1,41 @@
 cmake_minimum_required(VERSION 3.14)
 project(paracl)
 
+include(cmake/functions.cmake)
+
+find_package(LLVM REQUIRED)
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+
+function(add_llvm_based_lib target_name)
+  set(options_args SHARED)
+  set(multi_value_args LLVM_COMPONENTS SOURCES)
+  cmake_parse_arguments(ARGUMENTS "${options_args}" "" "${multi_value_args}"
+                        ${ARGN})
+  if(${ARGUMENTS_SHARED})
+    add_library(${target_name} SHARED ${ARGUMENTS_SOURCES})
+  else()
+    add_library(${target_name} STATIC ${ARGUMENTS_SOURCES})
+  endif()
+  enable_warnings(${target_name})
+  llvm_config(${target_name} ${ARGUMENTS_LLVM_COMPONENTS})
+  # warnings for this project's targets.
+  target_include_directories(${target_name} SYSTEM PUBLIC ${LLVM_INCLUDE_DIRS})
+  target_compile_features(${target_name} PUBLIC cxx_std_23)
+endfunction()
+
+function(add_llvm_based_tool target_name)
+  set(options_args SHARED)
+  set(multi_value_args LLVM_COMPONENTS SOURCES)
+  cmake_parse_arguments(ARGUMENTS "${options_args}" "" "${multi_value_args}"
+                        ${ARGN})
+  add_executable(${target_name} ${ARGUMENTS_SOURCES})
+  enable_warnings(${target_name})
+  llvm_config(${target_name} ${ARGUMENTS_LLVM_COMPONENTS})
+  # warnings for this project's targets.
+  target_include_directories(${target_name} SYSTEM PUBLIC ${LLVM_INCLUDE_DIRS})
+  target_compile_features(${target_name} PUBLIC cxx_std_23)
+endfunction()
+
 option(INSOURCEBUILD OFF)
 
 if((${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR}) AND NOT
@@ -57,12 +92,10 @@ FetchContent_Declare(
   GIT_REPOSITORY "https://github.com/ajlekcahdp4/graphs.git"
   GIT_TAG origin/main)
 
-FetchContent_Declare(
-  ezvis
-  GIT_REPOSITORY "https://github.com/serjzimmerman/ezvis.git"
-  GIT_TAG origin/main)
 
 FetchContent_MakeAvailable(graphs)
+
+set(PARACL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Tools
 find_package(FLEX REQUIRED)
@@ -85,7 +118,7 @@ target_link_libraries(bytecode_vm PUBLIC fmt::fmt)
 # target_enable_linter(pcldis)
 
 add_executable(pclvm src/pclvm.cc)
-target_link_libraries(pclvm Boost::program_options bytecode_vm)
+target_link_libraries(pclvm PRIVATE Boost::program_options bytecode_vm)
 target_enable_linter(pclvm)
 
 bison_target(
@@ -111,9 +144,17 @@ target_include_directories(paracl_compiler PUBLIC include
 target_link_libraries(paracl_compiler PUBLIC ezvis graphs fmt::fmt)
 target_enable_linter(paracl_compiler)
 
-add_executable(pclc src/pclc.cc)
-target_link_libraries(pclc PRIVATE ezvis Boost::program_options paracl_compiler bytecode_vm)
+add_llvm_based_tool(pclc 
+  LLVM_COMPONENTS
+  executionengine
+  interpreter
+  SOURCES 
+  src/pclc.cc
+)
 target_enable_linter(pclc)
+target_link_libraries(pclc PRIVATE ezvis Boost::program_options paracl_compiler bytecode_vm paracl-llvm)
+
+add_subdirectory(src/llvm_codegen)
 
 set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
 find_program(BASH_PROGRAM bash)

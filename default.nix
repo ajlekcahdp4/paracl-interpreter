@@ -27,5 +27,8 @@ stdenv.mkDerivation {
     flex
     fmt
   ];
-  buildInputs = with pkgs; [ boost ];
+  buildInputs = with pkgs; [
+    boost
+    llvm_18
+  ];
 }

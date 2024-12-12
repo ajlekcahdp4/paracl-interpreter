@@ -92,6 +92,7 @@ public:
         m_parsing_driver{std::make_unique<parser_driver>(m_source.filename())} {
     m_parsing_driver->switch_input_stream(m_iss.get());
   }
+  std::string_view get_filename() const { return m_source.get_filename(); }
 
   const ast::ast_container &ast() const & { return m_parsing_driver->ast(); }
   const functions_analytics &functions() const & { return m_functions; }

@@ -146,6 +146,8 @@ public:
         static_cast<const type_builtin &>(rhs).m_builtin_type_tag == m_builtin_type_tag;
   }
 
+  auto get_builtin_type_class() const { return m_builtin_type_tag; }
+
   std::string to_string() const override { return builtin_type_to_string(m_builtin_type_tag); }
   unique_type clone() const override { return std::make_unique<type_builtin>(*this); }
 };
@@ -195,11 +197,13 @@ public:
   generic_type &return_type() & { return m_return_type; }
   const generic_type &return_type() const & { return m_return_type; }
 
+  using vector::begin;
   using vector::cbegin;
   using vector::cend;
   using vector::crbegin;
   using vector::crend;
   using vector::empty;
+  using vector::end;
   using vector::size;
 };
 

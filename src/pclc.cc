@@ -14,15 +14,42 @@
 #include "codegen.hpp"
 #include "common.hpp"
 
+#include "llvm_codegen/codegen.hpp"
+
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/GenericValue.h>
+#include <llvm/ExecutionEngine/Interpreter.h>
+
 #include <boost/program_options.hpp>
 
 #include <concepts>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <ostream>
 #include <stdexcept>
 #include <string>
+
+namespace {
+
+enum class output_type : unsigned {
+  BYTECODE,
+  LLVM,
+};
+
+template <output_type T> static constexpr std::string_view output_type_name = "";
+
+template <> constexpr std::string_view output_type_name<output_type::BYTECODE> = "bytecode";
+template <> constexpr std::string_view output_type_name<output_type::LLVM> = "llvm";
+
+auto derive_output_type(std::string_view type) {
+  if (type == output_type_name<output_type::BYTECODE>) return output_type::BYTECODE;
+  if (type == output_type_name<output_type::LLVM>) return output_type::LLVM;
+  throw std::invalid_argument(fmt::format("Unknown output type: \"{}\"", type));
+}
+
+}; // namespace
 
 namespace po = boost::program_options;
 
@@ -31,15 +58,18 @@ int main(int argc, char *argv[]) try {
   auto ast_dump_option = false;
   std::string output_file_option;
   std::string input_file_name;
+  std::string output_type_str;
 
   desc.add_options()("help", "Produce help message");
+  desc.add_options()("emit-llvm", "Dump LLVM IR");
   desc.add_options()("ast-dump,a", po::value(&ast_dump_option)->default_value(false), "Dump AST");
   desc.add_options()("input-file", po::value(&input_file_name), "Input file name");
-
   desc.add_options()(
-      "output,o", po::value(&output_file_option)->default_value("a.out"), "Otput file for compiled program"
+      "output-type,t", po::value(&output_type_str)->default_value(output_type_name<output_type::BYTECODE>.data()),
+      "Output type"
   );
 
+  desc.add_options()("output,o", po::value(&output_file_option), "Otput file for compiled program");
   po::positional_options_description pos_desc;
   pos_desc.add("input-file", -1);
 
@@ -64,6 +94,8 @@ int main(int argc, char *argv[]) try {
   const auto &parse_tree = drv.ast();
   bool valid = drv.analyze();
 
+  auto out_type = derive_output_type(output_type_str);
+
   if (ast_dump_option) {
     paracl::frontend::ast::ast_dump(parse_tree.get_root_ptr(), std::cout);
     return k_exit_success;
@@ -73,11 +105,41 @@ int main(int argc, char *argv[]) try {
     return k_exit_failure;
   }
 
-  paracl::codegen::codegen_visitor generator;
-  generator.generate_all(drv.ast(), drv.functions());
-  auto ch = generator.to_chunk();
+  if (out_type == output_type::LLVM) {
+    llvm::LLVMContext ctx;
+    auto m = paracl::llvm_codegen::emit_llvm(drv, ctx);
+    if (vm.count("emit-llvm")) m->dump();
+    auto &module_ref = *m;
+    auto *exec = llvm::EngineBuilder(std::move(m)).create();
+    std::unordered_map<std::string, void *> external_functions;
+    external_functions.try_emplace("__print", reinterpret_cast<void *>(paracl::llvm_codegen::intrinsics::print));
+    external_functions.try_emplace("__read", reinterpret_cast<void *>(paracl::llvm_codegen::intrinsics::read));
 
-  if (output_file_option.empty()) {
+    exec->InstallLazyFunctionCreator([&](const std::string &name) -> void * {
+      fmt::println("HERE");
+      std::cout << "DFDFG" << std::endl;
+      auto it = external_functions.find(name);
+      if (it == external_functions.end()) {
+        fmt::println("Unknown function \"{}\"", name);
+        abort();
+        return nullptr;
+      }
+      fmt::println("FOUND function \"{}\"", name);
+      return it->second;
+    });
+
+    exec->setVerifyModules(true);
+    exec->DisableLazyCompilation(false);
+    exec->finalizeObject();
+    exec->runFunction(module_ref.getFunction("main"), {});
+
+    std::cerr << exec->getErrorMessage() << "\n";
+    return EXIT_SUCCESS;
+  }
+  paracl::codegen::codegen_visitor generator;
+
+  auto ch = generator.to_chunk();
+  if (!output_file_option.empty()) {
     std::ofstream output_file;
     utils::try_open_file(output_file, output_file_option, std::ios::binary);
     write_chunk(output_file, ch);

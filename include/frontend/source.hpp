@@ -56,6 +56,7 @@ public:
   // Can't make this const qualified, because bison location requires it be a modifiable pointer for whatever reason.
   // Note that the string is allocated on the heap to avoid issues with default constructors.
   std::string *filename() & { return m_filename.get(); }
+  std::string_view get_filename() const { return *m_filename.get(); }
   std::istringstream iss() const & { return std::istringstream{m_file_source}; }
 };
 

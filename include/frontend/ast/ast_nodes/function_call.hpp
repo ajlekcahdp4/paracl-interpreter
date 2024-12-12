@@ -43,6 +43,8 @@ public:
   auto end() const { return vector::end(); }
 
   void append_parameter(i_expression *ptr) { vector::push_back(ptr); }
+
+  auto *get_callee() const { return m_def; }
 };
 
 } // namespace paracl::frontend::ast
