@@ -48,11 +48,10 @@ public:
 namespace intrinsics {
 
 void print(int32_t val) {
-  fmt::println("PRINTING {}", val);
+  fmt::println("{}", val);
 }
 
 int32_t read() {
-  fmt::println("READING");
   int32_t v;
   std::cin >> v;
   if (!std::cin.good()) throw std::runtime_error("Invalid read");

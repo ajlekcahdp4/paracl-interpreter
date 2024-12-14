@@ -4,6 +4,7 @@ add_llvm_based_lib(paracl-llvm
   core
   executionengine
   interpreter
+  mcjit
   support
   SOURCES
   codegen.cpp

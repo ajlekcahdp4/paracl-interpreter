@@ -18,10 +18,9 @@
 
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
-#include <llvm/ExecutionEngine/Interpreter.h>
-#include <llvm/Support/TargetSelect.h>
+#include <llvm/ExecutionEngine/MCJIT.h>
 #include <llvm/Support/InitLLVM.h>
-
+#include <llvm/Support/TargetSelect.h>
 
 #include <boost/program_options.hpp>
 
@@ -68,7 +67,8 @@ int main(int argc, char *argv[]) try {
   desc.add_options()("ast-dump,a", po::value(&ast_dump_option)->default_value(false), "Dump AST");
   desc.add_options()("input-file", po::value(&input_file_name), "Input file name");
   desc.add_options()(
-      "output-type,t", po::value(&output_type_str)->default_value(output_type_name<output_type::BYTECODE>.data()),
+      "output-type,t",
+      po::value(&output_type_str)->default_value(output_type_name<output_type::BYTECODE>.data()),
       "Output type"
   );
 
@@ -109,6 +109,9 @@ int main(int argc, char *argv[]) try {
   }
 
   if (out_type == output_type::LLVM) {
+    llvm::InitializeAllTargetInfos();
+    llvm::InitializeAllTargetMCs();
+
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::LLVMContext ctx;
@@ -116,32 +119,31 @@ int main(int argc, char *argv[]) try {
     if (vm.count("emit-llvm")) m->dump();
     auto &module_ref = *m;
     std::string err;
-    auto *exec = llvm::EngineBuilder(std::move(m)).setErrorStr(&err).create();
-    if (!err.empty())
-      throw std::runtime_error(err);
+    auto *exec = llvm::EngineBuilder(std::move(m))
+                     .setEngineKind(llvm::EngineKind::JIT)
+                     .setErrorStr(&err)
+                     .create();
+    if (!err.empty()) throw std::runtime_error(err);
     assert(exec);
     std::unordered_map<std::string, void *> external_functions;
-    external_functions.try_emplace("__print", reinterpret_cast<void *>(paracl::llvm_codegen::intrinsics::print));
-    external_functions.try_emplace("__read", reinterpret_cast<void *>(paracl::llvm_codegen::intrinsics::read));
+    external_functions.try_emplace(
+        "__print", reinterpret_cast<void *>(paracl::llvm_codegen::intrinsics::print)
+    );
+    external_functions.try_emplace(
+        "__read", reinterpret_cast<void *>(paracl::llvm_codegen::intrinsics::read)
+    );
 
     exec->InstallLazyFunctionCreator([&](const std::string &name) -> void * {
-      fmt::println("HERE");
-      std::cout << "DFDFG" << std::endl;
       auto it = external_functions.find(name);
-      if (it == external_functions.end()) {
-        fmt::println("Unknown function \"{}\"", name);
-        abort();
-        return nullptr;
-      }
-      fmt::println("FOUND function \"{}\"", name);
+      if (it == external_functions.end()) return nullptr;
       return it->second;
     });
 
-    exec->setVerifyModules(true);
     exec->finalizeObject();
     exec->runFunction(module_ref.getFunction("main"), {});
 
-    std::cerr << exec->getErrorMessage() << "\n";
+    auto &Err = exec->getErrorMessage();
+    if (!Err.empty()) throw std::runtime_error(Err);
     return EXIT_SUCCESS;
   }
   paracl::codegen::codegen_visitor generator;
