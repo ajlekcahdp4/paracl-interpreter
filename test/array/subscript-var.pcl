@@ -1,0 +1,6 @@
+{
+  int[5] arr = 0;
+  arr[1] = 1;
+  b = (arr[1] + arr[1]) / 2;
+  print arr[b];
+}

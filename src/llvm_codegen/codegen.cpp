@@ -160,7 +160,7 @@ public:
           );
           builder.CreateMemSet(
               arr, Constant::getIntegerValue(Type::getInt8Ty(get_ctx()), APInt(8, 0)),
-              array_type.size, MaybeAlign()
+              array_type.size * 4, MaybeAlign()
           );
           return arr;
         } else

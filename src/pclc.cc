@@ -140,6 +140,7 @@ int main(int argc, char *argv[]) try {
     });
 
     exec->finalizeObject();
+    exec->setVerifyModules(true);
     exec->runFunction(module_ref.getFunction("main"), {});
 
     auto &Err = exec->getErrorMessage();
