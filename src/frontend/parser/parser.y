@@ -85,10 +85,12 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %define api.location.file "location.hpp"
 
 /* Signle letter tokens */
-%token LPAREN   "("
-%token RPAREN   ")"
-%token LBRACE   "{"
-%token RBRACE   "}"
+%token LPAREN     "("
+%token RPAREN     ")"
+%token LBRACE     "{"
+%token RBRACE     "}"
+%token LSQBRACE   "["
+%token RSQBRACE   "]"
 
 %token ASSIGN   "="
 
@@ -169,6 +171,9 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %type <ast::variable_expression *>
   typified_identifier
 
+%type <ast::subscript *>
+  subscript_expression
+
 %type <ast::function_definition *>
   function_def
 
@@ -176,6 +181,7 @@ static paracl::frontend::parser::symbol_type yylex(paracl::frontend::scanner &p_
 %type <types::generic_type>
   builtin_type
   function_type
+  array_type
   type
 
 %type <std::vector<types::generic_type>> 
@@ -214,10 +220,13 @@ typified_identifier:
   type IDENTIFIER { $$ = driver.make_ast_node<ast::variable_expression>($2, $1, @2); }
 | IDENTIFIER      { $$ = driver.make_ast_node<ast::variable_expression>($1, @1); }
 
+subscript_expression:
+  IDENTIFIER LSQBRACE expression RSQBRACE { $$ = driver.make_ast_node<ast::subscript>($1, $3, @2); }
 
 primary_expression:
   INTEGER_CONSTANT            { $$ = driver.make_ast_node<ast::constant_expression>($1, @1); }
 | IDENTIFIER                  { $$ = driver.make_ast_node<ast::variable_expression>($1, @1); }
+| subscript_expression        { $$ = $1; }
 | QMARK                       { $$ = driver.make_ast_node<ast::read_expression>(@$); }
 | LPAREN expression RPAREN    { $$ = $2; }
 | LPAREN error RPAREN         { auto e = driver.take_error(); $$ = driver.make_ast_node<ast::error_node>(e.m_error_message, e.m_loc); yyerrok; }
@@ -259,12 +268,13 @@ logical_expression:
 | equality_expression                                   { $$ = $1; }
 
 chainable_assignment: 
-  IDENTIFIER ASSIGN chainable_assignment  { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append_variable(left); } 
+  IDENTIFIER ASSIGN chainable_assignment  { $$ = $3; auto left = ast::variable_expression{$1, @1}; $$->append(left); } 
 | IDENTIFIER ASSIGN logical_expression    { auto left = ast::variable_expression{$1, @1}; $$ = driver.make_ast_node<ast::assignment_statement>(left, *$3, @3); }
 
 chainable_assignment_statement:  
-  typified_identifier ASSIGN chainable_assignment SEMICOL   { $$ = $3; $$->append_variable(*$1); }
+  typified_identifier ASSIGN chainable_assignment SEMICOL   { $$ = $3; $$->append(*$1); }
 | typified_identifier ASSIGN logical_expression SEMICOL     { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
+| subscript_expression ASSIGN logical_expression SEMICOL { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @3); }
 | typified_identifier ASSIGN value_block                    { $$ = driver.make_ast_node<ast::assignment_statement>(*$1, *$3, @2); }
 | typified_identifier ASSIGN function_def optional_semicol  {
     auto fnc_ptr = driver.make_ast_node<ast::function_definition_to_ptr_conv>(*$3, @3);
@@ -327,6 +337,10 @@ builtin_type:
 type: 
   builtin_type    { $$ = $1; }
 | function_type   { $$ = $1; }
+| array_type   { $$ = $1; }
+
+array_type:
+  type LSQBRACE INTEGER_CONSTANT RSQBRACE { $$ = types::generic_type::make<types::type_array>($1, $3); }
 
 type_list:  
   type_list COMMA type  { $$ = std::move($1); $$.push_back($3); }

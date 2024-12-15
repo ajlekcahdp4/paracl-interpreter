@@ -34,8 +34,11 @@ private:
     m_ss << fmt::format("\tnode_{} [label = \"{}\"];\n", fmt::ptr(&ref), label);
   }
 
-  void print_bind_node(const i_ast_node &parent, const i_ast_node &child, std::string_view label = "") {
-    m_ss << fmt::format("\tnode_{} -> node_{} [label = \"{}\"]\n", fmt::ptr(&parent), fmt::ptr(&child), label);
+  void
+  print_bind_node(const i_ast_node &parent, const i_ast_node &child, std::string_view label = "") {
+    m_ss << fmt::format(
+        "\tnode_{} -> node_{} [label = \"{}\"]\n", fmt::ptr(&parent), fmt::ptr(&child), label
+    );
   }
 
 public:
@@ -55,6 +58,7 @@ public:
   void dump_node(const read_expression &ref) { print_declare_node(ref, "<read> ?"); }
   void dump_node(const error_node &ref) { print_declare_node(ref, "<error>"); }
 
+  void dump_node(const subscript &ref);
   void dump_node(const variable_expression &ref) {
     print_declare_node(ref, fmt::format("<identifier> {}\n<type> {}", ref.name(), ref.type_str()));
   }
@@ -106,18 +110,20 @@ void ast_dumper::dump_node(const assignment_statement &ref) {
   print_declare_node(ref, "<assignment>");
   const i_ast_node *prev = &ref;
 
-  for (const auto &curr_ref : ref) {
-    add_next(curr_ref);
-    print_bind_node(*prev, curr_ref);
-    prev = &curr_ref;
-  }
+  //  for (const auto &curr_ref : ref) {
+  //    add_next(curr_ref);
+  //    print_bind_node(*prev, curr_ref);
+  //    prev = &curr_ref;
+  //  }
 
   print_bind_node(ref, ref.right());
   add_next(ref.right());
 }
 
 void ast_dumper::dump_node(const binary_expression &ref) {
-  print_declare_node(ref, fmt::format("<binary expression>: {}", ast::binary_operation_to_string(ref.op_type())));
+  print_declare_node(
+      ref, fmt::format("<binary expression>: {}", ast::binary_operation_to_string(ref.op_type()))
+  );
 
   print_bind_node(ref, ref.left());
   print_bind_node(ref, ref.right());
@@ -164,7 +170,9 @@ void ast_dumper::dump_node(const statement_block &ref) {
 }
 
 void ast_dumper::dump_node(const unary_expression &ref) {
-  print_declare_node(ref, fmt::format("<binary expression> {}", ast::unary_operation_to_string(ref.op_type())));
+  print_declare_node(
+      ref, fmt::format("<binary expression> {}", ast::unary_operation_to_string(ref.op_type()))
+  );
   print_bind_node(ref, ref.expr());
   add_next(ref.expr());
 }
@@ -181,8 +189,8 @@ void ast_dumper::dump_node(const while_statement &ref) {
 
 void ast_dumper::dump_node(const function_definition &ref) {
   auto label = fmt::format(
-      "<function definition>: {}\n<arg count>: {}\n<type>: {}", ref.name.value_or("anonymous"), ref.size(),
-      ref.type.to_string()
+      "<function definition>: {}\n<arg count>: {}\n<type>: {}", ref.name.value_or("anonymous"),
+      ref.size(), ref.type.to_string()
   );
 
   print_declare_node(ref, label);
@@ -202,7 +210,9 @@ void ast_dumper::dump_node(const return_statement &ref) {
 }
 
 void ast_dumper::dump_node(const function_call &ref) {
-  print_declare_node(ref, fmt::format("<function call>: {}\n<param count>: {}", ref.name(), ref.size()));
+  print_declare_node(
+      ref, fmt::format("<function call>: {}\n<param count>: {}", ref.name(), ref.size())
+  );
 
   for (unsigned i = 0; const auto &v : ref) {
     print_bind_node(ref, *v, fmt::format("param {}", i++));
@@ -214,6 +224,12 @@ void ast_dumper::dump_node(const function_definition_to_ptr_conv &ref) {
   print_declare_node(ref, "<function def to ptr conversion>");
   print_bind_node(ref, ref.definition());
   add_next(ref.definition());
+}
+
+void ast_dumper::dump_node(const subscript &ref) {
+  print_declare_node(ref, "<array subscript>");
+  print_bind_node(ref, *ref.get_subscript());
+  add_next(*ref.get_subscript());
 }
 
 std::string ast_dump_str(const i_ast_node *node) {

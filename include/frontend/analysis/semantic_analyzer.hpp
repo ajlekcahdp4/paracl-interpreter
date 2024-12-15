@@ -27,7 +27,8 @@
 
 namespace paracl::frontend {
 
-class semantic_analyzer final : public ezvis::visitor_base<ast::i_ast_node, semantic_analyzer, void> {
+class semantic_analyzer final
+    : public ezvis::visitor_base<ast::i_ast_node, semantic_analyzer, void> {
 private:
   symtab_stack m_scopes;
   functions_analytics *m_functions;
@@ -61,6 +62,7 @@ private:
     if (m_type_errors_allowed) return false;
 
     auto &&type = lhs;
+    if (!type || type.base().get_class() == types::type_class::E_ARRAY) return true;
     if (!type || !(type == rhs)) {
 
       if (!type) {
@@ -68,7 +70,12 @@ private:
       }
 
       else {
-        report_error(fmt::format("Expression is of type '{}', expected '{}'", type.to_string(), rhs.to_string()), loc);
+        report_error(
+            fmt::format(
+                "Expression is of type '{}', expected '{}'", type.to_string(), rhs.to_string()
+            ),
+            loc
+        );
       }
 
       return false;
@@ -112,6 +119,7 @@ public:
   void analyze_node(ast::function_call &);
   void analyze_node(ast::function_definition &);
   void analyze_node(ast::function_definition_to_ptr_conv &);
+  void analyze_node(ast::subscript &);
   void analyze_node(ast::return_statement &);
 
   EZVIS_VISIT_INVOKER(analyze_node);

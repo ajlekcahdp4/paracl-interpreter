@@ -19,12 +19,14 @@
 
 #include <iostream>
 #include <string>
+#include <variant>
 
 namespace paracl::frontend {
 
 using types::type_builtin;
 
-ast::statement_block *semantic_analyzer::try_get_statement_block_ptr(ast::i_ast_node &ref) { // clang-format off
+ast::statement_block *semantic_analyzer::try_get_statement_block_ptr(ast::i_ast_node &ref
+) { // clang-format off
   return ezvis::visit<ast::statement_block *, ast::error_node, ast::statement_block>(
       ::utils::visitors{
           [this](const ast::error_node &e) { analyze_node(e); return nullptr; },
@@ -33,7 +35,8 @@ ast::statement_block *semantic_analyzer::try_get_statement_block_ptr(ast::i_ast_
   );
 } // clang-format on
 
-ast::value_block *semantic_analyzer::try_get_value_block_ptr(ast::i_ast_node &ref) { // clang-format off
+ast::value_block *semantic_analyzer::try_get_value_block_ptr(ast::i_ast_node &ref
+) { // clang-format off
   return ezvis::visit<ast::value_block *, ast::error_node, ast::value_block>(
       ::utils::visitors{
           [this](const ast::error_node &e) { analyze_node(e); return nullptr; },
@@ -55,7 +58,10 @@ void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
   auto &right_type = ref.right().type;
   if (!right_type) {
     if (!m_type_errors_allowed) {
-      report_error("Type of the right side of the assignment is unknown or can't be deduced", ref.right().loc());
+      report_error(
+          "Type of the right side of the assignment is unknown or can't be deduced",
+          ref.right().loc()
+      );
     }
     return;
   }
@@ -66,11 +72,20 @@ void semantic_analyzer::analyze_node(ast::assignment_statement &ref) {
   }
 
   for (auto &v : ref) {
-    bool declared = analyze_node(v, true);
-    if (right_type && !declared && !v.type) {
-      v.type = right_type;
+    bool declared = false;
+    ast::i_expression *expr = nullptr;
+    if (std::holds_alternative<ast::variable_expression>(v)) {
+      declared = analyze_node(std::get<ast::variable_expression>(v), true);
+      expr = &std::get<ast::variable_expression>(v);
+    }
+    if (std::holds_alternative<ast::subscript>(v)) {
+      analyze_node(std::get<ast::subscript>(v));
+      expr = &std::get<ast::subscript>(v);
+    }
+    if (right_type && !declared && !expr->type) {
+      expr->type = right_type;
     } else {
-      if (expect_type_eq(v, ref.right().type)) continue;
+      if (expect_type_eq(*expr, ref.right().type)) continue;
       return;
     }
   }
@@ -82,7 +97,8 @@ void semantic_analyzer::analyze_node(ast::binary_expression &ref) {
   apply(ref.right());
   apply(ref.left());
 
-  if (expect_type_eq(ref.right(), type_builtin::type_int) && expect_type_eq(ref.left(), type_builtin::type_int)) {
+  if (expect_type_eq(ref.right(), type_builtin::type_int) &&
+      expect_type_eq(ref.left(), type_builtin::type_int)) {
     ref.type = type_builtin::type_int;
   }
 }
@@ -106,15 +122,17 @@ types::generic_type semantic_analyzer::deduce_return_type(location loc) {
     return first->expr().type && second->expr().type && (first->expr().type != second->expr().type);
   };
 
-  if (std::adjacent_find(m_return_statements->begin(), m_return_statements->end(), types_not_equal) !=
-      m_return_statements->end()) {
+  if (std::adjacent_find(
+          m_return_statements->begin(), m_return_statements->end(), types_not_equal
+      ) != m_return_statements->end()) {
     on_error(loc);
     return types::type_builtin::type_void;
   }
 
-  auto it = std::find_if(m_return_statements->begin(), m_return_statements->end(), [](ast::return_statement *ret) {
-    return ret->expr().type;
-  });
+  auto it = std::find_if(
+      m_return_statements->begin(), m_return_statements->end(),
+      [](ast::return_statement *ret) { return ret->expr().type; }
+  );
   if (it == m_return_statements->end()) {
     on_error(loc);
     return types::type_builtin::type_void;
@@ -123,7 +141,8 @@ types::generic_type semantic_analyzer::deduce_return_type(location loc) {
   return found->expr().type;
 }
 
-using expressions_and_base = ::utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
+using expressions_and_base =
+    ::utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
 void semantic_analyzer::analyze_node(ast::value_block &ref) {
   m_scopes.begin_scope(ref.stab);
 
@@ -138,12 +157,14 @@ void semantic_analyzer::analyze_node(ast::value_block &ref) {
 
     bool is_last = (std::next(start) == finish);
     if (!is_last) continue;
-    /* There we've already reached the last statement of the value block. It may be an implicit return */
+    /* There we've already reached the last statement of the value block. It may be an implicit
+     * return */
 
     /* If the last expression is of type void, then this's not an implicit return */
     auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
         ::utils::visitors{
-            [](ast::i_expression &expr) { return expr.type; }, [](ast::i_ast_node &) { return type_builtin::type_void; }
+            [](ast::i_expression &expr) { return expr.type; },
+            [](ast::i_ast_node &) { return type_builtin::type_void; }
         },
         stmt
     );
@@ -151,7 +172,10 @@ void semantic_analyzer::analyze_node(ast::value_block &ref) {
 
     /* It also can be an explicit return */
     auto is_return = ezvis::visit<bool, ast::return_statement, ast::i_ast_node>(
-        ::utils::visitors{[](ast::return_statement &) { return true; }, [](ast::i_ast_node &) { return false; }}, stmt
+        ::utils::visitors{
+            [](ast::return_statement &) { return true; }, [](ast::i_ast_node &) { return false; }
+        },
+        stmt
     );
 
     if (!is_implicit_return || is_return) break;
@@ -182,12 +206,14 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
 
     bool is_last = (std::next(start) == finish);
     if (!is_last || !m_return_statements) continue;
-    /* There we've already reached the last statement of the value block. It may be an implicit return */
+    /* There we've already reached the last statement of the value block. It may be an implicit
+     * return */
 
     /* If the last expression is of type void, then this's not an implicit return */
     auto type = ezvis::visit_tuple<types::generic_type, expressions_and_base>(
         ::utils::visitors{
-            [](ast::i_expression &expr) { return expr.type; }, [](ast::i_ast_node &) { return type_builtin::type_void; }
+            [](ast::i_expression &expr) { return expr.type; },
+            [](ast::i_ast_node &) { return type_builtin::type_void; }
         },
         stmt
     );
@@ -195,7 +221,10 @@ void semantic_analyzer::analyze_node(ast::statement_block &ref) {
 
     /* It also can be an explicit return */
     bool is_return = ezvis::visit<bool, ast::return_statement, ast::i_ast_node>(
-        ::utils::visitors{[](ast::return_statement &) { return true; }, [](ast::i_ast_node &) { return false; }}, stmt
+        ::utils::visitors{
+            [](ast::return_statement &) { return true; }, [](ast::i_ast_node &) { return false; }
+        },
+        stmt
     );
 
     if (!is_implicit_return || is_return) break;
@@ -223,6 +252,15 @@ void semantic_analyzer::analyze_node(ast::while_statement &ref) {
   apply(*ref.cond());
   expect_type_eq(*ref.cond(), type_builtin::type_int);
   apply(*ref.block());
+}
+
+void semantic_analyzer::analyze_node(ast::subscript &ref) {
+  auto attr = m_scopes.lookup_symbol(ref.name());
+  if (!attr) {
+    report_error(fmt::format("Use of undeclared variable `{}`", ref.name()), ref.loc());
+    return;
+  }
+  apply(*ref.get_subscript());
 }
 
 bool semantic_analyzer::analyze_node(ast::variable_expression &ref, bool can_declare) {
@@ -266,9 +304,12 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
     report_error(error);
   };
 
-  const auto match_types = [this](auto expr_ptr, auto &&arg) { return expect_type_eq(*expr_ptr, arg.base()); };
+  const auto match_types = [this](auto expr_ptr, auto &&arg) {
+    return expect_type_eq(*expr_ptr, arg.base());
+  };
   const auto check_func_parameter_list = [ref, report](auto &&type, auto &&loc, auto match) {
-    if (std::mismatch(ref.begin(), ref.end(), type.cbegin(), type.cend(), match).first != ref.end() ||
+    if (std::mismatch(ref.begin(), ref.end(), type.cbegin(), type.cend(), match).first !=
+            ref.end() ||
         ref.size() != type.size()) {
       report(loc);
       return false;
@@ -281,13 +322,19 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
       error_report report = {
           {fmt::format("Ambiguous call of `{}`", name), ref.loc()}
       };
-      report.add_attachment({fmt::format("[Info] Have variable `{}`", name), attr->m_definition->loc()});
-      report.add_attachment({fmt::format("[Info] Have function `{}`", name), function_found->definition->loc()});
+      report.add_attachment(
+          {fmt::format("[Info] Have variable `{}`", name), attr->m_definition->loc()}
+      );
+      report.add_attachment(
+          {fmt::format("[Info] Have function `{}`", name), function_found->definition->loc()}
+      );
       report_error(report);
       return;
     }
 
-    if (check_func_parameter_list(function_found->definition->type, function_found->definition->loc(), match_types)) {
+    if (check_func_parameter_list(
+            function_found->definition->type, function_found->definition->loc(), match_types
+        )) {
       ref.type = function_found->definition->type.return_type();
     }
 
@@ -304,7 +351,8 @@ void semantic_analyzer::analyze_node(ast::function_call &ref) {
     }
 
     auto &cast_type = static_cast<types::type_composite_function &>(def->type.base());
-    if (check_func_parameter_list(cast_type, def->loc(), match_types)) ref.type = cast_type.return_type();
+    if (check_func_parameter_list(cast_type, def->loc(), match_types))
+      ref.type = cast_type.return_type();
     return;
   }
 
@@ -347,8 +395,9 @@ bool semantic_analyzer::analyze_func(ast::function_definition &ref, bool is_recu
 }
 
 void semantic_analyzer::analyze_node(ast::function_definition &ref) {
-  semantic_analyzer analyzer{*m_functions}; // Yes, yes, a semantic analyzer that recursively creates another sema is
-                                            // pretty bad, but such is the language we are compiling.
+  semantic_analyzer analyzer{*m_functions
+  }; // Yes, yes, a semantic analyzer that recursively creates another sema is
+     // pretty bad, but such is the language we are compiling.
   analyzer.set_error_queue(*m_error_queue);
   analyzer.set_ast(*m_ast);
   analyzer.m_scopes = m_scopes;

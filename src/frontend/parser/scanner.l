@@ -46,6 +46,9 @@ cpp_style_comment ([/][/].*)
 ")"             { return parser::make_RPAREN(update_loc()); }
 "{"             { return parser::make_LBRACE(update_loc()); }
 "}"             { return parser::make_RBRACE(update_loc()); }
+"["             { return parser::make_LSQBRACE(update_loc()); }
+"]"             { return parser::make_RSQBRACE(update_loc()); }
+
 ";"             { return parser::make_SEMICOL(update_loc()); }
 ":"             { return parser::make_COL(update_loc()); }
 ","             { return parser::make_COMMA(update_loc()); }

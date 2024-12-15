@@ -31,6 +31,7 @@ namespace paracl::frontend::types {
 enum class type_class {
   E_BUILTIN,
   E_COMPOSITE_FUNCTION,
+  E_ARRAY,
 };
 
 enum class builtin_type_class {
@@ -112,11 +113,17 @@ public:
     return *m_impl;
   }
 
-  friend bool operator==(const generic_type &lhs, const generic_type &rhs) { return lhs.base().is_equal(rhs.base()); }
+  friend bool operator==(const generic_type &lhs, const generic_type &rhs) {
+    return lhs.base().is_equal(rhs.base());
+  }
   friend bool operator!=(const generic_type &lhs, const generic_type &rhs) { return !(lhs == rhs); }
 
-  friend bool operator==(const generic_type &lhs, const i_type &rhs) { return lhs.base().is_equal(rhs); }
-  friend bool operator==(const i_type &lhs, const generic_type &rhs) { return rhs.base().is_equal(lhs); }
+  friend bool operator==(const generic_type &lhs, const i_type &rhs) {
+    return lhs.base().is_equal(rhs);
+  }
+  friend bool operator==(const i_type &lhs, const generic_type &rhs) {
+    return rhs.base().is_equal(lhs);
+  }
   friend bool operator!=(const generic_type &lhs, const i_type &rhs) { return !(lhs == rhs); }
   friend bool operator!=(const i_type &lhs, const generic_type &rhs) { return !(lhs == rhs); }
 
@@ -135,11 +142,14 @@ private:
   EZVIS_VISITABLE();
 
 public:
-  static inline const generic_type type_int = generic_type::make<type_builtin>(builtin_type_class::E_BUILTIN_INT);
-  static inline const generic_type type_void = generic_type::make<type_builtin>(builtin_type_class::E_BUILTIN_VOID);
+  static inline const generic_type type_int =
+      generic_type::make<type_builtin>(builtin_type_class::E_BUILTIN_INT);
+  static inline const generic_type type_void =
+      generic_type::make<type_builtin>(builtin_type_class::E_BUILTIN_VOID);
 
 public:
-  type_builtin(builtin_type_class type_tag) : i_type{type_class::E_BUILTIN}, m_builtin_type_tag{type_tag} {}
+  type_builtin(builtin_type_class type_tag)
+      : i_type{type_class::E_BUILTIN}, m_builtin_type_tag{type_tag} {}
 
   bool is_equal(const i_type &rhs) const override {
     return m_type_tag == rhs.get_class() &&
@@ -152,6 +162,31 @@ public:
   unique_type clone() const override { return std::make_unique<type_builtin>(*this); }
 };
 
+class type_array : public i_type {
+public:
+  generic_type element_type;
+  std::size_t size = 0;
+  EZVIS_VISITABLE();
+
+  type_array(generic_type element, std::size_t size)
+      : i_type{type_class::E_ARRAY}, element_type(element), size(size) {}
+
+  bool is_equal(const i_type &rhs) const override {
+    if (m_type_tag != rhs.get_class()) return false;
+    const auto &rhs_array = static_cast<const type_array &>(rhs);
+    if (!rhs_array.element_type.base().is_equal(element_type)) return false;
+    return size == rhs_array.size;
+  }
+
+  std::string to_string() const override {
+    return fmt::format("{}[{}]", element_type.base().to_string(), size);
+  }
+
+  unique_type clone() const override { return std::make_unique<type_array>(element_type, size); }
+
+  generic_type get_element_type() const { return element_type; }
+};
+
 class type_composite_function : public i_type, private std::vector<generic_type> {
 public:
   generic_type m_return_type;
@@ -160,7 +195,8 @@ public:
 
 public:
   type_composite_function(std::vector<generic_type> arg_types, generic_type return_type)
-      : i_type{type_class::E_COMPOSITE_FUNCTION}, vector{std::move(arg_types)}, m_return_type{return_type} {}
+      : i_type{type_class::E_COMPOSITE_FUNCTION}, vector{std::move(arg_types)},
+        m_return_type{return_type} {}
 
   bool is_equal(const i_type &rhs) const override {
     if (m_type_tag != rhs.get_class()) return false;
@@ -181,9 +217,12 @@ public:
 
   std::string to_string() const override {
     std::vector<std::string> arg_types_str;
-    std::transform(cbegin(), cend(), std::back_inserter(arg_types_str), [](auto &&elem) { return elem.to_string(); });
+    std::transform(cbegin(), cend(), std::back_inserter(arg_types_str), [](auto &&elem) {
+      return elem.to_string();
+    });
     return fmt::format(
-        "({}) func({})", m_return_type ? m_return_type.to_string() : "undetermined", fmt::join(arg_types_str, ", ")
+        "({}) func({})", m_return_type ? m_return_type.to_string() : "undetermined",
+        fmt::join(arg_types_str, ", ")
     );
     ;
   }

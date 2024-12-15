@@ -24,6 +24,7 @@
 
 #include <iostream>
 #include <string_view>
+#include <variant>
 
 namespace paracl::frontend {
 
@@ -35,7 +36,9 @@ class main_explorer final : public ezvis::visitor_base<ast::i_ast_node, main_exp
 
 public:
   void explore(ast::assignment_statement &ref) {
-    for (auto &var : ref) {
+    for (auto &variant : ref) {
+      if (std::holds_alternative<ast::subscript>(variant)) continue;
+      auto &var = std::get<ast::variable_expression>(variant);
       auto name = var.name();
       if (!m_global_variables.declared(name)) m_global_variables.declare(name, &var);
     }

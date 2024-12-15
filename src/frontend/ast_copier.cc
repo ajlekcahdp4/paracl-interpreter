@@ -13,11 +13,16 @@
 
 #include <cassert>
 #include <memory>
+#include <variant>
 
 namespace paracl::frontend::ast {
 
 template <typename T> T &trivial_ast_node_copy(const T &ref, ast_container &cont) {
   return cont.make_node<T>(ref);
+}
+
+subscript &ast_copier::copy(const subscript &ref) {
+  return trivial_ast_node_copy(ref, m_container);
 }
 
 read_expression &ast_copier::copy(const read_expression &ref) {
@@ -52,7 +57,8 @@ unary_expression &ast_copier::copy(const unary_expression &ref) {
 
 while_statement &ast_copier::copy(const while_statement &ref) {
   return m_container.make_node<while_statement>(
-      static_cast<i_expression &>(apply(*ref.cond())), static_cast<statement_block &>(apply(*ref.block())), ref.loc()
+      static_cast<i_expression &>(apply(*ref.cond())),
+      static_cast<statement_block &>(apply(*ref.block())), ref.loc()
   );
 }
 
@@ -66,15 +72,19 @@ function_definition_to_ptr_conv &ast_copier::copy(const function_definition_to_p
 }
 
 return_statement &ast_copier::copy(const return_statement &ref) {
-  if (!ref.empty()) return m_container.make_node<return_statement>(&copy_expr(ref.expr()), ref.loc());
+  if (!ref.empty())
+    return m_container.make_node<return_statement>(&copy_expr(ref.expr()), ref.loc());
   return m_container.make_node<return_statement>(nullptr, ref.loc());
 }
 
 assignment_statement &ast_copier::copy(const assignment_statement &ref) {
-  auto &copy = m_container.make_node<assignment_statement>(*ref.rbegin(), copy_expr(ref.right()), ref.loc());
+  auto &copy =
+      m_container.make_node<assignment_statement>(*ref.rbegin(), copy_expr(ref.right()), ref.loc());
 
   for (auto start = std::next(ref.rbegin()), finish = ref.rend(); start != finish; ++start) {
-    copy.append_variable(*start);
+    if (std::holds_alternative<variable_expression>(*start))
+      copy.append(std::get<variable_expression>(*start));
+    else if (std::holds_alternative<subscript>(*start)) copy.append(std::get<subscript>(*start));
   }
 
   return copy;
@@ -87,7 +97,9 @@ if_statement &ast_copier::copy(const if_statement &ref) {
     );
   }
 
-  return m_container.make_node<if_statement>(copy_expr(*ref.cond()), copy(*ref.true_block()), ref.loc());
+  return m_container.make_node<if_statement>(
+      copy_expr(*ref.cond()), copy(*ref.true_block()), ref.loc()
+  );
 }
 
 value_block &ast_copier::copy(const value_block &ref) {

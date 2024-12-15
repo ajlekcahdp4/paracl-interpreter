@@ -27,6 +27,7 @@ enum class ast_node_type {
   E_FUNCTION_DEFINITION,
   E_IF_STATEMENT,
   E_WHILE_STATEMENT,
+  E_SUBSCRIPT,
   E_PRINT_STATEMENT,
   E_READ_EXPRESSION,
   E_STATEMENT_BLOCK,
@@ -56,6 +57,7 @@ template <> inline ast_node_type get_ast_node_type<unary_expression>() { return 
 template <> inline ast_node_type get_ast_node_type<variable_expression>() { return ast_node_type::E_VARIABLE_EXPRESSION; }
 template <> inline ast_node_type get_ast_node_type<return_statement>() { return ast_node_type::E_RETURN_STATEMENT; }
 template <> inline ast_node_type get_ast_node_type<function_definition_to_ptr_conv>() { return ast_node_type::E_FUNCTION_DEFINITION_TO_PTR_CONV; }
+template <> inline ast_node_type get_ast_node_type<subscript>() { return ast_node_type::E_SUBSCRIPT; }
 // clang-format on
 } // namespace detail
 
@@ -69,11 +71,13 @@ constexpr auto ast_expression_types = std::array{
     ast_node_type::E_FUNCTION_DEFINITION_TO_PTR_CONV,
     ast_node_type::E_READ_EXPRESSION,
     ast_node_type::E_FUNCTION_CALL,
+    ast_node_type::E_SUBSCRIPT,
 };
 
 inline ast_node_type identify_node(const i_ast_node &base) {
   return ezvis::visit_tuple<ast_node_type, ast::tuple_all_nodes>(
-      [](auto &&node) { return detail::get_ast_node_type<std::remove_cvref_t<decltype(node)>>(); }, base
+      [](auto &&node) { return detail::get_ast_node_type<std::remove_cvref_t<decltype(node)>>(); },
+      base
   );
 }
 

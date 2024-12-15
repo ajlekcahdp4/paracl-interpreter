@@ -36,6 +36,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <variant>
 
 namespace paracl::codegen {
 
@@ -118,11 +119,12 @@ public:
   std::optional<unsigned> lookup_location(std::string_view name) const {
     unsigned loc = 0;
 
-    [[maybe_unused]] auto found = std::find_if(m_blocks.crbegin(), m_blocks.crend(), [name, &loc](auto &block) {
-      auto found = block.lookup(name);
-      if (found) loc = *found;
-      return block.lookup(name).has_value();
-    });
+    [[maybe_unused]] auto found =
+        std::find_if(m_blocks.crbegin(), m_blocks.crend(), [name, &loc](auto &block) {
+          auto found = block.lookup(name);
+          if (found) loc = *found;
+          return block.lookup(name).has_value();
+        });
 
     return (found == m_blocks.crend() ? std::nullopt : std::optional{loc});
   }
@@ -144,12 +146,14 @@ public:
   codegen_stack_block front() { return m_blocks.front(); }
 };
 
-// It's really necessary to put all of this code inside an anonymous namespace to avoid external linkage.
-// paracl_isa relies on lambda types
+// It's really necessary to put all of this code inside an anonymous namespace to avoid external
+// linkage. paracl_isa relies on lambda types
 namespace {
 
-class codegen_visitor final : public ezvis::visitor_base<const frontend::ast::i_ast_node, codegen_visitor, void> {
-  using builder_type = bytecode_vm::builder::bytecode_builder<decltype(bytecode_vm::instruction_set::paracl_isa)>;
+class codegen_visitor final
+    : public ezvis::visitor_base<const frontend::ast::i_ast_node, codegen_visitor, void> {
+  using builder_type =
+      bytecode_vm::builder::bytecode_builder<decltype(bytecode_vm::instruction_set::paracl_isa)>;
 
 private:
   std::unordered_map<int, unsigned> m_constant_map;
@@ -201,7 +205,8 @@ private:
   unsigned lookup_or_insert_constant(int constant);
 
   unsigned current_constant_index() const {
-    return m_constant_map.size() + m_return_address_constants.size() + m_dynamic_jumps_constants.size();
+    return m_constant_map.size() + m_return_address_constants.size() +
+        m_dynamic_jumps_constants.size();
   }
 
 private:
@@ -244,11 +249,13 @@ private:
 
 private:
   using to_visit = std::tuple<
-      frontend::ast::assignment_statement, frontend::ast::binary_expression, frontend::ast::constant_expression,
-      frontend::ast::if_statement, frontend::ast::print_statement, frontend::ast::read_expression,
-      frontend::ast::value_block, frontend::ast::statement_block, frontend::ast::unary_expression,
-      frontend::ast::variable_expression, frontend::ast::while_statement, frontend::ast::function_call,
-      frontend::ast::return_statement, frontend::ast::function_definition_to_ptr_conv>;
+      frontend::ast::assignment_statement, frontend::ast::binary_expression,
+      frontend::ast::constant_expression, frontend::ast::if_statement,
+      frontend::ast::print_statement, frontend::ast::read_expression, frontend::ast::value_block,
+      frontend::ast::statement_block, frontend::ast::unary_expression,
+      frontend::ast::variable_expression, frontend::ast::while_statement,
+      frontend::ast::function_call, frontend::ast::return_statement,
+      frontend::ast::function_definition_to_ptr_conv>;
 
 public:
   EZVIS_VISIT_CT(to_visit);
@@ -273,7 +280,9 @@ public:
   EZVIS_VISIT_INVOKER(generate);
 
   unsigned generate_function(const frontend::ast::function_definition &);
-  void generate_all(const frontend::ast::ast_container &ast, const frontend::functions_analytics &functions);
+  void generate_all(
+      const frontend::ast::ast_container &ast, const frontend::functions_analytics &functions
+  );
   bytecode_vm::decl_vm::chunk to_chunk();
 };
 
@@ -288,7 +297,8 @@ void codegen_visitor::generate(const ast::read_expression &) {
 
 void codegen_visitor::generate(const ast::variable_expression &ref) {
   if (auto index = m_symtab_stack.lookup_location(ref.name()); index) {
-    emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, index.value()});
+    emit_with_increment(encoded_instruction{vm_instruction_set::push_local_rel_desc, index.value()}
+    );
     return;
   }
 
@@ -331,11 +341,13 @@ void codegen_visitor::generate(const ast::assignment_statement &ref) {
 
   const auto last_it = std::prev(ref.rend()); // Empty assignments can't exist.
   for (auto start = ref.rbegin(), finish = ref.rend(); start != finish; ++start) {
-    move_to_location(start->name());
+    assert(std::holds_alternative<ast::variable_expression>(*start));
+    auto &var = std::get<ast::variable_expression>(*start);
+    move_to_location(var.name());
 
     bool is_last = (start == last_it);
     if (!is_last || (is_last && emit_push)) {
-      push_from_location(start->name());
+      push_from_location(var.name());
     }
   }
 }
@@ -393,13 +405,15 @@ void codegen_visitor::generate(const ast::value_block &ref, bool global_scope) {
 
       const auto node_type = frontend::ast::identify_node(st);
       const auto is_expression =
-          std::find(ast_expression_types.begin(), ast_expression_types.end(), node_type) != ast_expression_types.end();
+          std::find(ast_expression_types.begin(), ast_expression_types.end(), node_type) !=
+          ast_expression_types.end();
 
       bool is_assignment = (node_type == frontend::ast::ast_node_type::E_ASSIGNMENT_STATEMENT);
       bool is_return = (node_type == frontend::ast::ast_node_type::E_RETURN_STATEMENT);
       bool pop_unused_result = is_expression && !is_return;
 
-      using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
+      using expressions_and_base =
+          utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
       auto type = ezvis::visit_tuple<frontend::types::generic_type, expressions_and_base>(
           ::utils::visitors{
               [](ast::i_expression &expr) { return expr.type; },
@@ -418,7 +432,8 @@ void codegen_visitor::generate(const ast::value_block &ref, bool global_scope) {
         apply(st);
       }
 
-      if ((!is_assignment) && (pop_unused_result) && (type != frontend::types::type_builtin::type_void)) {
+      if ((!is_assignment) && (pop_unused_result) &&
+          (type != frontend::types::type_builtin::type_void)) {
         emit_pop();
       }
     }
@@ -463,13 +478,15 @@ void codegen_visitor::generate(const ast::statement_block &ref, bool global_scop
 
       const auto node_type = frontend::ast::identify_node(st);
       const auto is_expression =
-          std::find(ast_expression_types.begin(), ast_expression_types.end(), node_type) != ast_expression_types.end();
+          std::find(ast_expression_types.begin(), ast_expression_types.end(), node_type) !=
+          ast_expression_types.end();
 
       bool is_assignment = (node_type == frontend::ast::ast_node_type::E_ASSIGNMENT_STATEMENT);
       bool is_return = (node_type == frontend::ast::ast_node_type::E_RETURN_STATEMENT);
       bool pop_unused_result = is_expression && !is_return;
 
-      using expressions_and_base = utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
+      using expressions_and_base =
+          utils::tuple_add_types_t<ast::tuple_expression_nodes, ast::i_ast_node>;
       auto type = ezvis::visit_tuple<frontend::types::generic_type, expressions_and_base>(
           ::utils::visitors{
               [](ast::i_expression &expr) { return expr.type; },
@@ -488,7 +505,8 @@ void codegen_visitor::generate(const ast::statement_block &ref, bool global_scop
         apply(st);
       }
 
-      if ((!is_assignment) && (pop_unused_result) && (type != frontend::types::type_builtin::type_void)) {
+      if ((!is_assignment) && (pop_unused_result) &&
+          (type != frontend::types::type_builtin::type_void)) {
         emit_pop();
       }
     }
@@ -509,13 +527,15 @@ void codegen_visitor::visit_if_no_else(const ast::if_statement &ref) {
   reset_currently_statement();
   apply(*ref.cond());
 
-  auto index_jmp_to_false_block = emit_with_decrement(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
+  auto index_jmp_to_false_block =
+      emit_with_decrement(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
 
   set_currently_statement();
   apply(*ref.true_block());
 
   auto jump_to_index = m_builder.current_loc();
-  auto &to_relocate = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_false_block);
+  auto &to_relocate =
+      m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_false_block);
 
   std::get<0>(to_relocate.m_attr) = jump_to_index;
 }
@@ -524,19 +544,22 @@ void codegen_visitor::visit_if_with_else(const ast::if_statement &ref) {
   reset_currently_statement();
   apply(*ref.cond());
 
-  auto index_jmp_to_false_block = emit_with_decrement(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
+  auto index_jmp_to_false_block =
+      emit_with_decrement(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
 
   set_currently_statement();
   apply(*ref.true_block());
   auto index_jmp_to_after_true_block = emit(encoded_instruction{vm_instruction_set::jmp_desc, 0});
 
-  auto &to_relocate_else_jump = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_false_block);
+  auto &to_relocate_else_jump =
+      m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_false_block);
   std::get<0>(to_relocate_else_jump.m_attr) = m_builder.current_loc();
 
   set_currently_statement();
   apply(*ref.else_block());
 
-  auto &to_relocate_after_true_block = m_builder.get_as(vm_instruction_set::jmp_desc, index_jmp_to_after_true_block);
+  auto &to_relocate_after_true_block =
+      m_builder.get_as(vm_instruction_set::jmp_desc, index_jmp_to_after_true_block);
   std::get<0>(to_relocate_after_true_block.m_attr) = m_builder.current_loc();
 }
 
@@ -559,12 +582,14 @@ void codegen_visitor::generate(const ast::while_statement &ref) {
   reset_currently_statement();
   apply(*ref.cond());
 
-  auto index_jmp_to_after_loop = emit_with_decrement(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
+  auto index_jmp_to_after_loop =
+      emit_with_decrement(encoded_instruction{vm_instruction_set::jmp_false_desc, 0});
   set_currently_statement();
 
   apply(*ref.block());
   emit(encoded_instruction{vm_instruction_set::jmp_desc, while_location_start});
-  auto &to_relocate_after_loop_jump = m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_after_loop);
+  auto &to_relocate_after_loop_jump =
+      m_builder.get_as(vm_instruction_set::jmp_false_desc, index_jmp_to_after_loop);
   std::get<0>(to_relocate_after_loop_jump.m_attr) = m_builder.current_loc();
 
   end_scope();
@@ -576,7 +601,9 @@ void codegen_visitor::generate(const ast::unary_expression &ref) {
 
   switch (ref.op_type()) {
   case unary_op::E_UN_OP_NEG: {
-    emit_with_increment(encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)});
+    emit_with_increment(
+        encoded_instruction{vm_instruction_set::push_const_desc, lookup_or_insert_constant(0)}
+    );
     apply(ref.expr());
     emit_with_decrement(vm_instruction_set::sub_desc);
     break;
@@ -716,7 +743,8 @@ void codegen_visitor::generate_all(
   }
 
   for (auto &&reloc : m_relocations_function_calls) {
-    auto &relocate_instruction = m_builder.get_as(vm_instruction_set::jmp_desc, reloc.m_reloc_index);
+    auto &relocate_instruction =
+        m_builder.get_as(vm_instruction_set::jmp_desc, reloc.m_reloc_index);
     relocate_instruction.m_attr = m_function_defs.at(reloc.m_func_ptr);
   }
 
